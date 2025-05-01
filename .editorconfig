@@ -1,0 +1,34 @@
+# EditorConfig helps maintain consistent coding styles for multiple developers
+# working on the same project across various editors and IDEs.
+
+root = true
+
+# Default settings for all files
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Specific settings for Markdown files
+[*.md]
+trim_trailing_whitespace = false
+
+# Specific settings for JSON files
+[*.json]
+indent_size = 2
+
+# Specific settings for YAML files
+[*.yml]
+indent_size = 2
+
+# Specific settings for Makefiles
+[Makefile]
+indent_style = tab
+
+# Prettier-specific settings
+[*.{js,jsx,ts,tsx,css,scss,html,json,md,yml}]
+max_line_length = 80
+quote_type = single

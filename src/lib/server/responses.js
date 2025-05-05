@@ -29,7 +29,39 @@ export function respondSuccess(data, message = 'Success', status = 200, meta) {
  */
 export function respondError(err) {
   if (err instanceof AppError) {
-    logError(err.code, err.details ?? err.stack);
+    logError(err.code, err);
+
+    if (err.status === 401) {
+      const payload = null;
+
+      const html = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Authentication Complete</title>
+  </head>
+  <body>
+    <script>
+      (function () {
+        const payload = ${JSON.stringify(payload)};
+        const targetOrigin = "${process.env.NEXT_PUBLIC_APP_URL.replace(
+          /"/g,
+          '\\"'
+        )}";
+
+        window.parent?.postMessage(payload, targetOrigin);
+      })();
+    </script>
+  </body>
+</html>`;
+
+      return new NextResponse(html, {
+        status: 401,
+        headers: {
+          'Content-type': 'text/html; charset=utf-8',
+        },
+      });
+    }
 
     return NextResponse.json(
       {

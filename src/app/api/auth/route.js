@@ -1,11 +1,12 @@
-import { cookies } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
-import db from "@/db/index";
-import { createSessionAndReturnTokenResponse } from "@/lib/server/auth/create_session";
-import axios from "axios";
-import { AppError } from "@/lib/server/errors/AppError";
-import { ERROR_CODES } from "@/lib/server/errors/errorCodes";
-import { respondError } from "@/lib/server/responses";
+import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+import db from '@/db/index';
+import { createSessionAndReturnTokenResponse } from '@/lib/server/auth/create_session';
+import axios from 'axios';
+import { AppError } from '@/lib/server/errors/AppError';
+import { ERROR_CODES } from '@/lib/server/errors/errorCodes';
+import { respondError } from '@/lib/server/responses';
+import { snakeKeysToCamelKeys } from '@/utils';
 
 /**
  * All these take place in a popup
@@ -17,12 +18,12 @@ import { respondError } from "@/lib/server/responses";
  */
 async function AuthSoul(request) {
   const cookieStore = await cookies();
-  const refreshToken = cookieStore.get("refresh_token");
-  const provider = request.nextUrl.searchParams.get("provider");
+  const refreshToken = cookieStore.get('refresh_token');
+  const provider = request.nextUrl.searchParams.get('provider');
 
   if (!provider) {
     return NextResponse.redirect(
-      new URL("/login", process.env.NEXT_PUBLIC_APP_URL)
+      new URL('/login', process.env.NEXT_PUBLIC_APP_URL)
     );
   }
 
@@ -36,8 +37,8 @@ async function AuthSoul(request) {
     );
   }
 
-  const dbSession = await db("sessions")
-    .where("refresh_token", refreshToken.value)
+  let dbSession = await db('sessions')
+    .where('refresh_token', refreshToken.value)
     .first();
 
   if (!dbSession) {
@@ -46,32 +47,35 @@ async function AuthSoul(request) {
     );
   }
 
-  if (await shouldRedirectToProviderAuth(provider, dbSession.user_id)) {
+  dbSession = snakeKeysToCamelKeys(dbSession);
+  if (await shouldRedirectToProviderAuth(provider, dbSession.userId)) {
     return NextResponse.redirect(
       new URL(`/api/auth/${provider}`, process.env.NEXT_PUBLIC_APP_URL)
     );
   }
 
-  const oldSession = await db("sessions")
-    .where("refresh_token", refreshToken.value)
-    .andWhere("expires_at", ">", new Date())
+  let oldSession = await db('sessions')
+    .where('refresh_token', refreshToken.value)
+    .andWhere('expires_at', '>', new Date())
     .del();
 
   try {
     if (oldSession < 1) {
       throw new AppError({
         code: ERROR_CODES.INTERNAL_ERROR,
-        message: "Something went horribly wrong",
+        message: 'Something went horribly wrong',
         details:
-          "This should not happen as, at line 40, we check for its existence",
+          'This should not happen as, at line 40, we check for its existence',
         status: 500,
       });
     }
 
+    oldSession = snakeKeysToCamelKeys(oldSession);
+
     return await createSessionAndReturnTokenResponse(
       {
-        user_id: dbSession["user_id"],
-        times_rotated: dbSession["times_rotated"],
+        userId: dbSession.userId,
+        timesRotated: dbSession.timesRotated,
       },
       cookieStore,
       true
@@ -93,16 +97,18 @@ async function AuthSoul(request) {
  * @returns {Promise<boolean>} - Returns `true` if the user should be redirected to reauthenticate.
  */
 async function shouldRedirectToProviderAuth(provider, userId) {
-  const providerSession = await db("oauth_accounts")
-    .where("user_id", userId)
-    .andWhere("provider", provider)
-    .andWhere("refresh_token_expiration", ">", new Date())
+  let providerSession = await db('oauth_accounts')
+    .where('user_id', userId)
+    .andWhere('provider', provider)
+    .andWhere('refresh_token_expiration', '>', new Date())
     .first();
 
   // No valid session found — reauthentication needed
   if (!providerSession) {
     return true;
   }
+
+  providerSession = snakeKeysToCamelKeys(providerSession);
 
   /**
    * MyAnimeList (MAL) supports token refreshing via its refresh token mechanism.
@@ -112,12 +118,12 @@ async function shouldRedirectToProviderAuth(provider, userId) {
    * expire after 1 year — at the same time. Therefore, if the refresh token is expired,
    * the access token will be too. No refresh logic is needed for AniList — the user must reauthenticate.
    */
-  if (provider === "mal") {
+  if (provider === 'mal') {
     try {
       const response = await axios.post(
-        "http://localhost:3000/api/auth/mal/refresh",
+        'http://localhost:3000/api/auth/mal/refresh',
         {
-          refresh_token: providerSession.refresh_token,
+          refreshToken: providerSession.refreshToken,
         }
       );
 
@@ -127,7 +133,7 @@ async function shouldRedirectToProviderAuth(provider, userId) {
     } catch (error) {
       throw new AppError({
         code: ERROR_CODES.INTERNAL_ERROR,
-        message: "Something went wrong, please contact the Developer",
+        message: 'Something went wrong, please contact the Developer',
         details: {
           error,
         },

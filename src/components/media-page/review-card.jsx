@@ -1,0 +1,80 @@
+import { HeartIcon } from '@yamada-ui/lucide';
+import {
+  Badge,
+  Box,
+  Flex,
+  HStack,
+  Rating,
+  Text,
+  VStack,
+} from '@yamada-ui/react';
+
+export default function ReviewCard({ review }) {
+  const emotionList = review.emotions ? review.emotions.split(';') : [];
+  const score = Math.floor(
+    1 / (5 * (review.rating / 10) - Math.floor(5 * (review.rating / 10)))
+  );
+  return (
+    <Box
+      borderWidth="1px"
+      borderRadius="md"
+      p="4"
+      w="full"
+      shadow="sm"
+      _hover={{ shadow: 'md' }}
+      transition="all 0.2s"
+    >
+      <Flex justify="space-between" align="start" mb="2">
+        <HStack spacing="2">
+          {!['anime', 'manga'].includes(review.subjectType) && (
+            <Badge colorScheme="primary" variant="solid">
+              {review.subjectType === 'chapter' && `Ch ${review.chapterNumber}`}
+              {review.subjectType === 'episode' && `Ep ${review.episodeNumber}`}
+              {review.subjectType === 'volume' && `Vl ${review.volume}`}
+            </Badge>
+          )}
+          <Rating
+            readOnly
+            defaultValue={5 * (review.rating / 10)}
+            fractions={score === Infinity ? null : score}
+          />
+        </HStack>
+
+        {review.favourite && <HeartIcon color={'red'} fill={'red'} />}
+
+        {/* <Menu matchWidth={true}>
+          <MenuButton
+            as={IconButton}
+            icon={<EllipsisIcon fontSize={'xl'} />}
+            variant="ghost"
+          />
+
+          <MenuList>
+            <MenuItem icon={<PencilIcon />}>Edit</MenuItem>
+            <MenuItem icon={<Trash2Icon />}>Remove</MenuItem>
+          </MenuList>
+        </Menu> */}
+      </Flex>
+
+      <VStack align="start" spacing="2">
+        <Text fontSize="md" fontWeight="medium">
+          {review.reviewText}
+        </Text>
+
+        {emotionList.length > 0 && (
+          <HStack spacing="1" flexWrap="wrap">
+            {emotionList.map((emotion) => (
+              <Badge key={emotion} colorScheme="pink" variant="subtle">
+                {emotion}
+              </Badge>
+            ))}
+          </HStack>
+        )}
+
+        <Text fontSize="xs" color="gray.500" mt="2">
+          {new Date(review.updatedAt).toLocaleString()}
+        </Text>
+      </VStack>
+    </Box>
+  );
+}

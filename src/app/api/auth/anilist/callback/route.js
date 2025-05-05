@@ -1,13 +1,14 @@
-import db from "@/db/index";
-import { getAnilistClient } from "@/lib/server/anilist";
-import { createSessionAndReturnTokenResponse } from "@/lib/server/auth/create_session";
-import { MS_IN_15_MINUTES, MS_IN_YEAR } from "@/lib/constants";
-import { AppError } from "@/lib/server/errors/AppError";
-import { ERROR_CODES } from "@/lib/server/errors/errorCodes";
-import { respondError } from "@/lib/server/responses";
-import * as arctic from "arctic";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import db from '@/db/index';
+import { getAnilistClient } from '@/lib/server/anilist';
+import { createSessionAndReturnTokenResponse } from '@/lib/server/auth/create_session';
+import { MS_IN_15_MINUTES, MS_IN_YEAR } from '@/lib/constants';
+import { AppError } from '@/lib/server/errors/AppError';
+import { ERROR_CODES } from '@/lib/server/errors/errorCodes';
+import { respondError } from '@/lib/server/responses';
+import * as arctic from 'arctic';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
+import { camelKeysToSnakeKeys, snakeKeysToCamelKeys } from '@/utils';
 
 /**
  * Handles the OAuth callback for AniList login via GET request.
@@ -25,7 +26,7 @@ import { NextResponse } from "next/server";
  */
 export async function GET(request) {
   try {
-    const code = request.nextUrl.searchParams.get("code");
+    const code = request.nextUrl.searchParams.get('code');
     const aniListClient = new arctic.AniList(
       process.env.ANILIST_CLIENT_ID,
       process.env.ANILIST_CLIENT_SECRET,
@@ -39,14 +40,15 @@ export async function GET(request) {
     const userInfo = await getAnilistUserInfo(accessToken);
     const viewer = userInfo.Viewer;
 
-    const existingOAuth = await db("oauth_accounts")
-      .where("provider_user_id", viewer.id)
+    let existingOAuth = await db('oauth_accounts')
+      .where('provider_user_id', viewer.id)
       .first();
 
     let userId;
 
     if (existingOAuth) {
-      userId = existingOAuth.user_id;
+      existingOAuth = snakeKeysToCamelKeys(existingOAuth);
+      userId = existingOAuth.userId;
     } else {
       userId = await createNewUserWithOAuth(
         viewer.name,
@@ -59,7 +61,7 @@ export async function GET(request) {
     const cookieStore = await cookies();
 
     return await createSessionAndReturnTokenResponse(
-      { user_id: userId },
+      { userId },
       cookieStore,
       false
     );
@@ -88,40 +90,42 @@ async function createNewUserWithOAuth(
   accessToken,
   refreshToken
 ) {
-  const userInsertResult = await db("users")
+  const userInsertResult = await db('users')
     .insert({ username: `al-${username}` })
-    .returning("id");
+    .returning('id');
 
   if (!userInsertResult.length) {
     throw new AppError({
       code: ERROR_CODES.DATABASE_ERROR,
-      message: "Failed to create new user",
+      message: 'Failed to create new user',
       status: 500,
     });
   }
 
   const userId = userInsertResult[0].id;
 
-  const oauthInsertResult = await db("oauth_accounts")
-    .insert({
-      user_id: userId,
-      provider: "anilist",
-      provider_user_id: providerUserId,
-      access_token: accessToken,
-      access_token_expiration: new Date(
-        Date.now() + MS_IN_YEAR - MS_IN_15_MINUTES
-      ),
-      refresh_token: refreshToken,
-      refresh_token_expiration: new Date(
-        Date.now() + MS_IN_YEAR - MS_IN_15_MINUTES
-      ),
-    })
-    .returning("id");
+  const oauthInsertResult = await db('oauth_accounts')
+    .insert(
+      camelKeysToSnakeKeys({
+        userId,
+        provider: 'anilist',
+        providerUserId,
+        accessToken,
+        accessTokenExpiration: new Date(
+          Date.now() + MS_IN_YEAR - MS_IN_15_MINUTES
+        ),
+        refreshToken,
+        refreshTokenExpiration: new Date(
+          Date.now() + MS_IN_YEAR - MS_IN_15_MINUTES
+        ),
+      })
+    )
+    .returning('id');
 
   if (!oauthInsertResult.length) {
     throw new AppError({
       code: ERROR_CODES.DATABASE_ERROR,
-      message: "Failed to link Anilist account",
+      message: 'Failed to link Anilist account',
       status: 500,
     });
   }
@@ -150,8 +154,6 @@ async function getAnilistUserInfo(accessToken) {
       Authorization: `Bearer ${accessToken}`,
     }
   );
-
-  console.log(user);
 
   return user;
 }
@@ -186,8 +188,8 @@ function handleError(err) {
 
     throw new AppError({
       code: ERROR_CODES.INTERNAL_ERROR,
-      message: "Something went wrong",
-      details: { description: "Token parsing error", error: err },
+      message: 'Something went wrong',
+      details: { description: 'Token parsing error', error: err },
       status: 500,
     });
   } catch (_err) {

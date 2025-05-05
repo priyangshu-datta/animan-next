@@ -20,6 +20,7 @@ const eslintConfig = [
       jsdoc,
     },
     rules: {
+      camelcase: ["error", { properties: "always" }],
       "jsdoc/check-access": 1, // Recommended
       "jsdoc/check-alignment": 1, // Recommended
       "jsdoc/check-examples": 0,

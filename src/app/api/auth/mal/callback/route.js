@@ -1,12 +1,13 @@
-import db from "@/db/index";
-import { createSessionAndReturnTokenResponse } from "@/lib/server/auth/create_session";
-import { MS_IN_15_MINUTES, MS_IN_HOUR, MS_IN_MONTH } from "@/lib/constants";
-import { AppError } from "@/lib/server/errors/AppError";
-import { ERROR_CODES } from "@/lib/server/errors/errorCodes";
-import { respondError } from "@/lib/server/responses";
-import * as arctic from "arctic";
-import { cookies } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
+import db from '@/db/index';
+import { createSessionAndReturnTokenResponse } from '@/lib/server/auth/create_session';
+import { MS_IN_15_MINUTES, MS_IN_HOUR, MS_IN_MONTH } from '@/lib/constants';
+import { AppError } from '@/lib/server/errors/AppError';
+import { ERROR_CODES } from '@/lib/server/errors/errorCodes';
+import { respondError } from '@/lib/server/responses';
+import * as arctic from 'arctic';
+import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+import { camelKeysToSnakeKeys, snakeKeysToCamelKeys } from '@/utils';
 
 /**
  *
@@ -15,7 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function GET(request) {
   try {
-    const code = request.nextUrl.searchParams.get("code");
+    const code = request.nextUrl.searchParams.get('code');
     const malClient = new arctic.MyAnimeList(
       process.env.MAL_CLIENT_ID,
       process.env.MAL_CLIENT_SECRET,
@@ -23,7 +24,7 @@ export async function GET(request) {
     );
 
     const cookieStore = await cookies();
-    const codeVerifier = cookieStore.get("code_verifier").value;
+    const codeVerifier = cookieStore.get('code_verifier').value;
 
     const tokens = await malClient.validateAuthorizationCode(
       code,
@@ -34,14 +35,15 @@ export async function GET(request) {
 
     const myAnimeListUser = await getMyAnimeListUserInfo(accessToken);
 
-    const existingOAuth = await db("oauth_accounts")
-      .where("provider_user_id", myAnimeListUser.id)
+    const existingOAuth = await db('oauth_accounts')
+      .where('provider_user_id', myAnimeListUser.id)
       .first();
 
     let userId;
 
     if (existingOAuth) {
-      userId = existingOAuth.user_id;
+      existingOAuth = snakeKeysToCamelKeys(existingOAuth);
+      userId = existingOAuth.userId;
     } else {
       userId = await createNewUserWithOAuth(
         myAnimeListUser.name,
@@ -52,7 +54,7 @@ export async function GET(request) {
     }
 
     return await createSessionAndReturnTokenResponse(
-      { user_id: userId },
+      { userId },
       cookieStore,
       false
     );
@@ -89,8 +91,8 @@ function handleError(err) {
 
     throw new AppError({
       code: ERROR_CODES.INTERNAL_ERROR,
-      message: "Something went wrong",
-      details: { description: "Token parsing error", error: err },
+      message: 'Something went wrong',
+      details: { description: 'Token parsing error', error: err },
       status: 500,
     });
   } catch (_err) {
@@ -118,40 +120,42 @@ async function createNewUserWithOAuth(
   accessToken,
   refreshToken
 ) {
-  const userInsertResult = await db("users")
+  const userInsertResult = await db('users')
     .insert({ username: `mal-${username}` })
-    .returning("id");
+    .returning('id');
 
   if (!userInsertResult.length) {
     throw new AppError({
       code: ERROR_CODES.DATABASE_ERROR,
-      message: "Failed to create new user",
+      message: 'Failed to create new user',
       status: 500,
     });
   }
 
   const userId = userInsertResult[0].id;
 
-  const oauthInsertResult = await db("oauth_accounts")
-    .insert({
-      user_id: userId,
-      provider: "mal",
-      provider_user_id: providerUserId,
-      access_token: accessToken,
-      access_token_expiration: new Date(
-        Date.now() + MS_IN_HOUR - MS_IN_15_MINUTES
-      ),
-      refresh_token: refreshToken,
-      refresh_token_expiration: new Date(
-        Date.now() + MS_IN_MONTH - MS_IN_15_MINUTES
-      ),
-    })
-    .returning("id");
+  const oauthInsertResult = await db('oauth_accounts')
+    .insert(
+      camelKeysToSnakeKeys({
+        userId: userId,
+        provider: 'mal',
+        providerUserId: providerUserId,
+        accessToken: accessToken,
+        accessTokenExpiration: new Date(
+          Date.now() + MS_IN_HOUR - MS_IN_15_MINUTES
+        ),
+        refreshToken: refreshToken,
+        refreshTokenExpiration: new Date(
+          Date.now() + MS_IN_MONTH - MS_IN_15_MINUTES
+        ),
+      })
+    )
+    .returning('id');
 
   if (!oauthInsertResult.length) {
     throw new AppError({
       code: ERROR_CODES.DATABASE_ERROR,
-      message: "Failed to link Anilist account",
+      message: 'Failed to link Anilist account',
       status: 500,
     });
   }
@@ -167,7 +171,7 @@ async function createNewUserWithOAuth(
  * @throws {Error} If the request fails or the response is not OK.
  */
 async function getMyAnimeListUserInfo(accessToken) {
-  const response = await fetch("https://api.myanimelist.net/v2/users/@me", {
+  const response = await fetch('https://api.myanimelist.net/v2/users/@me', {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -177,7 +181,7 @@ async function getMyAnimeListUserInfo(accessToken) {
     const errorBody = await response.text(); // MAL sometimes returns plain text on errors
     throw new AppError({
       code: ERROR_CODES.MAL_ERROR,
-      message: "Something went wrong with MAL response",
+      message: 'Something went wrong with MAL response',
       details: { description: response.statusText, error: errorBody },
       status: response.status,
     });

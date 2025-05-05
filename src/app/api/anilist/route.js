@@ -39,17 +39,17 @@ export async function POST(request) {
     }
 
     const {
-      provider_user_id: anilist_user_id,
-      provider_access_token: anilist_access_token,
+      providerUserId: anilistUserId,
+      providerAccessToken: anilistAccessToken,
     } = await withAuthProvider(request, 'anilist');
 
     const { query, variables } = value;
 
     const data = await getAnilistClient(
       query,
-      { ...variables, userId: anilist_user_id },
+      { ...variables, userId: anilistUserId },
       {
-        Authorization: `Bearer ${anilist_access_token}`,
+        Authorization: `Bearer ${anilistAccessToken}`,
       }
     );
 

@@ -2,20 +2,21 @@ import db from '@/db/index';
 import { validateAccessToken } from '@/lib/server/jwt';
 import { AppError } from '../errors/AppError';
 import { ERROR_CODES } from '../errors/errorCodes';
+import { snakeKeysToCamelKeys } from '@/utils';
 
 /**
  * Validate the user access token and fetch provider access token
  *
  * @param {import("next/server").NextRequest} request - Incoming Next.js request
  * @param {import("@/types").Provider} provider - The name of the provider (e.g. "anilist", "mal")
- * @returns {Promise<{ provider_user_id: string; provider_access_token: string; }>}
+ * @returns {Promise<{ providerUserId: string; providerAccessToken: string; }>}
  */
 export async function withAuthProvider(request, provider) {
   let tokenPayload = await isAnimanTokenValid(request);
 
   const animanUserId = tokenPayload.sub;
 
-  const providerSession = await db('oauth_accounts')
+  let providerSession = await db('oauth_accounts')
     .where('user_id', animanUserId)
     .andWhere('provider', provider)
     .select(['access_token', 'provider_user_id'])
@@ -30,9 +31,11 @@ export async function withAuthProvider(request, provider) {
     });
   }
 
+  providerSession = snakeKeysToCamelKeys(providerSession);
+
   return {
-    provider_user_id: providerSession.provider_user_id,
-    provider_access_token: providerSession.access_token,
+    providerUserId: providerSession.providerUserId,
+    providerAccessToken: providerSession.accessToken,
   };
 }
 
@@ -51,7 +54,7 @@ export async function isAnimanTokenValid(request) {
 
   if (!validity?.valid) {
     throw new AppError({
-      code: ERROR_CODES.UNAUTHORIZED,
+      code: ERROR_CODES.ACCESS_TOKEN_EXPIRED,
       message: 'Invalid or tampered `access_token`',
       details: validity.error,
       status: 401,

@@ -17,5 +17,5 @@ export function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/api/anilist/:path*', '/api/mal/:path*', '/api/notes/:path*'],
+  matcher: ['/api/anilist/:path*', '/api/mal/:path*', '/api/reviews/:path*'],
 };

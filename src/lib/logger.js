@@ -4,6 +4,6 @@
  * @param {any} details - Additional details about the error.
  */
 export function logError(code, details) {
-  console.error(`[${code}]`, details.stack ?? '');
-  console.dir(details, { depth: Infinity, colors: true });
+  console.error(`[${code}]`);
+  console.dir("Error Details: ",details, { depth: Infinity, colors: true });
 }

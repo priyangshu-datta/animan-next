@@ -4,7 +4,7 @@ import { decodeJwt } from 'jose';
 export function initiateAuthPopupFlow(provider) {
   return new Promise((resolve, reject) => {
     const popup = window.open(
-      `/api/auth/${provider}`,
+      `/api/auth/provider/${provider}`,
       'authPopup',
       'width=600,height=600,menubar=no,toolbar=no,left=400'
     );
@@ -27,6 +27,9 @@ export function initiateAuthPopupFlow(provider) {
           accessToken: event.data.accessToken,
           userId: event.data?.userId,
         });
+      } else if (event.data.linked) {
+        cleanup();
+        resolve(event.data.linked);
       } else {
         cleanup();
         reject(new Error('Authentication failed or cancelled'));

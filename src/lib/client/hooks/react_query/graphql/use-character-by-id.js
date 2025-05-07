@@ -1,4 +1,4 @@
-import { useBaseQuery } from '../base/use-base-query';
+import { useBaseQuery } from './base/use-base-query';
 
 const QUERY = `query($characterId: Int) {
 	Character(id: $characterId) {

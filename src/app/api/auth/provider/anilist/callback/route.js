@@ -56,15 +56,13 @@ export async function GET(request) {
         accessToken,
         refreshToken
       );
+
+      // redirect to profile page for first time setup
     }
 
     const cookieStore = await cookies();
 
-    return await createSessionAndReturnTokenResponse(
-      { userId },
-      cookieStore,
-      false
-    );
+    return await createSessionAndReturnTokenResponse({ userId }, false);
   } catch (error) {
     handleError(error);
   }
@@ -90,47 +88,53 @@ async function createNewUserWithOAuth(
   accessToken,
   refreshToken
 ) {
-  const userInsertResult = await db('users')
-    .insert({ username: `al-${username}` })
-    .returning('id');
-
-  if (!userInsertResult.length) {
+  let userInsertResult = null;
+  try {
+    userInsertResult = await db('users')
+      .insert({ username: `al-${username}` })
+      .returning('id');
+  } catch (err) {
     throw new AppError({
       code: ERROR_CODES.DATABASE_ERROR,
       message: 'Failed to create new user',
+      details:
+        'Animan user exists but no associated OAuth provider linked to it.',
       status: 500,
     });
   }
+  try {
+    const userId = userInsertResult[0].id;
 
-  const userId = userInsertResult[0].id;
+    const oauthInsertResult = await db('oauth_accounts')
+      .insert(
+        camelKeysToSnakeKeys({
+          userId,
+          provider: 'anilist',
+          providerUserId,
+          accessToken,
+          accessTokenExpiration: new Date(
+            Date.now() + MS_IN_YEAR - MS_IN_15_MINUTES
+          ),
+          refreshToken,
+          refreshTokenExpiration: new Date(
+            Date.now() + MS_IN_YEAR - MS_IN_15_MINUTES
+          ),
+        })
+      )
+      .returning('id');
 
-  const oauthInsertResult = await db('oauth_accounts')
-    .insert(
-      camelKeysToSnakeKeys({
-        userId,
-        provider: 'anilist',
-        providerUserId,
-        accessToken,
-        accessTokenExpiration: new Date(
-          Date.now() + MS_IN_YEAR - MS_IN_15_MINUTES
-        ),
-        refreshToken,
-        refreshTokenExpiration: new Date(
-          Date.now() + MS_IN_YEAR - MS_IN_15_MINUTES
-        ),
-      })
-    )
-    .returning('id');
+    if (!oauthInsertResult.length) {
+      throw new AppError({
+        code: ERROR_CODES.DATABASE_ERROR,
+        message: 'Failed to link Anilist account',
+        status: 500,
+      });
+    }
 
-  if (!oauthInsertResult.length) {
-    throw new AppError({
-      code: ERROR_CODES.DATABASE_ERROR,
-      message: 'Failed to link Anilist account',
-      status: 500,
-    });
+    return userId;
+  } catch (err) {
+    console.error(err);
   }
-
-  return userId;
 }
 
 /**
@@ -167,8 +171,6 @@ function handleError(err) {
   try {
     if (err instanceof arctic.OAuth2RequestError) {
       // Invalid authorization code, credentials, or redirect URI
-      const code = err.code;
-
       throw new AppError({
         code: err.code,
         message: err.message,
@@ -177,11 +179,10 @@ function handleError(err) {
     }
     if (err instanceof arctic.ArcticFetchError) {
       // Failed to call `fetch()`
-      const cause = err.cause;
-
       throw new AppError({
         code: ERROR_CODES.INTERNAL_ERROR,
         message: err.message,
+        details: err.cause,
         stack: err.stack,
       });
     }
@@ -189,7 +190,7 @@ function handleError(err) {
     throw new AppError({
       code: ERROR_CODES.INTERNAL_ERROR,
       message: 'Something went wrong',
-      details: { description: 'Token parsing error', error: err },
+      details: { error: err },
       status: 500,
     });
   } catch (_err) {

@@ -1,4 +1,4 @@
-import { useBaseMutation } from '../base/use-base-mutation';
+import { useBaseMutation } from './base/use-base-mutation';
 
 const QUERY = (_strings, subjectType) => {
   return `mutation ToggleFavourite($mediaId: Int) {

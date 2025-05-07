@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useBaseMutation } from '../base/use-base-mutation';
+import { useBaseMutation } from './base/use-base-mutation';
 import { useNotice } from '@yamada-ui/react';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -125,5 +125,3 @@ export function useUpdateMediaProgress({ progress: listEntryProgress }) {
     updatingMediaProgress: updateMediaProgress.isPending,
   };
 }
-
-

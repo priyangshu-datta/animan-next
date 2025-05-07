@@ -1,5 +1,9 @@
 import db from '@/db/index';
-import { createSessionAndReturnTokenResponse } from '@/lib/server/auth/create_session';
+import {
+  buildTokenResponse,
+  createSessionAndReturnTokenResponse,
+  setRefreshTokenCookie,
+} from '@/lib/server/auth/create_session';
 import { MS_IN_15_MINUTES, MS_IN_HOUR, MS_IN_MONTH } from '@/lib/constants';
 import { AppError } from '@/lib/server/errors/AppError';
 import { ERROR_CODES } from '@/lib/server/errors/errorCodes';
@@ -8,6 +12,7 @@ import * as arctic from 'arctic';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { camelKeysToSnakeKeys, snakeKeysToCamelKeys } from '@/utils';
+import { issueAccessToken, issueRefreshToken } from '@/lib/server/token-utils';
 
 /**
  *
@@ -24,18 +29,29 @@ export async function GET(request) {
     );
 
     const cookieStore = await cookies();
-    const codeVerifier = cookieStore.get('code_verifier').value;
 
+    const codeVerifier = cookieStore.get('code_verifier').value;
     const tokens = await malClient.validateAuthorizationCode(
       code,
       codeVerifier
     );
-    const accessToken = tokens.accessToken();
-    const refreshToken = tokens.refreshToken();
+    const malAccessToken = tokens.accessToken();
+    const malRefreshToken = tokens.refreshToken();
 
-    const myAnimeListUser = await getMyAnimeListUserInfo(accessToken);
+    let linkUserId = cookieStore.get('link_user_id');
 
-    const existingOAuth = await db('oauth_accounts')
+    if (linkUserId) {
+      const animanUser = await db('users')
+        .where('id', linkUserId.value)
+        .first();
+      if (!animanUser) {
+        linkUserId = null;
+      }
+    }
+
+    const myAnimeListUser = await getMyAnimeListUserInfo(malAccessToken);
+
+    let existingOAuth = await db('oauth_accounts')
       .where('provider_user_id', myAnimeListUser.id)
       .first();
 
@@ -46,18 +62,24 @@ export async function GET(request) {
       userId = existingOAuth.userId;
     } else {
       userId = await createNewUserWithOAuth(
+        linkUserId.value,
         myAnimeListUser.name,
         myAnimeListUser.id,
-        accessToken,
-        refreshToken
+        malAccessToken,
+        malRefreshToken
       );
     }
 
-    return await createSessionAndReturnTokenResponse(
-      { userId },
-      cookieStore,
-      false
-    );
+    if (linkUserId) {
+      const cookieStore = await cookies();
+      cookieStore.delete('link_user_id');
+
+      return buildTokenResponse(
+        { linked: { mal: myAnimeListUser.id } },
+        'popup'
+      );
+    }
+    return await createSessionAndReturnTokenResponse({ userId }, false);
   } catch (e) {
     handleError(e);
   }
@@ -115,29 +137,33 @@ function handleError(err) {
  * @throws {Error} If user creation or OAuth linking fails.
  */
 async function createNewUserWithOAuth(
+  linkUserId,
   username,
   providerUserId,
   accessToken,
   refreshToken
 ) {
-  const userInsertResult = await db('users')
-    .insert({ username: `mal-${username}` })
-    .returning('id');
+  let userId = linkUserId;
+  if (!linkUserId) {
+    const userInsertResult = await db('users')
+      .insert({ username: `mal-${username}` })
+      .returning('id');
 
-  if (!userInsertResult.length) {
-    throw new AppError({
-      code: ERROR_CODES.DATABASE_ERROR,
-      message: 'Failed to create new user',
-      status: 500,
-    });
+    if (!userInsertResult.length) {
+      throw new AppError({
+        code: ERROR_CODES.DATABASE_ERROR,
+        message: 'Failed to create new user',
+        status: 500,
+      });
+    }
+
+    userId = userInsertResult[0].id;
   }
-
-  const userId = userInsertResult[0].id;
 
   const oauthInsertResult = await db('oauth_accounts')
     .insert(
       camelKeysToSnakeKeys({
-        userId: userId,
+        userId,
         provider: 'mal',
         providerUserId: providerUserId,
         accessToken: accessToken,

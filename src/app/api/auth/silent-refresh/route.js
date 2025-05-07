@@ -71,7 +71,6 @@ async function AuthRefreshFlow(request) {
         userId: dbSession.userId,
         timesRotated: dbSession.timesRotated,
       },
-      cookieStore,
       true,
       'iframe'
     );

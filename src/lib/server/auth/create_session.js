@@ -2,9 +2,10 @@ import db from '@/db/index';
 import { NextResponse } from 'next/server';
 import { AppError } from '../errors/AppError';
 import { ERROR_CODES } from '../errors/errorCodes';
-import { issueAccessToken, issueRefreshToken } from '../jwt';
-import { MS_IN_MINUTE, MS_IN_WEEK } from '@/lib/constants';
+import { issueAccessToken, issueRefreshToken } from '../token-utils';
+import { MS_IN_WEEK } from '@/lib/constants';
 import { camelKeysToSnakeKeys } from '@/utils';
+import { cookies } from 'next/headers';
 
 /**
  * Creates a session, issues tokens, stores the session in DB,
@@ -12,14 +13,12 @@ import { camelKeysToSnakeKeys } from '@/utils';
  * @param {object} userAndSessionInfo - User session data.
  * @param {string} userAndSessionInfo.userId - The unique ID of the user.
  * @param {string} [userAndSessionInfo.timesRotated] - Previous rotation count.
- * @param {object} cookieStore - Cookie store object with a `.set()` method.
  * @param {boolean} refreshGrant - Whether this is a token rotation scenario.
  * @param {"iframe" | "popup"} type
  * @returns {Promise<import('next/server').NextResponse>} - A Next.js HTML response with token info.
  */
 export async function createSessionAndReturnTokenResponse(
   userAndSessionInfo,
-  cookieStore,
   refreshGrant,
   type = 'popup'
 ) {
@@ -35,14 +34,14 @@ export async function createSessionAndReturnTokenResponse(
     throw new AppError({
       code: ERROR_CODES.INTERNAL_ERROR,
       message: 'Failed to create user session',
-      details: 'Database inset error',
+      details: 'Database insert error',
       status: 500,
     });
   }
 
-  setRefreshTokenCookie(cookieStore, refreshToken);
+  setRefreshTokenCookie(refreshToken);
 
-  return buildTokenResponse(accessToken, userId, type);
+  return buildTokenResponse({ accessToken, userId }, type);
 }
 
 /**
@@ -52,7 +51,7 @@ export async function createSessionAndReturnTokenResponse(
  * @param {number} timesRotated - Number of times the refresh token has been rotated.
  * @returns {Promise<boolean>} - Whether the session was successfully created.
  */
-async function storeSession(userId, refreshToken, timesRotated) {
+export async function storeSession(userId, refreshToken, timesRotated) {
   const inserted = await db('sessions')
     .insert(
       camelKeysToSnakeKeys({
@@ -70,12 +69,14 @@ async function storeSession(userId, refreshToken, timesRotated) {
 /**
  * Sets the secure HTTP-only refresh token cookie.
  * @param {object} cookieStore - Object for setting cookies.
- * @param {string} token - Refresh token to store in the cookie.
+ * @param {string} refreshToken - Refresh token to store in the cookie.
  */
-function setRefreshTokenCookie(cookieStore, token) {
+export async function setRefreshTokenCookie(refreshToken) {
+  const cookieStore = await cookies();
+
   cookieStore.set({
     name: 'refresh_token',
-    value: token,
+    value: refreshToken,
     secure: true,
     path: '/',
     httpOnly: true,
@@ -90,12 +91,7 @@ function setRefreshTokenCookie(cookieStore, token) {
  * @param {"iframe" | "popup"} type
  * @returns {import('next/server').NextResponse} - An HTML response with embedded script.
  */
-function buildTokenResponse(accessToken, userId, type) {
-  const payload = {
-    accessToken: accessToken,
-    userId: userId,
-  };
-
+export function buildTokenResponse(payload, type) {
   const html = `<!DOCTYPE html>
 <html>
   <head>

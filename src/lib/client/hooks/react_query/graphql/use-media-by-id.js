@@ -1,4 +1,4 @@
-import { useBaseQuery } from '../base/use-base-query';
+import { useBaseQuery } from './base/use-base-query';
 
 const FULL_MEDIA_QUERY = `query($mediaId: Int!) {
 	Media(id: $mediaId) {

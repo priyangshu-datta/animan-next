@@ -1,4 +1,4 @@
-import { useBaseMutation } from '../base/use-base-mutation';
+import { useBaseMutation } from './base/use-base-mutation';
 
 const MUTATION = `mutation UpdateMediaListEntry($mediaId: Int, $progress: Int) {
   SaveMediaListEntry(mediaId: $mediaId, progress: $progress) {

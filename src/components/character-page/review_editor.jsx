@@ -79,7 +79,7 @@ export default function ReviewEditor(props) {
         title: {
           userPreferred: smallMediaInfo.data.data.Media.title.userPreferred,
         },
-        characterRole: editorContext.role,
+        characterRole: editorContext.characterRole,
       });
     }
   }, [smallMediaInfo.isSuccess]);
@@ -116,9 +116,9 @@ export default function ReviewEditor(props) {
           rating: data.rating,
           reviewText: data.review,
           favourite: data.favourite,
-          associatedMediaId: associatedMedia?.id,
-          associatedMediaType: associatedMedia?.type,
           emotions: data.emotions,
+          associatedMediaId: data.associatedMediaId,
+          associatedMediaType: data.associatedMediaType,
           role: associatedMedia?.characterRole,
         });
       } else {
@@ -134,9 +134,9 @@ export default function ReviewEditor(props) {
         rating: data.rating,
         reviewText: data.review,
         favourite: data.favourite,
-        associatedMediaId: associatedMedia?.id,
-        associatedMediaType: associatedMedia?.type,
         emotions: data.emotions,
+        associatedMediaId: data.associatedMediaId,
+        associatedMediaType: data.associatedMediaType,
         role: associatedMedia?.characterRole,
       });
     }
@@ -201,7 +201,21 @@ export default function ReviewEditor(props) {
     >
       <DrawerHeader>
         <Flex alignItems={'center'} w={'full'} gap={'3'} flexWrap={'wrap'}>
-          {/* {associatedMedia ? ( */}
+          <Controller
+            name={'associatedMediaId'}
+            control={control}
+            render={({ field }) => <Input {...field} hidden />}
+          />
+          <Controller
+            name={'associatedMediaType'}
+            control={control}
+            render={({ field }) => <Input {...field} hidden />}
+          />
+          <Controller
+            name={'characterRole'}
+            control={control}
+            render={({ field }) => <Input {...field} hidden />}
+          />
           <Flex flexGrow={'1'} gap={'2'}>
             <Box w={'32'} aspectRatio={5 / 7} minW={'28'}>
               <Image src={character.image.large} w={'full'} height={'full'} />

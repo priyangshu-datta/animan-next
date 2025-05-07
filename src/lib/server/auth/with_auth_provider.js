@@ -1,5 +1,5 @@
 import db from '@/db/index';
-import { validateAccessToken } from '@/lib/server/jwt';
+import { validateAccessToken } from '@/lib/server/token-utils';
 import { AppError } from '../errors/AppError';
 import { ERROR_CODES } from '../errors/errorCodes';
 import { snakeKeysToCamelKeys } from '@/utils';

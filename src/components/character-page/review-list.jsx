@@ -30,7 +30,7 @@ export default function ReviewList({
       favourite: review.favourite,
       associatedMediaId: review.associatedMediaId,
       associatedMediaType: review.associatedMediaType,
-      role: review.role,
+      characterRole: review.role,
     };
 
     setEditorContext(editorContext);

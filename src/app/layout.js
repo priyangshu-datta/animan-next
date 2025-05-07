@@ -4,7 +4,7 @@ import './globals.css';
 
 import { Geist, Geist_Mono as GeistMono } from 'next/font/google';
 import { ReactQueryClientProvider } from '@/providers/react-query-client-provider';
-import { ColorModeScript, UIProvider } from '@yamada-ui/react';
+import { ColorModeScript, extendConfig, UIProvider } from '@yamada-ui/react';
 import { useEffect } from 'react';
 
 const geistSans = Geist({

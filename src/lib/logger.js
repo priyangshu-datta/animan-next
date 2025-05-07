@@ -5,5 +5,5 @@
  */
 export function logError(code, details) {
   console.error(`[${code}]`);
-  console.dir("Error Details: ",details, { depth: Infinity, colors: true });
+  console.dir(details, { depth: Infinity, colors: true });
 }

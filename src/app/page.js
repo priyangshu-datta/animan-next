@@ -52,7 +52,7 @@ function MediaCardList({ mediaType, mediaStatus }) {
     hasNextPage,
     isFetchingNextPage,
     isFetched,
-    isFetching,
+    isPending,
   } = useUserList(mediaType, mediaStatus);
 
   const fetchMore = debounce(() => {
@@ -88,21 +88,20 @@ function MediaCardList({ mediaType, mediaStatus }) {
               key={watchEntry.media.id}
             />
           ))}
-
-      <Button
-        onClick={fetchMore}
-        disabled={isFetchingNextPage || !hasNextPage}
-        gridColumn={'1/-1'}
-        w="full"
-      >
-        {isFetchingNextPage ? (
-          <Loading />
-        ) : hasNextPage ? (
-          'Load More'
-        ) : (
-          'Nothing more to load'
-        )}
-      </Button>
+      {isPending ? (
+        <Loading fontSize={"2xl"} gridColumn={"1 / -1"} />
+      ) : (
+        hasNextPage && (
+          <Button
+            onClick={fetchMore}
+            disabled={isFetchingNextPage || !hasNextPage}
+            gridColumn={'1/-1'}
+            w="full"
+          >
+            Load More
+          </Button>
+        )
+      )}
     </Grid>
   );
 }

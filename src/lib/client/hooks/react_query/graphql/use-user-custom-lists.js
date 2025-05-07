@@ -1,4 +1,4 @@
-import { useBaseQuery } from '../base/use-base-query';
+import { useBaseQuery } from './base/use-base-query';
 
 const QUERY = (_strings, mediaTypeExp) => {
   return `query {

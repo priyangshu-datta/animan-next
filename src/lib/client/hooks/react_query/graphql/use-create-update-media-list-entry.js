@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useBaseMutation } from '../base/use-base-mutation';
+import { useBaseMutation } from './base/use-base-mutation';
 
 const QUERY = `mutation SaveMediaListEntry($mediaId: Int, $status: MediaListStatus, $score: Float, $progress: Int, $repeat: Int, $private: Boolean, $hiddenFromStatusLists: Boolean, $notes: String, $customLists: [String], $startedAt: FuzzyDateInput, $completedAt: FuzzyDateInput, $progressVolumes: Int) {
   SaveMediaListEntry(

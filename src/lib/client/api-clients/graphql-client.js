@@ -1,4 +1,4 @@
-import { httpRequest } from './http-client'
+import { httpRequest } from './http-client';
 
 /**
  * Sends a GraphQL request using the provided query, variables, and provider.
@@ -15,7 +15,7 @@ export function graphqlRequest({
   provider = 'anilist',
 }) {
   return httpRequest({
-    url: '/api/anilist',
+    url: '/api/provider/anilist',
     method: 'post',
     data: { query, variables },
     provider,

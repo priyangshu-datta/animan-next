@@ -34,7 +34,5 @@ export async function getUserInfo(_, { animanUserId, ...metadata }) {
     });
   }
 
-  console.log({ ...value, ...snakeKeysToCamelKeys(user) });
-
   return respondSuccess({ ...value, ...snakeKeysToCamelKeys(user) });
 }

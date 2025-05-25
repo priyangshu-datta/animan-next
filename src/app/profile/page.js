@@ -91,7 +91,6 @@ function Page() {
       });
     },
     handleSuccess: ({ variables }) => {
-      console.log(watch());
       notice({
         status: 'success',
         description: 'Updated successfully',

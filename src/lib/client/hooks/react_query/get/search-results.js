@@ -1,17 +1,6 @@
-import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
-import { useMutation, useSuspenseInfiniteQuery } from '@tanstack/react-query';
+import { rpcRequest } from '@/lib/client/api-clients/rpc-client'
+import { useSuspenseInfiniteQuery } from '@tanstack/react-query'
 
-// export function useSearch() {
-//   return useMutation({
-//     mutationFn: ({ searchOptions }) =>
-//       rpcRequest({
-//         action: 'get:search:results:{searchOptions}',
-//         context: searchOptions,
-//       }),
-
-//     onSuccess: (data) => console.log(data),
-//   });
-// }
 
 export function useSearch({ searchOptions }) {
   return useSuspenseInfiniteQuery({

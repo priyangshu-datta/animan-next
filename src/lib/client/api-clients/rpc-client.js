@@ -15,7 +15,8 @@ export async function rpcRequest({ action, context, metadata }) {
 
     return response.data;
   } catch (error) {
-    console.log({ error: error.response.data.error });
-    throw error.response.data.error;
+    const responseError = error.response.data.error;
+    console.error({ error: responseError });
+    throw responseError;
   }
 }

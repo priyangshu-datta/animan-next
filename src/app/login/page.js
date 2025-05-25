@@ -38,7 +38,6 @@ export default function LoginPage() {
     if (provider) {
       initiateAuthPopupFlow(provider).then((authObject) => {
         authStore.setState(authObject);
-        console.log(nextRoute);
         router.push(nextRoute);
       });
     }

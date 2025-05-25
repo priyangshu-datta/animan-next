@@ -16,7 +16,6 @@ export function useToggleCharacterFavourite({
         context: { characterId },
       }),
     onSuccess: (_, variables) => {
-      console.log({ variables });
       queryClient.invalidateQueries({
         queryKey: [
           'get:character:full-details:{characterId}',

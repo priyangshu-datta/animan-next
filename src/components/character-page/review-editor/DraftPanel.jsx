@@ -56,15 +56,6 @@ export function DraftPanel({ drafts, setDrafts, changeTab }) {
 
   const allMedia = [...allManga, ...allAnime];
 
-  console.log(
-    drafts
-      .filter(
-        ([_, draft]) =>
-          !!draft.associatedMediaId && draft.associatedMediaType === 'ANIME'
-      )
-      .map(([_, draft]) => draft.associatedMediaId)
-  );
-
   drafts = drafts
     .map(([key, draft]) => {
       return [
@@ -72,10 +63,7 @@ export function DraftPanel({ drafts, setDrafts, changeTab }) {
         {
           ...draft,
           ...(draft.associatedMediaId && {
-            media: allMedia.find((m) => {
-              console.log({ mId: m.id, dId: draft.associatedMediaId });
-              return m.id === draft.associatedMediaId;
-            }),
+            media: allMedia.find((m) => m.id === draft.associatedMediaId),
           }),
         },
       ];

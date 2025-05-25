@@ -14,6 +14,7 @@ export default function ReviewCard({ review }) {
   const score = Math.floor(
     1 / (5 * (review.rating / 10) - Math.floor(5 * (review.rating / 10)))
   );
+
   return (
     <Box
       borderWidth="1px"
@@ -35,7 +36,7 @@ export default function ReviewCard({ review }) {
           )}
           <Rating
             readOnly
-            defaultValue={5 * (review.rating / 10)}
+            value={5 * (review.rating / 10)}
             fractions={score === Infinity ? null : score}
           />
         </HStack>

@@ -1,13 +1,14 @@
 import { useCharacter } from '@/context/use-character';
-import { useDeleteReview } from '@/lib/client/hooks/react_query/review/character/use-delete-review';
+import { useDeleteMediaReview } from '@/lib/client/hooks/react_query/delete/character/review';
 import {
   Button,
+  Loading,
   Modal,
   ModalBody,
   ModalFooter,
   ModalHeader,
-  NativeOption,
-  NativeSelect,
+  Option,
+  Select,
   Tab,
   TabList,
   TabPanel,
@@ -15,11 +16,12 @@ import {
   useDisclosure,
   useNotice,
 } from '@yamada-ui/react';
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import CharacterMedia from './character-media';
 import ReviewList from './review-list';
+import { SNACK_DURATION } from '@/lib/constants'
 
-export default function TabSection({ setEditorContext, onDrawerOpen }) {
+export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
   const character = useCharacter();
 
   const memoedDescription = useMemo(() => ({ __html: character.description }));
@@ -32,37 +34,35 @@ export default function TabSection({ setEditorContext, onDrawerOpen }) {
 
   const [delReview, setDelReview] = useState(null);
 
-  const deleteReview = useDeleteReview();
+  const deleteReview = useDeleteMediaReview({
+    characterId: character.id,
+    handleSuccess: () => {
+      notice({
+        description: 'Review deleted',
+        status: 'success',
+        duration: SNACK_DURATION,
+      });
+      setDelReview(null);
+      onCloseReviewDeleteModal();
+    },
+    handleError: (error) => {
+      notice({
+        status: 'error',
+        title: error.name,
+        description: error.message,
+        duration: SNACK_DURATION,
+      });
+      setDelReview(null);
+    },
+  });
 
   function handleDelete() {
     deleteReview.mutate({
       reviewId: delReview.id,
-      characterId: character.id,
     });
   }
 
   const notice = useNotice();
-
-  useEffect(() => {
-    if (deleteReview.isSuccess) {
-      notice({
-        title: 'Success',
-        description: 'Deleted the review',
-        status: 'success',
-      });
-      setDelReview(null);
-      onCloseReviewDeleteModal();
-    }
-    if (deleteReview.isError) {
-      notice({
-        status: 'error',
-        title: `Error: ${deleteReview.error.name}`,
-        description: deleteReview.error.message,
-      });
-      setDelReview(null);
-    }
-  }, [deleteReview.isError, deleteReview.isSuccess]);
-
   const [mediaType, setMediaType] = useState('ANIME');
 
   return (
@@ -95,55 +95,74 @@ export default function TabSection({ setEditorContext, onDrawerOpen }) {
           <div dangerouslySetInnerHTML={memoedDescription} />
         </TabPanel>
         <TabPanel>
-          <NativeSelect
+          <Select
             defaultValue={mediaType}
-            onChange={(ev) => setMediaType(ev.target.value)}
+            onChange={(option) => setMediaType(option)}
           >
-            <NativeOption value="ANIME">Anime</NativeOption>
-            <NativeOption value="MANGA">Manga</NativeOption>
-          </NativeSelect>
-
-          <CharacterMedia
-            characterId={character.id}
-            mediaType={mediaType}
-            style={'default'}
-          />
+            <Option value="ANIME">Anime</Option>
+            <Option value="MANGA">Manga</Option>
+          </Select>
+          <Suspense fallback={<Loading />}>
+            <CharacterMedia
+              characterId={character.id}
+              mediaType={mediaType}
+              style={'default'}
+            />
+          </Suspense>
         </TabPanel>
         <TabPanel>
-          <ReviewList
-            characterId={character.id}
-            setEditorContext={setEditorContext}
-            onDrawerOpen={onDrawerOpen}
-            setDelReview={setDelReview}
-            onOpenReviewDeleteModal={onOpenReviewDeleteModal}
-          />
+          <Suspense fallback={<Loading />}>
+            <ReviewList
+              characterId={character.id}
+              setCurrentReviewMetadata={setCurrentReviewMetadata}
+              onDrawerOpen={onDrawerOpen}
+              setDelReview={setDelReview}
+              onOpenReviewDeleteModal={onOpenReviewDeleteModal}
+            />
+          </Suspense>
         </TabPanel>
       </Tabs>
 
-      <Modal
-        open={openReviewDeleteModal}
-        onClose={onCloseReviewDeleteModal}
-        size="md"
-      >
-        <ModalHeader>Confirm Delete?</ModalHeader>
-        <ModalBody>This is a destructive operation.</ModalBody>
-        <ModalFooter>
-          <Button
-            variant="ghost"
-            onClick={onCloseReviewDeleteModal}
-            disabled={deleteReview.isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            colorScheme="red"
-            onClick={handleDelete}
-            disabled={deleteReview.isPending}
-          >
-            {deleteReview.isPending ? 'Deleting...' : 'Delete'}
-          </Button>
-        </ModalFooter>
-      </Modal>
+      <ReviewActionMenu
+        deleteReview={deleteReview}
+        handleDelete={handleDelete}
+        onCloseReviewDeleteModal={onCloseReviewDeleteModal}
+        openReviewDeleteModal={openReviewDeleteModal}
+      />
     </>
+  );
+}
+
+function ReviewActionMenu({
+  deleteReview,
+  handleDelete,
+  onCloseReviewDeleteModal,
+  openReviewDeleteModal,
+}) {
+  return (
+    <Modal
+      open={openReviewDeleteModal}
+      onClose={onCloseReviewDeleteModal}
+      size="md"
+    >
+      <ModalHeader>Confirm Delete?</ModalHeader>
+      <ModalBody>This is a destructive operation.</ModalBody>
+      <ModalFooter>
+        <Button
+          variant="ghost"
+          onClick={onCloseReviewDeleteModal}
+          disabled={deleteReview.isPending}
+        >
+          Cancel
+        </Button>
+        <Button
+          colorScheme="red"
+          onClick={handleDelete}
+          disabled={deleteReview.isPending}
+        >
+          {deleteReview.isPending ? 'Deleting...' : 'Delete'}
+        </Button>
+      </ModalFooter>
+    </Modal>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
-import { useUpdateMediaProgress } from '@/lib/client/hooks/react_query/graphql/use-small-hooks';
-import { sentenceCase } from '@/lib/client/utils';
+import { sentenceCase } from '@/utils/general';
 import { MONTH_NAMES } from '@/lib/constants';
 import {
   Button,
@@ -19,6 +18,7 @@ import {
 } from '@yamada-ui/react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useOptimisticUpdateMediaProgress } from '@/lib/client/hooks/react_query/patch/user/media/progress';
 
 /**
  *
@@ -50,28 +50,16 @@ function formatTimeLeft(nextAiringAt) {
   }
 }
 
-/**
- * Card for anime / manga
- * @param {object} parameters
- * @param {string} parameters.title
- * @param {string} parameters.coverImage
- * @param {number} parameters.progress
- * @param {number} parameters.totalEpisodes
- * @param {number} parameters.nextAiringAt
- * @param {string} parameters.status
- * @param {number} parameters.mediaId
- * @returns {import("react").ReactElement}
- */
 export default function MediaCard({
   title,
   coverImage,
-  progress: _progress,
   totalEpisodes,
   nextAiringAt,
   mediaId,
+  mediaType,
   mediaStatus,
-  watchEntry,
-} = {}) {
+  listEntry,
+}) {
   const [timeLeft, setTimeLeft] = useState();
 
   useEffect(() => {
@@ -88,7 +76,7 @@ export default function MediaCard({
   }, [nextAiringAt]);
 
   const { progress, updateMediaProgress, updatingMediaProgress } =
-    useUpdateMediaProgress({ progress: _progress });
+    useOptimisticUpdateMediaProgress({ mediaProgress: listEntry.progress });
 
   function computeStartDate({ year, month, day }) {
     let startDate = '';
@@ -120,7 +108,7 @@ export default function MediaCard({
         </CardHeader>
         <CardBody>
           <Tooltip label={title}>
-            <Link href={`/media/${mediaId}`}>
+            <Link href={`/media?id=${mediaId}&type=${mediaType}`}>
               <Text lineClamp={1} fontSize={'xl'}>
                 {title}
               </Text>
@@ -138,7 +126,7 @@ export default function MediaCard({
               </DataListTerm>
               <DataListDescription>
                 {mediaStatus === 'NOT_YET_RELEASED' ? (
-                  computeStartDate(watchEntry.media.startDate) ?? 'N/A'
+                  computeStartDate(listEntry.media.startDate) ?? 'N/A'
                 ) : (
                   <Flex gap={'1'} alignItems={'center'}>
                     {totalEpisodes - progress > 0 ? (
@@ -170,8 +158,7 @@ export default function MediaCard({
             </DataListItem>
             <DataListItem>
               <DataListTerm>
-                {mediaStatus === 'RELEASING' &&
-                watchEntry.media.type !== 'MANGA'
+                {mediaStatus === 'RELEASING' && listEntry.media.type !== 'MANGA'
                   ? 'Time Left'
                   : 'Status'}
               </DataListTerm>

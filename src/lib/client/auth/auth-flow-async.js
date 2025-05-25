@@ -46,11 +46,11 @@ export function initiateAuthPopupFlow(provider) {
   });
 }
 
-async function trySilentRefreshFlow(provider) {
+async function trySilentRefreshFlow() {
   return new Promise((resolve, reject) => {
     const iframe = document.createElement('iframe');
     iframe.style.display = 'block';
-    iframe.src = `/api/auth/silent-refresh?provider=${provider}`;
+    iframe.src = `/api/auth/silent-refresh`;
     document.body.appendChild(iframe);
 
     function handler(event) {
@@ -82,7 +82,7 @@ function isFirstPageLoad() {
   return entry?.type === 'navigate'; // "navigate" = direct load or reload
 }
 
-export async function getValidAccessToken(provider) {
+export async function getValidAccessToken() {
   try {
     let accessToken = authStore.getState().accessToken;
 
@@ -93,23 +93,24 @@ export async function getValidAccessToken(provider) {
       }
     }
 
-    const authObject = await trySilentRefreshFlow(provider); // iframe
+    const authObject = await trySilentRefreshFlow(); // iframe
 
     authStore.setState(authObject);
 
     return authObject.accessToken;
-  } catch {
+  } catch (err) {
+    console.error(err);
     console.log('Silent Refresh failed.');
 
     if (isFirstPageLoad()) {
       console.log('Redirecting to login page.');
-      const currentPath = window.location.pathname;
+      const currentPath = window.location;
 
       window.location.href = `/login?next=${encodeURIComponent(currentPath)}`;
       return new Promise(() => {}); // Never resolve — we're navigating
     } else {
       console.log('Trying fresh login via popup.');
-      const authObject = await initiateAuthPopupFlow(provider);
+      const authObject = await initiateAuthPopupFlow('anilist');
       authStore.setState(authObject);
       return authObject.accessToken;
     }

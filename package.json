@@ -20,15 +20,17 @@
     "@yamada-ui/react": "^1.7.6",
     "arctic": "^3.6.0",
     "axios": "^1.8.4",
+    "fuse.js": "^7.1.0",
     "joi": "^17.13.3",
     "jose": "^6.0.10",
     "knex": "^3.1.0",
     "next": "15.3.1",
     "pg": "^8.14.1",
-    "postcss": "^8.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-error-boundary": "^6.0.0",
     "react-hook-form": "^7.56.1",
+    "react-select": "^5.10.1",
     "zustand": "^5.0.3"
   },
   "devDependencies": {

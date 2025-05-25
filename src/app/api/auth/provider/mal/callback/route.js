@@ -1,24 +1,16 @@
 import db from '@/db/index';
-import {
-  buildTokenResponse,
-  createSessionAndReturnTokenResponse,
-  setRefreshTokenCookie,
-} from '@/lib/server/auth/create_session';
-import { MS_IN_15_MINUTES, MS_IN_HOUR, MS_IN_MONTH } from '@/lib/constants';
 import { AppError } from '@/lib/server/errors/AppError';
 import { ERROR_CODES } from '@/lib/server/errors/errorCodes';
-import { respondError } from '@/lib/server/responses';
+import {
+  buildTokenResponse,
+  createNewUserWithOAuth,
+  createSessionAndReturnTokenResponse,
+  handleError,
+} from '@/utils/auth';
+import { snakeKeysToCamelKeys } from '@/utils/general';
 import * as arctic from 'arctic';
 import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
-import { camelKeysToSnakeKeys, snakeKeysToCamelKeys } from '@/utils';
-import { issueAccessToken, issueRefreshToken } from '@/lib/server/token-utils';
 
-/**
- *
- * @param {NextRequest} request
- * @returns {Promise<NextResponse>}
- */
 export async function GET(request) {
   try {
     const code = request.nextUrl.searchParams.get('code');
@@ -66,8 +58,10 @@ export async function GET(request) {
         myAnimeListUser.name,
         myAnimeListUser.id,
         malAccessToken,
-        malRefreshToken
+        malRefreshToken,
+        'mal'
       );
+      // redirect to profile page for first time setup
     }
 
     if (linkUserId) {
@@ -80,122 +74,11 @@ export async function GET(request) {
       );
     }
     return await createSessionAndReturnTokenResponse({ userId }, false);
-  } catch (e) {
-    handleError(e);
+  } catch (error) {
+    handleError(error);
   }
 }
 
-/**
- *
- * @param {any} err
- * @returns {NextResponse}
- */
-function handleError(err) {
-  try {
-    if (err instanceof arctic.OAuth2RequestError) {
-      // Invalid authorization code, credentials, or redirect URI
-
-      throw new AppError({
-        code: err.code,
-        message: err.message,
-        stack: err.stack,
-      });
-    }
-    if (err instanceof arctic.ArcticFetchError) {
-      // Failed to call `fetch()`
-
-      throw new AppError({
-        code: ERROR_CODES.INTERNAL_ERROR,
-        message: err.message,
-        stack: err.stack,
-      });
-    }
-
-    throw new AppError({
-      code: ERROR_CODES.INTERNAL_ERROR,
-      message: 'Something went wrong',
-      details: { description: 'Token parsing error', error: err },
-      status: 500,
-    });
-  } catch (_err) {
-    return respondError(_err);
-  }
-}
-
-/**
- * Creates a new user in the database and links their AniList account via OAuth.
- *
- * This function:
- * - Inserts a new user record with a username based on the AniList username.
- * - Creates an associated OAuth account entry with access and refresh tokens.
- *
- * @param {string} username - The AniList username of the user.
- * @param {string|number} providerUserId - The AniList user ID.
- * @param {string} accessToken - The OAuth access token from AniList.
- * @param {string} refreshToken - The OAuth refresh token from AniList.
- * @returns {Promise<number>} The newly created user's ID.
- * @throws {Error} If user creation or OAuth linking fails.
- */
-async function createNewUserWithOAuth(
-  linkUserId,
-  username,
-  providerUserId,
-  accessToken,
-  refreshToken
-) {
-  let userId = linkUserId;
-  if (!linkUserId) {
-    const userInsertResult = await db('users')
-      .insert({ username: `mal-${username}` })
-      .returning('id');
-
-    if (!userInsertResult.length) {
-      throw new AppError({
-        code: ERROR_CODES.DATABASE_ERROR,
-        message: 'Failed to create new user',
-        status: 500,
-      });
-    }
-
-    userId = userInsertResult[0].id;
-  }
-
-  const oauthInsertResult = await db('oauth_accounts')
-    .insert(
-      camelKeysToSnakeKeys({
-        userId,
-        provider: 'mal',
-        providerUserId: providerUserId,
-        accessToken: accessToken,
-        accessTokenExpiration: new Date(
-          Date.now() + MS_IN_HOUR - MS_IN_15_MINUTES
-        ),
-        refreshToken: refreshToken,
-        refreshTokenExpiration: new Date(
-          Date.now() + MS_IN_MONTH - MS_IN_15_MINUTES
-        ),
-      })
-    )
-    .returning('id');
-
-  if (!oauthInsertResult.length) {
-    throw new AppError({
-      code: ERROR_CODES.DATABASE_ERROR,
-      message: 'Failed to link Anilist account',
-      status: 500,
-    });
-  }
-
-  return userId;
-}
-
-/**
- * Fetches user information from MyAnimeList using the given access token.
- *
- * @param {string} accessToken - The OAuth access token.
- * @returns {Promise<MyAnimeListUserInfo>} The user information object.
- * @throws {Error} If the request fails or the response is not OK.
- */
 async function getMyAnimeListUserInfo(accessToken) {
   const response = await fetch('https://api.myanimelist.net/v2/users/@me', {
     headers: {

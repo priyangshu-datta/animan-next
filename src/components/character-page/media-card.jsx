@@ -1,4 +1,5 @@
-import { sentenceCase } from '@/lib/client/utils';
+import { assocMedia } from '@/stores/assoc-media';
+import { sentenceCase } from '@/utils/general';
 import {
   Card,
   CardBody,
@@ -13,10 +14,9 @@ import {
   Button,
 } from '@yamada-ui/react';
 import Link from 'next/link';
+import Spoiler from '../spoiler';
 
-export default function MediaCard(props) {
-  const { media, style, setAssociatedMedia } = props;
-  const { open, onToggle } = useDisclosure();
+export default function MediaCard({ media, style }) {
   return (
     <Card>
       {style !== 'list' && (
@@ -31,11 +31,7 @@ export default function MediaCard(props) {
       )}
       <CardBody display={'flex'} flexDir={'row'}>
         {style == 'list' && (
-          <Box
-            justifyContent="center"
-            aspectRatio={style === 'list' ? 2 / 3 : 4 / 5}
-            w={'32'}
-          >
+          <Box justifyContent="center" aspectRatio={2 / 3} w={'32'}>
             <Image
               src={media.coverImage.extraLarge}
               objectFit="cover"
@@ -50,12 +46,20 @@ export default function MediaCard(props) {
               <Text
                 size="md"
                 lineClamp={1}
-                onClick={() => setAssociatedMedia(media)}
+                onClick={() => {
+                  assocMedia.setState({
+                    id: media.id,
+                    type: media.type,
+                    title: media.title.userPreferred,
+                    coverImage: media.coverImage.extraLarge,
+                    role: media.characterRole,
+                  });
+                }}
               >
                 {media.title.userPreferred}
               </Text>
             ) : (
-              <Link href={`/media/${media.id}`} passHref>
+              <Link href={`/media?id=${media.id}&type=${media.type}`} passHref>
                 <Text size="md" lineClamp={1}>
                   {media.title.userPreferred}
                 </Text>
@@ -63,38 +67,7 @@ export default function MediaCard(props) {
             )}
           </Tooltip>
           <Text>ROLE: {sentenceCase(media.characterRole)}</Text>
-          {style === 'list' && (
-            <VStack gap={'0'}>
-              <Box
-                position="relative"
-                maxH={open ? 'none' : 'fit-content'}
-                overflow="hidden"
-              >
-                <Collapse open={open} startingHeight={42}>
-                  <Text
-                    dangerouslySetInnerHTML={{ __html: media.description }}
-                  />
-                </Collapse>
-                {!open && (
-                  <Box
-                    position="absolute"
-                    bottom="0"
-                    left="0"
-                    right="0"
-                    height="40px"
-                    bgGradient={[
-                      'linear(to-t, white, transparent)',
-                      'linear(to-t, black, transparent)',
-                    ]}
-                    pointerEvents="none"
-                  />
-                )}
-              </Box>
-              <Button onClick={onToggle} variant={'unstyled'}>
-                Show More
-              </Button>
-            </VStack>
-          )}
+          {style === 'list' && <Spoiler text={media.description} />}
         </VStack>
       </CardBody>
     </Card>

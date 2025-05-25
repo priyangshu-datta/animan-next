@@ -8,7 +8,7 @@ export function up(knex) {
   return knex.schema
     .createTable('character_reviews', (table) => {
       table
-        .uuid('id', { primaryKey: true })
+        .uuid('id').primary()
         .defaultTo(knex.raw('gen_random_uuid()'));
       table
         .uuid('user_id')
@@ -20,8 +20,8 @@ export function up(knex) {
       table.integer('character_id').notNullable();
       table.integer('associated_media_id');
       table.enum('associated_media_type', ['ANIME', 'MANGA']);
-      table.string('role');
-      table.float('rating', 2).checkBetween([0.0, 10.0]);
+      table.enum('role', ['MAIN', 'SUPPORTING', 'BACKGROUND']);
+      table.float('rating', 3, 1).checkBetween([0.0, 10.0]);
       table.text('review_text').checkLength('>', 10);
       table.text('emotions');
       table.boolean('favourite').defaultTo(false);

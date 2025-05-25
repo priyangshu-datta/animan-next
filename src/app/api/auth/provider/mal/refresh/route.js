@@ -3,7 +3,7 @@ import { MS_IN_15_MINUTES, MS_IN_HOUR, MS_IN_MONTH } from '@/lib/constants';
 import { AppError } from '@/lib/server/errors/AppError';
 import { ERROR_CODES } from '@/lib/server/errors/errorCodes';
 import { respondError, respondSuccess } from '@/lib/server/responses';
-import { camelKeysToSnakeKeys } from '@/utils';
+import { camelKeysToSnakeKeys } from '@/utils/general';
 import * as arctic from 'arctic';
 import { NextResponse } from 'next/server';
 

@@ -8,7 +8,7 @@ export function up(knex) {
   return knex.schema
     .createTable('anime_reviews', (table) => {
       table
-        .uuid('id', { primaryKey: true })
+        .uuid('id').primary()
         .defaultTo(knex.raw('gen_random_uuid()'));
       table
         .uuid('user_id')
@@ -22,7 +22,7 @@ export function up(knex) {
       table.integer('anime_id');
       table.enum('season', ['winter', 'spring', 'summer', 'fall']);
       table.integer('year');
-      table.decimal('rating', 3, 1).checkBetween([0.0, 10.0]);
+      table.float('rating', 3, 1).checkBetween([0.0, 10.0]);
       table.text('review_text');
       table.boolean('favourite').defaultTo(false);
       table.text('emotions');

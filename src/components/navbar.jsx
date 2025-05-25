@@ -1,77 +1,128 @@
-export default function NavBar(props) {
-  const {userId} = props
+'use client';
+
+import { useUserInfo } from '@/lib/client/hooks/react_query/get/user/info';
+import { authStore } from '@/stores/auth-store';
+import {
+  Avatar,
+  Box,
+  Button,
+  Flex,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  MenuSeparator,
+  Snacks,
+  Text,
+  useColorModeValue,
+  useSnacks,
+  Link,
+  Image,
+} from '@yamada-ui/react';
+import axios from 'axios';
+import NextLink from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef } from 'react';
+
+export default function NavBar({}) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  if (pathname.includes('/login')) {
+    return;
+  }
+
+  const bgColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.100');
+
+  const { snack, snacks } = useSnacks();
+
+  const {
+    data: { data: userData },
+  } = useUserInfo();
+
+  const snackRef = useRef(null);
+
+  useEffect(() => {
+    const locale = localStorage.getItem('animan-locale');
+    const timezone = localStorage.getItem('animan-timezone');
+
+    if (
+      userData &&
+      !(userData.locale.length > 0 && userData.timezone.length > 0)
+    ) {
+      snackRef.current = snack({
+        status: 'warning',
+        description: (
+          <Flex gap="1" p="1" alignItems={'center'}>
+            Go to{' '}
+            <Link as={NextLink} href={'/profile'}>
+              <Text>settings</Text>
+            </Link>{' '}
+            to set your locale and timezone.
+          </Flex>
+        ),
+        isClosable: false,
+        variant: 'solid',
+      });
+    } else if (!(locale && timezone)) {
+      console.log({ locale, timezone });
+      if (userData.locale.length > 0 && userData.timezone.length > 0) {
+        localStorage.setItem('animan-locale', userData.locale);
+        localStorage.setItem('animan-timezone', userData.timezone);
+      }
+    } else {
+      snack.closeAll();
+    }
+  }, [userData, pathname, localStorage]);
+
+  console.log(userData);
+
   return (
-    <div className="navbar bg-base-100 shadow-sm">
-      <div className="flex-1">
-        <a className="btn btn-ghost text-xl">daisyUI</a>
-      </div>
-      <div className="flex-none">
-        <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
-            <div className="indicator">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                {' '}
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                />{' '}
-              </svg>
-              <span className="badge badge-sm indicator-item">8</span>
-            </div>
-          </div>
-          <div
-            tabIndex={0}
-            className="card card-compact dropdown-content bg-base-100 z-1 mt-3 w-52 shadow"
-          >
-            <div className="card-body">
-              <span className="text-lg font-bold">8 Items</span>
-              <span className="text-info">Subtotal: $999</span>
-              <div className="card-actions">
-                <button className="btn btn-primary btn-block">View cart</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="dropdown dropdown-end">
-          <div
-            tabIndex={0}
-            role="button"
-            className="btn btn-ghost btn-circle avatar"
-          >
-            <div className="w-10 rounded-full">
-              <img
-                alt="Tailwind CSS Navbar component"
-                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
-              />
-            </div>
-          </div>
-          <ul
-            tabIndex={0}
-            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
-          >
-            <li>
-              <a className="justify-between">
-                Profile
-                <span className="badge">New</span>
-              </a>
-            </li>
-            <li>
-              <a>Settings</a>
-            </li>
-            <li>
-              <a>Logout</a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
+    <>
+      <Flex w="full" bgColor={bgColor} p="4" mb="4">
+        <Link as={NextLink} href="/">
+          <Image src={'/animan-logo.png'} width={'12'} />
+        </Link>
+
+        <Menu>
+          <MenuButton as={Button} variant={'link'} h="full" ml="auto">
+            <Avatar name={userData.username} />
+          </MenuButton>
+
+          <MenuList>
+            <Box px="3" py="2">
+              User: {userData.username}
+            </Box>
+            <MenuItem as={NextLink} href="/profile">
+              Profile Settings
+            </MenuItem>
+
+            <MenuSeparator />
+
+            <MenuItem onClick={() => handleLogout()}>Sign out</MenuItem>
+          </MenuList>
+        </Menu>
+      </Flex>
+      {pathname !== '/profile' && (
+        <Box px={'4'}>
+          <Snacks snacks={snacks} mb="4" />
+        </Box>
+      )}
+    </>
   );
+
+  function handleLogout() {
+    axios
+      .delete(`${window.location.origin}/api/auth/logout`, {
+        headers: {
+          Authorization: `Bearer ${authStore.getState().accessToken}`,
+        },
+      })
+      .catch((error) => {
+        if (error.status) {
+          authStore.setState({ accessToken: null, userId: null });
+          router.push(error.response.data.data.redirect);
+        }
+      });
+  }
 }

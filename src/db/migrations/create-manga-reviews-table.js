@@ -8,7 +8,7 @@ export function up(knex) {
   return knex.schema
     .createTable('manga_reviews', (table) => {
       table
-        .uuid('id', { primaryKey: true })
+        .uuid('id').primary()
         .defaultTo(knex.raw('gen_random_uuid()'));
       table
         .uuid('user_id')
@@ -21,7 +21,7 @@ export function up(knex) {
       table.integer('chapter_number');
       table.integer('manga_id');
       table.integer('volume');
-      table.float('rating', 2).checkBetween([0.0, 10.0]);
+      table.float('rating', 3, 1).checkBetween([0.0, 10.0]);
       table.text('review_text');
       table.boolean('favourite').defaultTo(false);
       table.text('emotions');

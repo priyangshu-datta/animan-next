@@ -1,13 +1,14 @@
 import { useMedia } from '@/context/use-media';
-import { useDeleteReview } from '@/lib/client/hooks/react_query/review/media/use-delete-review';
+import { useDeleteMediaReview } from '@/lib/client/hooks/react_query/delete/media/review';
 import {
   Button,
+  Loading,
   Modal,
   ModalBody,
   ModalFooter,
   ModalHeader,
-  NativeOption,
-  NativeSelect,
+  Option,
+  Select,
   Tab,
   TabList,
   TabPanel,
@@ -15,11 +16,12 @@ import {
   useDisclosure,
   useNotice,
 } from '@yamada-ui/react';
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import MediaCharacters from './media-characters';
 import ReviewList from './review-list';
+import { SNACK_DURATION } from '@/lib/constants'
 
-export default function TabSection({ setEditorContext, onDrawerOpen }) {
+export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
   const media = useMedia();
 
   const memoedDescription = useMemo(() => ({ __html: media.description }));
@@ -31,8 +33,28 @@ export default function TabSection({ setEditorContext, onDrawerOpen }) {
   } = useDisclosure();
 
   const [delReview, setDelReview] = useState(null);
+  const notice = useNotice();
 
-  const deleteReview = useDeleteReview();
+  const deleteReview = useDeleteMediaReview({
+    handleSuccess: () => {
+      notice({
+        description: 'Deleted the review',
+        status: 'success',
+        duration: SNACK_DURATION,
+      });
+      setDelReview(null);
+      onCloseReviewDeleteModal();
+    },
+    handleError: (error) => {
+      notice({
+        status: 'error',
+        title: error.name,
+        description: error.message,
+        duration: SNACK_DURATION,
+      });
+      setDelReview(null);
+    },
+  });
 
   function handleDelete() {
     deleteReview.mutate({
@@ -42,28 +64,6 @@ export default function TabSection({ setEditorContext, onDrawerOpen }) {
       subjectType: delReview.subjectType,
     });
   }
-
-  const notice = useNotice();
-
-  useEffect(() => {
-    if (deleteReview.isSuccess) {
-      notice({
-        title: 'Success',
-        description: 'Deleted the review',
-        status: 'success',
-      });
-      setDelReview(null);
-      onCloseReviewDeleteModal();
-    }
-    if (deleteReview.isError) {
-      notice({
-        status: 'error',
-        title: `Error: ${deleteReview.error.name}`,
-        description: deleteReview.error.message,
-      });
-      setDelReview(null);
-    }
-  }, [deleteReview.isError, deleteReview.isSuccess]);
 
   const [subjectType, setSubjectType] = useState(
     media.type === 'ANIME' ? 'episode' : 'chapter'
@@ -86,35 +86,35 @@ export default function TabSection({ setEditorContext, onDrawerOpen }) {
 
         <TabPanel dangerouslySetInnerHTML={memoedDescription} />
         <TabPanel>
-          <MediaCharacters mediaId={media.id} />
+          <Suspense fallback={<Loading fontSize={'2xl'} />}>
+            <MediaCharacters mediaId={media.id} mediaType={media.type} />
+          </Suspense>
         </TabPanel>
         <TabPanel>
-          <NativeSelect
+          <Select
             defaultValue={subjectType}
-            onChange={(ev) => setSubjectType(ev.target.value)}
+            onChange={(option) => setSubjectType(option)}
           >
-            <NativeOption value={media.type === 'ANIME' ? 'anime' : 'manga'}>
+            <Option value={media.type === 'ANIME' ? 'anime' : 'manga'}>
               {media.type === 'ANIME' ? 'Anime' : 'Manga'}
-            </NativeOption>
-            {media.type === 'MANGA' && (
-              <NativeOption value="volume">Volume</NativeOption>
-            )}
-            <NativeOption
-              value={media.type === 'ANIME' ? 'episode' : 'chapter'}
-            >
+            </Option>
+            {media.type === 'MANGA' && <Option value="volume">Volume</Option>}
+            <Option value={media.type === 'ANIME' ? 'episode' : 'chapter'}>
               {media.type === 'ANIME' ? 'Episode' : 'Chapter'}
-            </NativeOption>
-          </NativeSelect>
+            </Option>
+          </Select>
 
-          <ReviewList
-            subjectType={subjectType}
-            mediaType={media.type}
-            mediaId={media.id}
-            onDrawerOpen={onDrawerOpen}
-            setEditorContext={setEditorContext}
-            setDelReview={setDelReview}
-            onOpenReviewDeleteModal={onOpenReviewDeleteModal}
-          />
+          <Suspense fallback={<Loading />}>
+            <ReviewList
+              subjectType={subjectType}
+              mediaType={media.type}
+              mediaId={media.id}
+              onDrawerOpen={onDrawerOpen}
+              setCurrentReviewMetadata={setCurrentReviewMetadata}
+              setDelReview={setDelReview}
+              onOpenReviewDeleteModal={onOpenReviewDeleteModal}
+            />
+          </Suspense>
         </TabPanel>
       </Tabs>
 

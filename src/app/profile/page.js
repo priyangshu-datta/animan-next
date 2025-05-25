@@ -1,28 +1,21 @@
 'use client';
 
-import { initiateAuthPopupFlow } from '@/lib/client/auth/auth-flow-async';
-import usePatchUserInfo from '@/lib/client/hooks/react_query/user/use-patch-user-info';
-import usePatchUserLinkedAccounts from '@/lib/client/hooks/react_query/user/use-patch-user-linked-accounts';
-import useUserInfo from '@/lib/client/hooks/react_query/user/use-user-info';
-import useLinkedAccounts from '@/lib/client/hooks/react_query/user/use-user-linked-accounts';
-import { sentenceCase } from '@/lib/client/utils';
-import { authStore } from '@/stores/auth-store';
-import { useQueryClient } from '@tanstack/react-query';
+import { useUpdateUserInfo } from '@/lib/client/hooks/react_query/patch/user/info';
+import { useUserInfo } from '@/lib/client/hooks/react_query/get/user/info';
+
+import AnilistIcon from '@/components/icons/anilist';
+import { debounce, fuzzyRegexMatch, sentenceCase } from '@/utils/general';
 import {
+  CheckIcon,
   ComputerIcon,
-  Link2Icon,
-  Link2OffIcon,
   MoonIcon,
-  RefreshCwIcon,
-  RefreshCwOffIcon,
+  SaveIcon,
   SunIcon,
+  XIcon,
 } from '@yamada-ui/lucide';
 import {
   Button,
   ButtonGroup,
-  Card,
-  CardBody,
-  CardHeader,
   Container,
   DataList,
   DataListDescription,
@@ -30,81 +23,132 @@ import {
   DataListTerm,
   Flex,
   FormControl,
-  Grid,
   Heading,
+  IconButton,
   Input,
+  InputGroup,
+  InputRightAddon,
+  InputRightElement,
+  Loading,
   Text,
-  Toggle,
   useColorMode,
+  useNotice,
   VStack,
 } from '@yamada-ui/react';
-import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import ReactSelect from 'react-select';
+import { useCheckUsername } from '@/lib/client/hooks/react_query/get/user/check-username';
+import { SNACK_DURATION } from '@/lib/constants';
 
-export default function ProfilePage() {
+/* Locales and time zone. */
+
+export default function Profile() {
+  useEffect(() => {
+    document.title = 'Settings';
+  }, []);
+  return (
+    <Suspense fallback={<Loading />}>
+      <Page />
+    </Suspense>
+  );
+}
+
+function Page() {
   const userInfo = useUserInfo();
-  const linkedAccounts = useLinkedAccounts();
-  const [oauthAccounts, setOauthAccounts] = useState([]);
-
   const {
     control,
     reset,
-    formState: { errors, isDirty, dirtyFields },
+    getValues,
+    formState: { errors, isDirty, dirtyFields, defaultValues },
     handleSubmit,
-  } = useForm();
+    watch,
+    setValue,
+    resetField,
+  } = useForm({
+    defaultValues: {
+      username: userInfo.data.data.username,
+      locale: userInfo.data.data.locale ?? '',
+      timezone: userInfo.data.data.timezone ?? '',
+      colorScheme: userInfo.data.data.colorScheme,
+    },
+  });
+
+  const notice = useNotice();
+  const {
+    mutate,
+    data: isUsernameExists,
+    isPending: checkingUsername,
+    isSuccess: checkedUsername,
+    reset: resetCheckUsername,
+  } = useCheckUsername();
+  const patchUserInfo = useUpdateUserInfo({
+    handleError: (error) => {
+      notice({
+        status: 'error',
+        description: error.message,
+        duration: SNACK_DURATION,
+      });
+    },
+    handleSuccess: ({ variables }) => {
+      console.log(watch());
+      notice({
+        status: 'success',
+        description: 'Updated successfully',
+        duration: SNACK_DURATION,
+      });
+      localStorage.setItem('animan-locale', watch('locale'));
+      localStorage.setItem('animan-timezone', watch('timezone'));
+
+      reset({ ...watch() });
+      resetCheckUsername();
+    },
+  });
+
+  const { internalColorMode, changeColorMode, colorMode } = useColorMode();
 
   useEffect(() => {
-    if (userInfo.isSuccess && linkedAccounts.isSuccess) {
-      setOauthAccounts(Object.keys(linkedAccounts.data.data.oauthAccounts));
-      reset({
-        username: userInfo.data.data.username,
-        ...Object.fromEntries(
-          Object.entries(linkedAccounts.data.data.oauthAccounts).map(
-            ([provider, oauthAccount]) => [
-              `sync${sentenceCase(provider)}`,
-              oauthAccount.sync,
-            ]
-          )
-        ),
-        ...Object.fromEntries(
-          Object.entries(linkedAccounts.data.data.oauthAccounts).map(
-            ([provider]) => [`unlink${sentenceCase(provider)}`, false]
-          )
-        ),
-      });
+    if (userInfo.data.data.colorScheme) {
+      changeColorMode(userInfo.data.data.colorScheme);
     }
-  }, [userInfo.data, linkedAccounts.data]);
-
-  const { internalColorMode, changeColorMode } = useColorMode();
-
-  const patchUserInfo = usePatchUserInfo();
-  const patchUserLinkedAccounts = usePatchUserLinkedAccounts();
+  }, [userInfo.data, changeColorMode]);
 
   function onSubmit(data) {
-    if ('username' in dirtyFields) {
-      const userInformationData = {
-        username: data.username,
-      };
-      patchUserInfo.mutate(userInformationData);
-    }
-    const unlink = Object.entries(data)
-      .filter(([key, value]) => key.startsWith('unlink') && value)
-      .map(([k]) => k.replace('unlink', '').toLowerCase());
-    const sync = Object.entries(data)
-      .filter(
-        ([key, value]) => !(key in unlink) && key.startsWith('sync') && value
-      )
-      .map(([k]) => k.replace('sync', '').toLowerCase());
-    const userLinkedAccountsInfo = {
-      ...(unlink.length && { unlink }),
-      ...(sync.length && { sync }),
-    };
-    console.log({ userLinkedAccountsInfo });
-    if (Object.entries(userLinkedAccountsInfo).length) {
-      patchUserLinkedAccounts.mutate(userLinkedAccountsInfo);
+    if (isDirty) {
+      if (
+        isUsernameExists?.data?.exists !== false &&
+        'username' in dirtyFields
+      ) {
+        notice({
+          status: 'warning',
+          description: 'Username already exists. Choose something different.',
+          duration: SNACK_DURATION,
+        });
+        return;
+      }
+      patchUserInfo.mutate(
+        Object.fromEntries(Object.entries(data).filter(([k]) => dirtyFields[k]))
+      );
+    } else {
+      notice({
+        status: 'info',
+        description: 'No changes are made',
+        duration: SNACK_DURATION,
+      });
     }
   }
+
+  const timeZones = useMemo(() => Intl.supportedValuesOf('timeZone'), []);
+
+  const [validLocale, setValidLocale] = useState(true);
+
+  const checkUsername = useMemo(() => debounce(mutate), []);
+
+  useEffect(() => {
+    if (watch('username') && isDirty) {
+      checkUsername({ username: watch('username') });
+    }
+  }, [watch('username'), checkUsername]);
 
   return (
     <Container maxW={'min(80%, 1200px)'} minW={{ md: 'full' }} m={'auto'}>
@@ -118,107 +162,233 @@ export default function ProfilePage() {
           <Controller
             name="username"
             control={control}
-            defaultValue={userInfo.isLoading && 'Loading'}
-            disabled={userInfo.isPending}
             render={({ field }) => {
-              return <Input {...field} placeholder="Username" />;
+              return (
+                <InputGroup>
+                  <Input {...field} placeholder="Username" />
+                  <InputRightElement>
+                    {checkingUsername ? (
+                      <Loading />
+                    ) : checkedUsername ? (
+                      isUsernameExists?.data?.exists ? (
+                        <XIcon color="red.500" />
+                      ) : (
+                        <CheckIcon color="green.500" />
+                      )
+                    ) : (
+                      ''
+                    )}
+                  </InputRightElement>
+                </InputGroup>
+              );
             }}
           />
         </FormControl>
-        <FormControl label="Color Scheme">
+        <FormControl
+          label="Color Scheme"
+          invalid={!!errors.colorScheme}
+          errorMessage={
+            errors.colorScheme ? errors.colorScheme.message : undefined
+          }
+        >
+          <Controller
+            name="colorScheme"
+            control={control}
+            render={({ field }) => <Input {...field} hidden />}
+          />
           <ColorSchemeButtonGroup
+            setFormControlValue={setValue}
             internalColorMode={internalColorMode}
             changeColorMode={changeColorMode}
           />
         </FormControl>
-        {linkedAccounts.data && (
-          <OAuthCards
-            oauthAccounts={oauthAccounts}
-            setOauthAccounts={setOauthAccounts}
-            control={control}
-            errors={errors}
-            linkedAccounts={linkedAccounts}
-          />
-        )}
-        <Grid gridTemplateColumns={{ sm: '1fr', base: '1fr 1fr' }} gap="2">
-          <Button
-            onClick={() => {
-              setOauthAccounts(
-                Object.keys(linkedAccounts.data.data.oauthAccounts)
-              );
-              reset({
-                username: userInfo.data.data.username,
-                ...Object.fromEntries(
-                  Object.entries(linkedAccounts.data.data.oauthAccounts).map(
-                    ([provider, oauthAccount]) => [
-                      `sync${sentenceCase(provider)}`,
-                      oauthAccount.sync,
-                    ]
-                  )
-                ),
-                ...Object.fromEntries(
-                  Object.entries(linkedAccounts.data.data.oauthAccounts).map(
-                    ([provider]) => [`unlink${sentenceCase(provider)}`, false]
-                  )
-                ),
-              });
-            }}
+        <Flex gap="4">
+          <FormControl
+            label="Locale"
+            invalid={!!errors.locale}
+            errorMessage={errors.locale ? errors.locale.message : undefined}
           >
-            Clear
-          </Button>
-          <Button colorScheme={'primary'} type="submit" disabled={!isDirty}>
+            <InputGroup>
+              <Controller
+                name="locale"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    onInput={(ev) => {
+                      const inputLocale = ev.currentTarget.value;
+                      if (inputLocale.length > 0) {
+                        try {
+                          Intl.getCanonicalLocales(inputLocale);
+                          setValidLocale(true);
+                        } catch {
+                          setValidLocale(false);
+                        }
+                      } else {
+                        setValidLocale(false);
+                      }
+                    }}
+                    onBlur={() => {
+                      field.onBlur();
+                      if (!validLocale) {
+                        resetField('locale');
+                        setValidLocale(true);
+                      }
+                    }}
+                  />
+                )}
+              />
+              <InputRightElement>
+                {validLocale ? (
+                  <CheckIcon color="green.500" />
+                ) : (
+                  <XIcon color="red.500" />
+                )}
+              </InputRightElement>
+            </InputGroup>
+          </FormControl>
+          <FormControl
+            label="Timezone"
+            invalid={!!errors.timezone}
+            errorMessage={errors.timezone ? errors.timezone.message : undefined}
+          >
+            <Controller
+              name="timezone"
+              control={control}
+              render={({ field }) => (
+                <ReactSelect
+                  {...field}
+                  styles={
+                    colorMode === 'dark' && {
+                      control: (styles) => ({
+                        ...styles,
+                        backgroundColor: '#141414',
+                        borderColor: '#434248',
+                        ':hover': {
+                          borderColor: '#4c4c4c',
+                        },
+                        ':focus-within:not(:hover)': {
+                          borderColor: '#0070f0',
+                        },
+                        borderRadius: '0.375rem',
+                      }),
+                      input: (styles) => ({
+                        ...styles,
+                        padding: '2.6px',
+                        color: 'white',
+                      }),
+                      menu: (styles) => ({
+                        ...styles,
+                        backgroundColor: 'ThreeDDarkShadow',
+                      }),
+                      option: (styles) => ({
+                        ...styles,
+                      }),
+                      singleValue: (styles) => ({ ...styles, color: 'white' }),
+                    }
+                  }
+                  theme={(theme) =>
+                    colorMode === 'dark'
+                      ? {
+                          ...theme,
+                          colors: {
+                            ...theme.colors,
+                            primary25: '#4c9aff',
+                          },
+                        }
+                      : { ...theme }
+                  }
+                  options={timeZones.map((tz) => ({
+                    label: tz,
+                    value: tz,
+                  }))}
+                  filterOption={({ value }, input) => {
+                    return fuzzyRegexMatch(input, value);
+                  }}
+                  noOptionsMessage={() => 'No Timezone found'}
+                  value={{
+                    label: field.value,
+                    value: field.value,
+                  }}
+                  onChange={({ value }) => {
+                    field.onChange(value);
+                  }}
+                />
+              )}
+            />
+          </FormControl>
+        </Flex>
+        <Flex w={'full'} gap="4">
+          <Button
+            type="submit"
+            flexGrow={1}
+            colorScheme={'primary'}
+            disabled={!isDirty}
+          >
             Save
           </Button>
-        </Grid>
+          <Button
+            disabled={!isDirty}
+            flexGrow={1}
+            onClick={() => {
+              reset();
+              resetCheckUsername();
+            }}
+            variant={'outline'}
+          >
+            Rest
+          </Button>
+        </Flex>
       </VStack>
+      <Heading size={'md'} as={'h2'}>
+        Provider Information
+      </Heading>
+      <DataList size={'md'} col={2} w="full" variant={'grid'}>
+        <DataListItem>
+          <DataListTerm>Signed in using</DataListTerm>
+          <DataListDescription>
+            <Flex alignItems={'center'} gap="4">
+              <AnilistIcon />
+              <Text>{sentenceCase(userInfo.data.data.providerName)}</Text>
+            </Flex>
+          </DataListDescription>
+        </DataListItem>
+        <DataListItem>
+          <DataListTerm>User ID</DataListTerm>
+          <DataListDescription>
+            <Text>{sentenceCase(userInfo.data.data.providerUserId)}</Text>
+          </DataListDescription>
+        </DataListItem>
+        <DataListItem>
+          <DataListTerm>Memeber since</DataListTerm>
+          <DataListDescription>
+            {Intl.DateTimeFormat(
+              validLocale
+                ? watch('locale').length < 2
+                  ? undefined
+                  : watch('locale')
+                : defaultValues.locale.length < 2
+                ? undefined
+                : defaultValues.locale,
+              {
+                timeZone:
+                  watch('timezone').length < 2 ? undefined : watch('timezone'),
+                dateStyle: 'full',
+                timeStyle: 'long',
+              }
+            ).format(Date.parse(userInfo.data.data.createdAt))}
+          </DataListDescription>
+        </DataListItem>
+      </DataList>
     </Container>
   );
 }
 
-function OAuthCards({
-  oauthAccounts,
-  setOauthAccounts,
-  control,
-  errors,
-  linkedAccounts,
+function ColorSchemeButtonGroup({
+  setFormControlValue,
+  internalColorMode,
+  changeColorMode,
 }) {
-  return (
-    <Grid gridTemplateColumns={{ md: '1fr', base: '1fr 1fr 1fr' }} gap={'2'}>
-      <OAuthCard
-        oauthAccounts={oauthAccounts}
-        setOauthAccounts={setOauthAccounts}
-        control={control}
-        errors={errors}
-        provider={'anilist'}
-        providerUserId={
-          linkedAccounts.data.data.oauthAccounts?.anilist?.providerUserId
-        }
-      />
-      <OAuthCard
-        oauthAccounts={oauthAccounts}
-        setOauthAccounts={setOauthAccounts}
-        control={control}
-        errors={errors}
-        provider={'mal'}
-        providerUserId={
-          linkedAccounts.data.data.oauthAccounts?.mal?.providerUserId
-        }
-      />
-      <OAuthCard
-        oauthAccounts={oauthAccounts}
-        setOauthAccounts={setOauthAccounts}
-        control={control}
-        errors={errors}
-        provider={'kitsu'}
-        providerUserId={
-          linkedAccounts.data.data.oauthAccounts?.kitsu?.providerUserId
-        }
-      />
-    </Grid>
-  );
-}
-
-function ColorSchemeButtonGroup({ internalColorMode, changeColorMode }) {
   return (
     <ButtonGroup
       w="full"
@@ -227,165 +397,50 @@ function ColorSchemeButtonGroup({ internalColorMode, changeColorMode }) {
       gap="2"
     >
       <Button
+        type="button"
         disabled={internalColorMode === 'dark'}
         startIcon={<MoonIcon />}
-        onClick={() => changeColorMode('dark')}
+        onClick={() => {
+          changeColorMode('dark');
+          setFormControlValue('colorScheme', 'dark', {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true,
+          });
+        }}
       >
         Dark
       </Button>
       <Button
+        type="button"
         disabled={internalColorMode === 'system'}
         startIcon={<ComputerIcon />}
-        onClick={() => changeColorMode('system')}
+        onClick={() => {
+          changeColorMode('system');
+          setFormControlValue('colorScheme', 'system', {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true,
+          });
+        }}
       >
         System
       </Button>
       <Button
+        type="button"
         disabled={internalColorMode === 'light'}
         startIcon={<SunIcon />}
-        onClick={() => changeColorMode('light')}
+        onClick={() => {
+          changeColorMode('light');
+          setFormControlValue('colorScheme', 'light', {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true,
+          });
+        }}
       >
         Light
       </Button>
     </ButtonGroup>
-  );
-}
-
-function OAuthCard({
-  provider,
-  providerUserId,
-  control,
-  errors,
-  oauthAccounts,
-  setOauthAccounts,
-}) {
-  const queryClient = useQueryClient();
-
-  return (
-    <Card variant={'outline'} h={'full'}>
-      <CardHeader>
-        <Flex justifyContent={'space-between'} alignItems={'center'} w="full">
-          <Text fontSize={'lg'}>{sentenceCase(provider)}</Text>
-
-          {providerUserId ? (
-            <Controller
-              name={`unlink${sentenceCase(provider)}`}
-              control={control}
-              render={({ field }) => {
-                return (
-                  <Toggle
-                    {...field}
-                    onChange={(selected) => field.onChange(selected)}
-                    selected={field.value}
-                    icon={
-                      field.value ? (
-                        <Link2OffIcon color={'orange'} />
-                      ) : (
-                        <Link2OffIcon color={'red'} />
-                      )
-                    }
-                    variant={'unstyled'}
-                    minW={0}
-                    minH={0}
-                    m={0}
-                    p={0}
-                    disabled={
-                      oauthAccounts.length <= 1 &&
-                      oauthAccounts.includes(provider)
-                    }
-                    onClick={() => {
-                      if (oauthAccounts.includes(provider)) {
-                        setOauthAccounts((prev) =>
-                          prev.filter((account) => account !== provider)
-                        );
-                      } else {
-                        setOauthAccounts((prev) => [...prev, provider]);
-                      }
-                    }}
-                  />
-                );
-              }}
-            />
-          ) : (
-            <Button
-              // disabled={!providerUserId}
-              variant={'link'}
-              onClick={() => {
-                axios
-                  .post('/api/auth/link-oauth', null, {
-                    headers: {
-                      Authorization: `Bearer ${
-                        authStore.getState().accessToken
-                      }`,
-                    },
-                  })
-                  .then(() => {
-                    initiateAuthPopupFlow(provider).then((data) => {
-                      if ('mal' in data) {
-                        queryClient.invalidateQueries([
-                          'me',
-                          'linked-accounts',
-                        ]);
-                        setOauthAccounts((count) => count + 1);
-                      }
-                    });
-                  });
-              }}
-            >
-              <Link2Icon />
-            </Button>
-          )}
-        </Flex>
-      </CardHeader>
-      <CardBody>
-        {providerUserId && (
-          <DataList gap="1" fontSize={'md'} col={2} w={'full'}>
-            <DataListItem>
-              <DataListTerm>UserID</DataListTerm>
-              <DataListDescription>{providerUserId}</DataListDescription>
-            </DataListItem>
-            <DataListItem>
-              <DataListTerm>Sync</DataListTerm>
-              <DataListDescription>
-                <FormControl
-                  invalid={!!errors[`sync${sentenceCase(provider)}`]}
-                  errorMessage={
-                    errors[`sync${sentenceCase(provider)}`]
-                      ? errors[`sync${sentenceCase(provider)}`].message
-                      : undefined
-                  }
-                >
-                  <Controller
-                    name={`sync${sentenceCase(provider)}`}
-                    control={control}
-                    render={({ field }) => {
-                      return (
-                        <Toggle
-                          {...field}
-                          onChange={(selected) => field.onChange(selected)}
-                          selected={field.value}
-                          icon={
-                            field.value ? (
-                              <RefreshCwIcon color={'green.400'} />
-                            ) : (
-                              <RefreshCwOffIcon color={'red.400'} />
-                            )
-                          }
-                          variant={'unstyled'}
-                          minW={0}
-                          minH={0}
-                          m={0}
-                          p={0}
-                        />
-                      );
-                    }}
-                  />
-                </FormControl>
-              </DataListDescription>
-            </DataListItem>
-          </DataList>
-        )}
-      </CardBody>
-    </Card>
   );
 }

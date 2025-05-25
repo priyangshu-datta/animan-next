@@ -10,6 +10,12 @@ export function up(knex) {
     .createTable('users', (table) => {
       table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
       table.string('username').unique().notNullable();
+
+      table
+        .enum('color_scheme', ['dark', 'light', 'system'])
+        .defaultTo('system');
+      table.string('locale');
+      table.string('timezone');
       table.timestamps(true, true);
     })
     .then(() => knex.raw(onUpdateTrigger('users')));

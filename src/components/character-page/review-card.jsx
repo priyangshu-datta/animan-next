@@ -1,5 +1,5 @@
-import { useSmallMediaById } from '@/lib/client/hooks/react_query/graphql/use-media-by-id';
-import { sentenceCase } from '@/lib/client/utils';
+import { useMediaBasicInfoById } from '@/lib/client/hooks/react_query/get/media/info/basic/by-id';
+import { sentenceCase } from '@/utils/general';
 import { HeartIcon } from '@yamada-ui/lucide';
 import {
   Badge,
@@ -14,6 +14,7 @@ import {
   Text,
   VStack,
 } from '@yamada-ui/react';
+import Spoiler from '../spoiler';
 
 export default function ReviewCard({ review }) {
   const emotionList = review.emotions ? review.emotions.split(';') : [];
@@ -21,20 +22,19 @@ export default function ReviewCard({ review }) {
     1 / (5 * (review.rating / 10) - Math.floor(5 * (review.rating / 10)))
   );
 
-  const associatedMedia = useSmallMediaById(review.associatedMediaId);
+  let associatedMedia = null;
+
+  if (review.associatedMediaId && review.associatedMediaType) {
+    associatedMedia = useMediaBasicInfoById({
+      mediaId: review.associatedMediaId,
+      mediaType: review.associatedMediaType,
+    });
+  }
 
   return (
-    <Box
-      borderWidth="1px"
-      borderRadius="md"
-      p="4"
-      w="full"
-      shadow="sm"
-      _hover={{ shadow: 'md' }}
-      transition="all 0.2s"
-    >
+    <Container>
       <Flex align="start" mb="2">
-        {review.associatedMediaId && associatedMedia.isFetching && (
+        {review.associatedMediaId && associatedMedia?.isFetching && (
           <>
             <HStack>
               <Skeleton>
@@ -46,48 +46,37 @@ export default function ReviewCard({ review }) {
         )}
 
         <HStack alignItems={'flex-start'}>
-          {review.associatedMediaId && associatedMedia.isFetched && (
+          {review.associatedMediaId && associatedMedia?.isFetched && (
             <Box
               justifyContent="center"
-              aspectRatio={4 / 5}
+              aspectRatio={9 / 13}
               w={'28'}
               flexShrink={0}
             >
               <Image
-                src={associatedMedia.data.data.Media.coverImage.extraLarge}
-                alt={associatedMedia.data.data.Media.title.userPreferred}
+                src={associatedMedia.data.data.coverImage.extraLarge}
+                alt={associatedMedia.data.data.title.userPreferred}
                 w={'full'}
                 h={'full'}
               />
             </Box>
           )}
           <VStack gap={'6'}>
-            {review.associatedMediaId && associatedMedia.isFetched && (
+            {review.associatedMediaId && associatedMedia?.isFetched && (
               <VStack gap={'2'}>
                 <Heading size={'md'}>
-                  {associatedMedia.data.data.Media.title.userPreferred}
+                  {associatedMedia.data.data.title.userPreferred}
                 </Heading>
                 <Text>
                   Character Role: <strong>{sentenceCase(review.role)}</strong>
                 </Text>
               </VStack>
             )}
-            <VStack gap={'2'}>
-              <Rating
-                readOnly
-                defaultValue={5 * (review.rating / 10)}
-                fractions={score === Infinity ? null : score}
-              />
-              {emotionList.length > 0 && (
-                <HStack spacing="1" flexWrap="wrap">
-                  {emotionList.map((emotion) => (
-                    <Badge key={emotion} colorScheme="pink" variant="subtle">
-                      {emotion}
-                    </Badge>
-                  ))}
-                </HStack>
-              )}
-            </VStack>
+            <RatingWithEmotions
+              review={review}
+              score={score}
+              emotionList={emotionList}
+            />
           </VStack>
         </HStack>
 
@@ -95,14 +84,57 @@ export default function ReviewCard({ review }) {
       </Flex>
 
       <VStack align="start" spacing="2">
-        <Text fontSize="md" fontWeight="medium">
-          {review.reviewText}
-        </Text>
+        <Spoiler text={review.reviewText} />
+        {/* <Text fontSize="md" fontWeight="medium">
+          {}
+        </Text> */}
 
-        <Text fontSize="xs" color="gray.500" mt="2">
-          {new Date(review.updatedAt).toLocaleString()}
+        <Text fontSize="sm" color="gray.200" mt="2">
+          Last edited:{' '}
+          {Intl.DateTimeFormat(localStorage.getItem('animan-locale'), {
+            dateStyle: 'long',
+            timeStyle: 'long',
+            timeZone: localStorage.getItem('animan-timezone') ?? undefined,
+          }).format(new Date(review.updatedAt))}
         </Text>
       </VStack>
+    </Container>
+  );
+}
+
+function RatingWithEmotions({ review, score, emotionList }) {
+  return (
+    <VStack gap={'2'}>
+      <Rating
+        readOnly
+        defaultValue={5 * (review.rating / 10)}
+        fractions={score === Infinity ? null : score}
+      />
+      {emotionList.length > 0 && (
+        <HStack spacing="1" flexWrap="wrap">
+          {emotionList.map((emotion) => (
+            <Badge key={emotion} colorScheme="pink" variant="subtle">
+              {emotion}
+            </Badge>
+          ))}
+        </HStack>
+      )}
+    </VStack>
+  );
+}
+
+function Container({ children }) {
+  return (
+    <Box
+      borderWidth="1px"
+      borderRadius="md"
+      p="4"
+      w="full"
+      shadow="sm"
+      _hover={{ shadow: 'md' }}
+      transition="all 0.2s"
+    >
+      {children}
     </Box>
   );
 }

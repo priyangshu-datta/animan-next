@@ -6,7 +6,7 @@ import axios from 'axios';
 import { AppError } from '@/lib/server/errors/AppError';
 import { ERROR_CODES } from '@/lib/server/errors/errorCodes';
 import { respondError } from '@/lib/server/responses';
-import { snakeKeysToCamelKeys } from '@/utils';
+import { snakeKeysToCamelKeys } from '@/utils/general';
 
 /**
  * All these take place in a popup
@@ -16,26 +16,12 @@ import { snakeKeysToCamelKeys } from '@/utils';
  * @param {NextRequest} request
  * @returns {Promise<NextResponse>}
  */
-async function AuthRefreshFlow(request) {
+async function AuthRefreshFlow() {
   try {
     const cookieStore = await cookies();
     const refreshToken = cookieStore.get('refresh_token');
 
-    const provider = request.nextUrl.searchParams.get('provider');
 
-    if (!provider) {
-      throw new AppError({
-        code: ERROR_CODES.NO_PROVIDER_FOUND,
-        status: 400,
-        message:
-          'No provider was given. Something went wrong, try fresh login.',
-      });
-    }
-
-    /**
-     * as there is no refresh token, in provider auth logic, remember to
-     * delete the previous all sessions after user authenticates
-     */
     if (!refreshToken) {
       throw new AppError({
         code: ERROR_CODES.NO_REFRESH_TOKEN,
@@ -53,15 +39,15 @@ async function AuthRefreshFlow(request) {
 
     if (!dbSession) {
       throw new AppError({
-        code: ERROR_CODES.DATABASE_ERROR,
+        code: ERROR_CODES.NO_REFRESH_TOKEN,
         status: 401,
-        message: 'No refresh token found on client cookies. Try fresh login.',
+        message: 'No session found on server. Try fresh login.',
       });
     }
 
     dbSession = snakeKeysToCamelKeys(dbSession);
 
-    await shouldTryFreshLogin(provider, dbSession.userId);
+    // await shouldTryFreshLogin(provider, dbSession.userId);
 
     // delete old sessions and issue new tokens, as provider tokens are valid
     await refreshTokenQuery.del();
@@ -75,6 +61,7 @@ async function AuthRefreshFlow(request) {
       'iframe'
     );
   } catch (err) {
+    console.log({err})
     return respondError(err);
   }
 }

@@ -1,12 +1,36 @@
-import { useMedia } from '@/context/use-media';
-import { Card, Flex, Image, useDisclosure } from '@yamada-ui/react';
-import { useState } from 'react';
+'use client';
+
+import { MediaProvider } from '@/context/use-media';
+import {
+  Card,
+  Center,
+  Flex,
+  Image,
+  Text,
+  useDisclosure,
+} from '@yamada-ui/react';
+import { useEffect, useState } from 'react';
 import MediaInfo from './media-info';
-import ReviewEditor from './review_editor';
+import ReviewEditor from './review-editor';
 import TabSection from './tab-section';
+import { useMediaFullInfoById } from '@/lib/client/hooks/react_query/get/media/info/full-by-id';
+import { useSearchParams } from 'next/navigation';
 
 export default function MediaPage() {
-  const media = useMedia();
+  const searchParams = useSearchParams();
+
+  const {
+    data: { data: mediaData },
+  } = useMediaFullInfoById({
+    mediaId: parseInt(searchParams.get('id')),
+    mediaType: searchParams.get('type'),
+  });
+
+  useEffect(() => {
+    if (mediaData) {
+      document.title = mediaData.title.userPreferred;
+    }
+  }, [mediaData]);
 
   const {
     open: openReviewEditor,
@@ -14,43 +38,35 @@ export default function MediaPage() {
     onClose: onReviewEditorClose,
   } = useDisclosure();
 
-  const [editorContext, setEditorContext] = useState({});
+  const [currentReviewMetadata, setCurrentReviewMetadata] = useState(null);
 
   return (
     <>
-      <Flex
-        direction={'column'}
-        maxW={{ sm: '100%', xl: '90%', '2xl': '80%', base: '60%' }}
-        w={'full'}
-      >
-        <Card
-          flexDirection={{ base: 'row', md: 'column' }}
-          overflow="hidden"
-          variant="elevated"
-          alignItems={{ md: 'center' }}
-        >
-          <Image
-            src={media.coverImage.extraLarge}
-            objectFit="cover"
-            minW={'40'}
-            maxW={'68'}
-          />
-          <MediaInfo
-            onReviewEditorOpen={onOpenReviewEditor}
-            // onListEditorOpen={onOpenListEditor}
-            setEditorContext={setEditorContext}
-          />
-        </Card>
-        <TabSection
-          setEditorContext={setEditorContext}
-          onDrawerOpen={onOpenReviewEditor}
-        />
-      </Flex>
-      <ReviewEditor
-        editorContext={editorContext}
-        openReviewEditor={openReviewEditor}
-        onReviewEditorClose={onReviewEditorClose}
-      />
+      <Center>
+        <MediaProvider value={mediaData}>
+          <Flex
+            direction={'column'}
+            maxW={{ sm: '100%', xl: '90%', '2xl': '80%', base: '60%' }}
+            w={'full'}
+          >
+            <MediaInfo
+              onReviewEditorOpen={onOpenReviewEditor}
+              setCurrentReviewMetadata={setCurrentReviewMetadata}
+            />
+            <TabSection
+              setCurrentReviewMetadata={setCurrentReviewMetadata}
+              onDrawerOpen={onOpenReviewEditor}
+            />
+          </Flex>
+          {openReviewEditor && (
+            <ReviewEditor
+              currentReviewMetadata={currentReviewMetadata}
+              openReviewEditor={openReviewEditor}
+              onReviewEditorClose={onReviewEditorClose}
+            />
+          )}
+        </MediaProvider>
+      </Center>
     </>
   );
 }

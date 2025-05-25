@@ -1,19 +1,9 @@
-import { useCharacterMedia } from '@/lib/client/hooks/react_query/graphql/use-character-media';
-import { debounce } from '@/lib/client/utils';
+import { useCharacterMedia } from '@/lib/client/hooks/react_query/get/character/related/media';
+import { debounce, fuzzyRegexMatch } from '@/utils/general';
 import { Button, Grid, Input } from '@yamada-ui/react';
 import MediaCard from './media-card';
 import { useEffect, useState } from 'react';
-
-export function useDebounce(value, delay = 300) {
-  const [debounced, setDebounced] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-
-  return debounced;
-}
+import { useDebounce } from '@/lib/client/hooks/use-debounce';
 
 function fuzzySearchGrouped(query, data) {
   const results = [];
@@ -31,21 +21,9 @@ function fuzzySearchGrouped(query, data) {
   return results;
 }
 
-function fuzzyRegexMatch(query, target) {
-  const pattern = query
-    .split('')
-    .map((ch) => ch.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&')) // escape regex chars
-    .join('.*?'); // non-greedy wildcard between letters
-
-  const regex = new RegExp(pattern, 'i'); // case-insensitive
-  return regex.test(target);
-}
-
-export default function CharacterMedia(props) {
-  const { characterId, mediaType, style, setAssociatedMedia } = props;
-
+export default function CharacterMedia({ characterId, mediaType, style }) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetched } =
-    useCharacterMedia(characterId, mediaType);
+    useCharacterMedia({ characterId, mediaType });
 
   const fetchMore = debounce(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -69,7 +47,6 @@ export default function CharacterMedia(props) {
             media.title.native,
             media.title.english,
             media.title.userPreferred,
-            // media.description,
           ];
         })
       );
@@ -105,12 +82,7 @@ export default function CharacterMedia(props) {
         {isFetched
           ? searchResult.length
             ? searchResult.map((media) => (
-                <MediaCard
-                  key={media.id}
-                  media={media}
-                  style={style}
-                  setAssociatedMedia={setAssociatedMedia}
-                />
+                <MediaCard key={media.id} media={media} style={style} />
               ))
             : 'No result.'
           : 'Loading...'}

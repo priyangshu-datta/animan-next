@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { AppError } from './errors/AppError.js';
 import { ERROR_CODES } from './errors/errorCodes.js';
 import { logError } from '../logger.js';
+import { AxiosError } from 'axios';
 
 /**
  * @template T
@@ -75,7 +76,19 @@ export function respondError(err) {
     );
   }
 
-  // console.dir(err.response.data, {depth: Infinity});
+  if (err instanceof AxiosError) {
+    logError(err.code, err.response.data);
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: err.code,
+          message: err.message,
+        },
+      },
+      { status: err.status }
+    );
+  }
 
   logError('UNHANDLED_ERROR', err);
 

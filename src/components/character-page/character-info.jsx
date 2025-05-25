@@ -1,5 +1,5 @@
 import { useCharacter } from '@/context/use-character';
-import { useToggleFavourite } from '@/lib/client/hooks/react_query/graphql/use-small-hooks';
+import { useOptimisticToggleCharacterFavourite } from '@/lib/client/hooks/react_query/patch/user/character/toggle-favourite';
 import { MONTH_NAMES } from '@/lib/constants';
 import { HeartIcon } from '@yamada-ui/lucide';
 import {
@@ -16,18 +16,18 @@ import {
   VStack,
 } from '@yamada-ui/react';
 
-export default function CharacterInfo(props) {
-  const { onReviewEditorOpen, setEditorContext } = props;
-
+export default function CharacterInfo({ onReviewEditorOpen, setCurrentReviewMetadata }) {
   const character = useCharacter();
 
   const { day, month, year } = character.dateOfBirth;
 
-  const { isFavourite, toggleFavourite, togglingFavourite } =
-    useToggleFavourite({
-      subjectType: 'character',
-      isFavourite: character.isFavourite,
-    });
+  const {
+    characterIsFavourite,
+    toggleCharacterFavourite,
+    togglingCharacterFavourite,
+  } = useOptimisticToggleCharacterFavourite({
+    characterIsFavourite: character.isFavourite,
+  });
 
   return (
     <VStack gap="0">
@@ -36,13 +36,13 @@ export default function CharacterInfo(props) {
         <Toggle
           borderRadius={'full'}
           value="favourite"
-          selected={isFavourite}
+          selected={characterIsFavourite}
           colorScheme="red"
           variant={'solid'}
-          icon={togglingFavourite ? <Loading /> : <HeartIcon />}
+          icon={togglingCharacterFavourite ? <Loading /> : <HeartIcon />}
           aria-label="Favourite Characrter"
           onChange={() => {
-            toggleFavourite({ subjectId: character.id });
+            toggleCharacterFavourite({ characterId: character.id });
           }}
         />
       </CardHeader>
@@ -84,14 +84,7 @@ export default function CharacterInfo(props) {
 
         <Button
           onClick={() => {
-            setEditorContext({
-              id: null,
-              rating: 0,
-              associatedMedia: null,
-              emotions: [],
-              review: '',
-              favourite: false,
-            });
+            setCurrentReviewMetadata(null);
             onReviewEditorOpen();
           }}
         >

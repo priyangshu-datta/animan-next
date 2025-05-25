@@ -10,10 +10,10 @@ export default function CharacterCard(props) {
       </CardHeader>
 
       <CardBody>
-        <Link href={`/character/${id}`} size="md">
-          {name}
+        <Link href={`/character?id=${id}`}>
+          <Text fontSize={"lg"}>{name}</Text>
         </Link>
-        <Text size="xs" as={'sub'}>
+        <Text fontSize="md">
           {role.toLowerCase().replace(/\b\w/g, (s) => s.toUpperCase())}
         </Text>
       </CardBody>

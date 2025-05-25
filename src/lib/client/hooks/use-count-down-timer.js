@@ -22,27 +22,52 @@ export function useCountDownTimer(nextEpisodeAiringAt) {
 
       const days = Math.floor(diff / 86400);
 
+      let duration = null;
+
       if (days > 0) {
-        setTimeLeft(
-          `${days} day${days > 1 ? 's' : ''} ${
-            hours > 0 ? `${hours} hour${hours > 1 ? 's' : ''}` : ''
-          }`
-        );
+        duration = {
+          days,
+          hours,
+        };
+        // setTimeLeft(
+        //   `${days} day${days > 1 ? 's' : ''} ${
+        //     hours > 0 ? `${hours} hour${hours > 1 ? 's' : ''}` : ''
+        //   }`
+        // );
       } else if (hours > 0) {
-        setTimeLeft(
-          `${hours} hour${hours > 1 ? 's' : ''} ${minutes} minute${
-            minutes > 1 ? 's' : ''
-          }`
-        );
+        duration = {
+          hours,
+          minutes,
+        };
+        // setTimeLeft(
+        //   `${hours} hour${hours > 1 ? 's' : ''} ${minutes} minute${
+        //     minutes > 1 ? 's' : ''
+        //   }`
+        // );
       } else if (minutes > 0) {
-        setTimeLeft(
-          `${minutes} minute${minutes > 1 ? 's' : ''} ${seconds} second${
-            seconds !== 1 ? 's' : ''
-          }`
-        );
+        duration = {
+          minutes,
+          seconds,
+        };
+        // setTimeLeft(
+        //   `${minutes} minute${minutes > 1 ? 's' : ''} ${seconds} second${
+        //     seconds !== 1 ? 's' : ''
+        //   }`
+        // );
       } else {
-        setTimeLeft(`${seconds} second${seconds !== 1 ? 's' : ''}`);
+        duration = {
+          seconds,
+        };
+        // setTimeLeft(`${seconds} second${seconds !== 1 ? 's' : ''}`);
       }
+      setTimeLeft(
+        new Intl.DurationFormat(
+          localStorage.getItem('animan-locale') ?? undefined,
+          {
+            style: 'long',
+          }
+        ).format(duration)
+      );
     }
 
     updateCountdown();

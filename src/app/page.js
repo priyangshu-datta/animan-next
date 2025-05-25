@@ -1,59 +1,52 @@
 'use client';
 
 import MediaCard from '@/components/media-card';
-import { useUserList } from '@/lib/client/hooks/react_query/graphql/use-user-list';
-import { debounce } from '@/lib/client/utils';
+import { useUserMediaList } from '@/lib/client/hooks/react_query/get/user/media/list';
+import { MEDIA_LIST_STATUS } from '@/lib/constants'
+import { debounce } from '@/utils/general';
 import {
   Box,
   Button,
   Flex,
   Grid,
   Loading,
-  NativeOption,
-  NativeSelect,
+  Option,
+  Select,
 } from '@yamada-ui/react';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 
 export default function Home() {
   const [mediaType, setMediaType] = useState('ANIME');
-  const [mediaStatus, setMediaStatus] = useState('CURRENT');
+  const [mediaListStatus, setMediaListStatus] = useState('CURRENT');
   return (
-    <section className="max-w-6xl mx-auto px-4">
+    <Box as={'section'} className="max-w-6xl mx-auto px-4">
       <Flex>
-        <NativeSelect
+        <Select
           defaultValue={mediaType}
-          onChange={(ev) => setMediaType(ev.target.value)}
+          onChange={(option) => setMediaType(option)}
         >
-          <NativeOption value={'ANIME'}>Anime</NativeOption>
-          <NativeOption value={'MANGA'}>Manga</NativeOption>
-        </NativeSelect>
-        <NativeSelect
-          defaultValue={mediaStatus}
-          onChange={(ev) => setMediaStatus(ev.target.value)}
-        >
-          <NativeOption value={'CURRENT'}>
-            {mediaType === 'ANIME' ? 'Watching' : 'Reading'}
-          </NativeOption>
-          <NativeOption value={'PLANNING'}>Planning</NativeOption>
-          <NativeOption value={'PAUSED'}>Paused</NativeOption>
-          <NativeOption value={'DROPPED'}>Dropped</NativeOption>
-          <NativeOption value={'REPEATING'}>Repeating</NativeOption>
-        </NativeSelect>
+          <Option value={'ANIME'}>Anime</Option>
+          <Option value={'MANGA'}>Manga</Option>
+        </Select>
+        <Select
+          defaultValue={mediaListStatus}
+          onChange={(option) => setMediaListStatus(option)}
+          items={MEDIA_LIST_STATUS[mediaType.toLocaleLowerCase()]}
+        />
       </Flex>
-      <MediaCardList mediaStatus={mediaStatus} mediaType={mediaType} />
-    </section>
+      <Suspense fallback={<Loading />}>
+        <MediaCardList
+          mediaListStatus={mediaListStatus}
+          mediaType={mediaType}
+        />
+      </Suspense>
+    </Box>
   );
 }
 
-function MediaCardList({ mediaType, mediaStatus }) {
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isFetched,
-    isPending,
-  } = useUserList(mediaType, mediaStatus);
+function MediaCardList({ mediaType, mediaListStatus }) {
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useUserMediaList({ mediaType, mediaListStatus });
 
   const fetchMore = debounce(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -69,38 +62,35 @@ function MediaCardList({ mediaType, mediaStatus }) {
       placeItems={'center'}
       gridTemplateColumns={'repeat(auto-fill, minmax(220px, 1fr))'}
     >
-      {isFetched &&
-        data.pages
-          .flatMap((page) => page.mediaList)
-          .map((watchEntry) => (
-            <MediaCard
-              watchEntry={watchEntry}
-              coverImage={watchEntry.media.coverImage.large}
-              title={watchEntry.media.title.userPreferred}
-              mediaStatus={watchEntry.media.status}
-              totalEpisodes={
-                watchEntry.media.nextAiringEpisode?.episode - 1 ||
-                watchEntry.media.episodes
-              }
-              progress={watchEntry.progress}
-              nextAiringAt={watchEntry.media.nextAiringEpisode?.airingAt ?? ''}
-              mediaId={watchEntry.media.id}
-              key={watchEntry.media.id}
-            />
-          ))}
-      {isPending ? (
-        <Loading fontSize={"2xl"} gridColumn={"1 / -1"} />
-      ) : (
-        hasNextPage && (
-          <Button
-            onClick={fetchMore}
-            disabled={isFetchingNextPage || !hasNextPage}
-            gridColumn={'1/-1'}
-            w="full"
-          >
-            Load More
-          </Button>
-        )
+      {data.pages
+        .flatMap((page) => page.mediaList)
+        .map((listEntry) => (
+          <MediaCard
+            listEntry={listEntry}
+            coverImage={listEntry.media.coverImage.large}
+            title={listEntry.media.title.userPreferred}
+            mediaStatus={listEntry.media.status}
+            totalEpisodes={
+              listEntry.media.nextAiringEpisode?.episode - 1 ||
+              listEntry.media.episodes
+            }
+            progress={listEntry.progress}
+            nextAiringAt={listEntry.media.nextAiringEpisode?.airingAt ?? ''}
+            mediaId={listEntry.media.id}
+            mediaType={mediaType}
+            key={listEntry.media.id}
+          />
+        ))}
+      {hasNextPage && (
+        <Button
+          onClick={fetchMore}
+          disabled={isFetchingNextPage || !hasNextPage}
+          gridColumn={'1/-1'}
+          w="full"
+          mt={'2'}
+        >
+          {isFetchingNextPage ? <Loading /> : 'Load more'}
+        </Button>
       )}
     </Grid>
   );

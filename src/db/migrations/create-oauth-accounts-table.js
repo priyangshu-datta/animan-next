@@ -16,8 +16,7 @@ export function up(knex) {
       table.timestamp('access_token_expiration');
       table.text('refresh_token');
       table.timestamp('refresh_token_expiration');
-      table.boolean('sync').defaultTo(true);
-
+      
       table.unique(['user_id', 'provider', 'provider_user_id']);
       table.timestamps(true, true);
     })

@@ -52,7 +52,7 @@ const eslintConfig = [
       "jsdoc/require-example": 0,
       "jsdoc/require-file-overview": 0,
       "jsdoc/require-hyphen-before-param-description": 0,
-      "jsdoc/require-jsdoc": 1, // Recommended
+      "jsdoc/require-jsdoc": 0, // Recommended
       "jsdoc/require-param": 1, // Recommended
       "jsdoc/require-param-description": 0, // Recommended
       "jsdoc/require-param-name": 1, // Recommended

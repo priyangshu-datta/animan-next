@@ -5,7 +5,7 @@ const MediaContext = createContext(null);
 export const useMedia = () => {
   const context = useContext(MediaContext);
   if (!context) {
-    throw new Error('useMedia must be used within a MediaProvider');
+    throw new Error(`context is: ${context}`);
   }
   return context;
 };

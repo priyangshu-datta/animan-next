@@ -1,8 +1,8 @@
 import db from '@/db/index';
-import { validateAccessToken } from '@/lib/server/token-utils';
+import { validateAccessToken } from '@/utils/token-utils';
 import { AppError } from '../errors/AppError';
 import { ERROR_CODES } from '../errors/errorCodes';
-import { snakeKeysToCamelKeys } from '@/utils';
+import { snakeKeysToCamelKeys } from '@/utils/general';
 
 /**
  * Validate the user access token and fetch provider access token

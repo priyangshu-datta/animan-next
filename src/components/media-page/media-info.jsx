@@ -1,21 +1,24 @@
 import { useMedia } from '@/context/use-media';
-import {
-  useToggleFavourite,
-  useUpdateMediaProgress,
-} from '@/lib/client/hooks/react_query/graphql/use-small-hooks';
+import { useUpdateUserMedia } from '@/lib/client/hooks/react_query/patch/user/media';
+import { useOptimisticToggleMediaFavourite } from '@/lib/client/hooks/react_query/patch/user/media/toggle-favourite';
 import { useCountDownTimer } from '@/lib/client/hooks/use-count-down-timer';
-import { REVIEW_CATEGORIES } from '@/lib/constants';
+import { MEDIA_LIST_STATUS, REVIEW_CATEGORIES } from '@/lib/constants';
 import {
   CalendarIcon,
   ChevronDownIcon,
   HeartIcon,
+  NotepadTextIcon,
   PlusIcon,
 } from '@yamada-ui/lucide';
 import {
+  Box,
   Button,
   ButtonGroup,
+  Card,
   CardBody,
   CardHeader,
+  Checkbox,
+  Collapse,
   DataList,
   DataListDescription,
   DataListItem,
@@ -24,19 +27,28 @@ import {
   Heading,
   HStack,
   IconButton,
+  Image,
   Loading,
   Menu,
   MenuButton,
   MenuItem,
   MenuList,
+  Popover,
+  PopoverBody,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
   Rating,
   Separator,
   Tag,
   Toggle,
   Tooltip,
   useDisclosure,
+  useNotice,
   VStack,
 } from '@yamada-ui/react';
+import Link from 'next/link';
+import { useState } from 'react';
 import ListEditor from './list-editor';
 
 function computeProgressString(progress, total, latest) {
@@ -63,9 +75,10 @@ function computeProgressString(progress, total, latest) {
   );
 }
 
-export default function MediaInfo(props) {
-  const { onReviewEditorOpen, setEditorContext } = props;
-
+export default function MediaInfo({
+  onReviewEditorOpen,
+  setCurrentReviewMetadata,
+}) {
   const media = useMedia();
 
   const {
@@ -74,186 +87,439 @@ export default function MediaInfo(props) {
     onClose: onListEditorClose,
   } = useDisclosure();
 
-  const timeLeft = useCountDownTimer(media.nextAiringEpisode?.airingAt);
-
-  const { progress, updatingMediaProgress, updateMediaProgress } =
-    useUpdateMediaProgress({
-      progress: media.listEntry?.progress,
-    });
-
-  const {
-    isFavourite: mediaIsFavourite,
-    toggleFavourite: toggleMediaFavourite,
-    togglingFavourite: togglingMediaFavourite,
-  } = useToggleFavourite({
-    subjectType: media.type,
-    isFavourite: media.isFavourite,
-  });
+  const { open, onToggle } = useDisclosure();
 
   return (
-    <VStack gap="0">
+    <Card
+      flexDirection={{ base: 'row', md: 'column' }}
+      overflow="hidden"
+      variant="elevated"
+      alignItems={{ md: 'center', base: 'start' }}
+    >
       <CardHeader>
-        <Heading size="lg">{media.title.userPreferred}</Heading>
-        <Toggle
-          borderRadius={'full'}
-          value="favourite"
-          selected={mediaIsFavourite}
-          colorScheme="red"
-          variant={'solid'}
-          icon={togglingMediaFavourite ? <Loading /> : <HeartIcon />}
-          aria-label="Favourite Episode"
-          onChange={() => {
-            toggleMediaFavourite({ subjectId: media.id });
-          }}
+        <Image
+          src={media.coverImage.extraLarge}
+          objectFit="cover"
+          minW={'40'}
+          maxW={'68'}
         />
       </CardHeader>
 
       <CardBody>
+        <VStack gap="0">
+          {media.listEntry && <MediaListEntryStatus />}
+          <HStack>
+            <Heading size="lg">{media.title.userPreferred}</Heading>
+
+            <MediaToggleFavourite />
+
+            {media.listEntry?.notes && <UserAnilistNote />}
+          </HStack>
+        </VStack>
         <Flex gap={'1.5'} wrap={'wrap'}>
-          {media.genres &&
-            media.genres.map((genre) => {
-              return <Tag key={genre}>{genre}</Tag>;
-            })}
+          {(media.genres ?? []).map((genre) => {
+            return <Tag key={genre}>{genre}</Tag>;
+          })}
+
+          <MediaTags tags={media.tags} onToggle={onToggle} open={open} />
         </Flex>
-        <DataList
-          col={2}
-          variant={'subtle'}
-          size={{ base: 'lg' }}
-          gapY={{ base: '4', lg: '2' }}
-        >
-          <DataListItem>
-            <DataListTerm>Type</DataListTerm>
-            <DataListDescription>{media.type}</DataListDescription>
-          </DataListItem>
-          <DataListItem>
-            <DataListTerm>Format</DataListTerm>
-            <DataListDescription>{media.format}</DataListDescription>
-          </DataListItem>
-          <DataListItem>
-            <DataListTerm>Score</DataListTerm>
-            <DataListDescription>
-              <Tooltip label={`${media.meanScore}%`}>
-                <Rating
-                  readOnly
-                  defaultValue={5 * (media.meanScore / 100)}
-                  fractions={Math.floor(
-                    1 /
-                      (5 * (media.meanScore / 100) -
-                        Math.floor(5 * (media.meanScore / 100)))
-                  )}
-                />
-              </Tooltip>
-            </DataListDescription>
-          </DataListItem>
-          <DataListItem>
-            <DataListTerm>Airing Status</DataListTerm>
-            <DataListDescription>
-              {media.type === 'ANIME'
-                ? media.nextAiringEpisode
-                  ? `Next episode ${media.nextAiringEpisode.episode} is airing in ${timeLeft}`
-                  : `Not airing (${media.status.replace('_', ' ')})`
-                : media.status === 'RELEASING'
-                ? 'Ongoing'
-                : media.status}
-            </DataListDescription>
-          </DataListItem>
-          {progress && (
-            <DataListItem>
-              <DataListTerm>Progress</DataListTerm>
-              <DataListDescription>
-                {media.type === 'ANIME'
-                  ? computeProgressString(
-                      progress,
-                      media.episodes,
-                      media.nextAiringEpisode?.episode - 1
-                    )
-                  : computeProgressString(progress, media.chapters)}
-              </DataListDescription>
-            </DataListItem>
-          )}
-        </DataList>
-        <HStack wrap={'wrap'}>
-          {progress ? (
-            <>
-              <IconButton
-                variant={'outline'}
-                icon={updatingMediaProgress ? <Loading /> : <PlusIcon />}
-                onClick={() => {
-                  updateMediaProgress({
-                    mediaId: media.id,
-                    progress: progress + 1,
-                  });
-                }}
-                disabled={updatingMediaProgress}
-              />
-              <ButtonGroup attached variant="outline">
-                <Button
-                  onClick={() => {
-                    setEditorContext({
-                      id: null,
-                      unit: progress ?? 1,
-                      rating: 0,
-                      emotions: [],
-                      review: '',
-                      favourite: false,
-                      subject: media.type === 'ANIME' ? 'episode' : 'chapter',
-                    });
-                    onReviewEditorOpen();
-                  }}
-                >
-                  Review
-                </Button>
 
-                <Menu>
-                  <MenuButton as={IconButton} icon={<ChevronDownIcon />} />
+        <MediaInfoDataList />
 
-                  <MenuList>
-                    {REVIEW_CATEGORIES[media.type.toLowerCase()].map((item) => (
-                      <MenuItem
-                        key={item.value}
-                        onClick={() => {
-                          setEditorContext({
-                            id: null,
-                            unit: progress ?? 1,
-                            rating: 0,
-                            emotions: [],
-                            review: '',
-                            favourite: false,
-                            subject: item.value,
-                            ...(media.progressVolumes && {
-                              volume: media.progressVolumes,
-                            }),
-                          });
-                          onReviewEditorOpen();
-                        }}
-                      >
-                        {item.label}
-                      </MenuItem>
-                    ))}
-                  </MenuList>
-                </Menu>
-              </ButtonGroup>
-            </>
-          ) : media.status === 'NOT_YET_RELEASED' ? (
-            <IconButton icon={<CalendarIcon />} />
-          ) : (
-            <Flex gap={'2'}>
-              <Button onClick={() => {}}>Start Watching</Button>
-              <IconButton icon={<CalendarIcon />} />
-            </Flex>
-          )}
-          <Separator orientation="vertical" />
-          <Button onClick={onListEditorOpen} variant={'outline'}>
-            List Editor
-          </Button>
-        </HStack>
-      </CardBody>
-      {openListEditor && (
-        <ListEditor
-          openListEditor={openListEditor}
-          onListEditorClose={onListEditorClose}
+        <ActionButtons
+          onListEditorOpen={onListEditorOpen}
+          onReviewEditorOpen={onReviewEditorOpen}
+          setCurrentReviewMetadata={setCurrentReviewMetadata}
         />
+      </CardBody>
+      <ListEditor
+        openListEditor={openListEditor}
+        onListEditorClose={onListEditorClose}
+      />
+    </Card>
+  );
+}
+
+function MediaRating({ score, maxScore = 10, label = '' } = {}) {
+  const normalizedScore = score / maxScore;
+  const fractions = Math.floor(
+    1 / (5 * normalizedScore - Math.floor(5 * normalizedScore))
+  );
+  return (
+    <Tooltip
+      label={`${label}${new Intl.NumberFormat(
+        localStorage.getItem('animan-locale') ?? undefined,
+        {
+          style: 'percent',
+        }
+      ).format(normalizedScore)}`}
+    >
+      <Rating
+        readOnly
+        value={5 * normalizedScore}
+        fractions={fractions === Infinity ? null : fractions}
+      />
+    </Tooltip>
+  );
+}
+
+function MediaTags({ tags, onToggle, open }) {
+  const [showSpoilerTags, setShowSpoilerTags] = useState(false);
+  return (
+    <>
+      <Button variant={'link'} onClick={onToggle}>
+        See Tags
+      </Button>
+      <Collapse open={open}>
+        <Box>
+          {tags.some((tag) => tag.isMediaSpoiler) && (
+            <Checkbox
+              label={'Show spoiler tags'}
+              defaultChecked={showSpoilerTags}
+              onChange={() => setShowSpoilerTags((prev) => !prev)}
+            />
+          )}
+          <Flex flexWrap={'wrap'} gap={'2'} mt="2">
+            {tags
+              .filter((tag) => showSpoilerTags || !tag.isMediaSpoiler)
+              .map((tag) => (
+                <Tooltip key={tag.id} label={tag.description}>
+                  <Tag
+                    variant={'surface'}
+                    colorScheme={tag.isMediaSpoiler ? 'green' : 'purple'}
+                    as={Link}
+                    href={`/tag?id=${tag.id}`}
+                  >
+                    {tag.name}
+                  </Tag>
+                </Tooltip>
+              ))}
+          </Flex>
+        </Box>
+      </Collapse>
+    </>
+  );
+}
+
+function ActionButtons({
+  onListEditorOpen,
+  onReviewEditorOpen,
+  setCurrentReviewMetadata,
+}) {
+  const media = useMedia();
+  const notice = useNotice();
+
+  const { mutate, isPending } = useUpdateUserMedia({
+    mediaId: media.id,
+    mediaType: media.type,
+    handleSuccess: () => {
+      notice({
+        status: 'success',
+        description: 'Media List Entry Updated',
+      });
+    },
+    handleError: (error) => {
+      notice({
+        status: 'error',
+        description: error.message,
+        title: error.name,
+      });
+    },
+  });
+
+  const components = {
+    DEFAULT: (
+      <IconButton
+        disabled={isPending}
+        icon={<CalendarIcon />}
+        onClick={() => {
+          mutate({
+            mediaId: media.id,
+            mediaType: media.type,
+            status: 'PLANNING',
+          });
+        }}
+      />
+    ),
+    CURRENT: (
+      <>
+        <UpdateMediaProgress isPending={isPending} mutate={mutate} />
+        <ReviewButtonGroup
+          disabled={isPending}
+          onReviewEditorOpen={onReviewEditorOpen}
+          setCurrentReviewMetadata={setCurrentReviewMetadata}
+        />
+      </>
+    ),
+
+    REPEATING: (
+      <>
+        <UpdateMediaProgress isPending={isPending} mutate={mutate} />
+        <ReviewButtonGroup
+          disabled={isPending}
+          onReviewEditorOpen={onReviewEditorOpen}
+          setCurrentReviewMetadata={setCurrentReviewMetadata}
+        />
+      </>
+    ),
+
+    PLANNING: <PlanningComponent isPending={isPending} mutate={mutate} />,
+
+    PAUSED: (
+      <>
+        <PlanningComponent isPending={isPending} mutate={mutate} />
+        <ReviewButtonGroup
+          disabled={isPending}
+          onReviewEditorOpen={onReviewEditorOpen}
+          setCurrentReviewMetadata={setCurrentReviewMetadata}
+        />
+      </>
+    ),
+
+    COMPLETED: (
+      <ReviewButtonGroup
+        disabled={isPending}
+        onReviewEditorOpen={onReviewEditorOpen}
+        setCurrentReviewMetadata={setCurrentReviewMetadata}
+      />
+    ),
+
+    DROPPED: (
+      <ReviewButtonGroup
+        disabled={isPending}
+        onReviewEditorOpen={onReviewEditorOpen}
+        setCurrentReviewMetadata={setCurrentReviewMetadata}
+      />
+    ),
+  };
+
+  return (
+    <HStack wrap={'wrap'}>
+      {media.status === 'NOT_YET_RELEASED' ? (
+        components['DEFAULT']
+      ) : media.listEntry ? (
+        components[media.listEntry.status]
+      ) : (
+        <>
+          {components['PLANNING']} {components['DEFAULT']}
+        </>
       )}
-    </VStack>
+      <Separator orientation="vertical" h={'20px'} />
+      <Button onClick={onListEditorOpen} variant={'outline'}>
+        List Editor
+      </Button>
+    </HStack>
+  );
+}
+
+function ReviewButtonGroup({
+  onReviewEditorOpen,
+  setCurrentReviewMetadata,
+  disabled,
+}) {
+  const media = useMedia();
+  return (
+    <ButtonGroup attached variant="outline">
+      <Button
+        disabled={disabled}
+        onClick={() => {
+          setCurrentReviewMetadata({
+            subjectType: media.type === 'ANIME' ? 'episode' : 'chapter',
+          });
+          onReviewEditorOpen();
+        }}
+      >
+        Review
+      </Button>
+
+      <Menu>
+        <MenuButton
+          as={IconButton}
+          icon={<ChevronDownIcon />}
+          disabled={disabled}
+        />
+
+        <MenuList>
+          {REVIEW_CATEGORIES[media.type.toLowerCase()].map((item) => (
+            <MenuItem
+              key={item.value}
+              onClick={() => {
+                setCurrentReviewMetadata({
+                  subjectType: item.value,
+                });
+                onReviewEditorOpen();
+              }}
+            >
+              {item.label}
+            </MenuItem>
+          ))}
+        </MenuList>
+      </Menu>
+    </ButtonGroup>
+  );
+}
+
+function UpdateMediaProgress({ isPending, mutate }) {
+  const media = useMedia();
+  return (
+    <IconButton
+      variant={'outline'}
+      icon={isPending ? <Loading /> : <PlusIcon />}
+      onClick={() => {
+        mutate({
+          mediaId: media.id,
+          mediaType: media.type,
+          progress: media.listEntry?.progress + 1,
+        });
+      }}
+      disabled={isPending}
+    />
+  );
+}
+
+function PlanningComponent({ isPending, mutate }) {
+  const media = useMedia();
+  return (
+    <Button
+      disabled={isPending}
+      onClick={() => {
+        mutate({
+          mediaId: media.id,
+          mediaType: media.type,
+          status: 'CURRENT',
+        });
+      }}
+    >
+      {isPending ? <Loading /> : 'Start Watching'}
+    </Button>
+  );
+}
+
+function MediaInfoDataList() {
+  const media = useMedia();
+  const timeLeft = useCountDownTimer(media.nextAiringEpisode?.airingAt);
+  return (
+    <DataList
+      col={2}
+      variant={'subtle'}
+      size={{ base: 'lg' }}
+      gapY={{ base: '4', lg: '2' }}
+    >
+      <DataListItem>
+        <DataListTerm>Type</DataListTerm>
+        <DataListDescription>{media.type}</DataListDescription>
+      </DataListItem>
+      <DataListItem>
+        <DataListTerm>Format</DataListTerm>
+        <DataListDescription>{media.format}</DataListDescription>
+      </DataListItem>
+      <DataListItem>
+        <DataListTerm>Score</DataListTerm>
+        <DataListDescription display={'flex'} gap="2">
+          {media.listEntry && (
+            <>
+              <MediaRating
+                score={media.listEntry.score}
+                label={'Your score: '}
+              />
+              <Separator orientation="vertical" h={'20px'} />
+            </>
+          )}
+          <MediaRating
+            score={media.meanScore}
+            maxScore={100}
+            label={'Mean Score: '}
+          />
+        </DataListDescription>
+      </DataListItem>
+      <DataListItem>
+        <DataListTerm>Airing Status</DataListTerm>
+        <DataListDescription>
+          {media.type === 'ANIME'
+            ? media.nextAiringEpisode
+              ? `Next episode ${media.nextAiringEpisode.episode} is airing in ${timeLeft}`
+              : `Not airing (${media.status.replace('_', ' ')})`
+            : media.status === 'RELEASING'
+            ? 'Ongoing'
+            : media.status}
+        </DataListDescription>
+      </DataListItem>
+      {media.listEntry?.status === 'CURRENT' && (
+        <DataListItem>
+          <DataListTerm>Progress</DataListTerm>
+          <DataListDescription>
+            {media.type === 'ANIME'
+              ? computeProgressString(
+                  media.listEntry?.progress,
+                  media.episodes,
+                  media.nextAiringEpisode?.episode - 1
+                )
+              : computeProgressString(
+                  media.listEntry?.progress,
+                  media.chapters
+                )}
+          </DataListDescription>
+        </DataListItem>
+      )}
+    </DataList>
+  );
+}
+
+function UserAnilistNote() {
+  const media = useMedia();
+  return (
+    <Popover trigger="hover">
+      <PopoverTrigger>
+        <span>
+          <NotepadTextIcon />
+        </span>
+      </PopoverTrigger>
+      <PopoverContent>
+        <PopoverHeader>Your Anilist note</PopoverHeader>
+        <PopoverBody>{media.listEntry.notes}</PopoverBody>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function MediaListEntryStatus() {
+  const media = useMedia();
+  return (
+    <p>
+      You{' '}
+      {['PAUSED', 'DROPPED', 'COMPLETED'].includes(media.listEntry.status)
+        ? 'have'
+        : 'are'}{' '}
+      <em>
+        {MEDIA_LIST_STATUS[media.type.toLowerCase()]
+          .find((mls) => mls.value === media.listEntry.status)
+          .label.toLowerCase()}
+      </em>
+    </p>
+  );
+}
+
+function MediaToggleFavourite() {
+  const media = useMedia();
+  const { mediaIsFavourite, toggleMediaFavourite, togglingMediaFavourite } =
+    useOptimisticToggleMediaFavourite({
+      mediaIsFavourite: media.isFavourite,
+    });
+  return (
+    <Toggle
+      borderRadius={'full'}
+      value="favourite"
+      selected={mediaIsFavourite}
+      colorScheme="red"
+      variant={'solid'}
+      disabled={togglingMediaFavourite}
+      icon={togglingMediaFavourite ? <Loading /> : <HeartIcon />}
+      onChange={() => {
+        toggleMediaFavourite({
+          mediaId: media.id,
+          mediaType: media.type,
+        });
+      }}
+    />
   );
 }

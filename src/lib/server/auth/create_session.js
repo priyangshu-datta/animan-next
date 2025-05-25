@@ -2,21 +2,19 @@ import db from '@/db/index';
 import { NextResponse } from 'next/server';
 import { AppError } from '../errors/AppError';
 import { ERROR_CODES } from '../errors/errorCodes';
-import { issueAccessToken, issueRefreshToken } from '../token-utils';
-import { MS_IN_WEEK } from '@/lib/constants';
-import { camelKeysToSnakeKeys } from '@/utils';
+import {
+  issueAccessToken,
+  issueRefreshToken,
+} from '../../../utils/token-utils';
+import {
+  MS_IN_15_MINUTES,
+  MS_IN_HOUR,
+  MS_IN_MONTH,
+  MS_IN_WEEK,
+} from '@/lib/constants';
+import { camelKeysToSnakeKeys } from '@/utils/general';
 import { cookies } from 'next/headers';
 
-/**
- * Creates a session, issues tokens, stores the session in DB,
- * sets the cookie, and returns an HTML response that sends the access token to the opener.
- * @param {object} userAndSessionInfo - User session data.
- * @param {string} userAndSessionInfo.userId - The unique ID of the user.
- * @param {string} [userAndSessionInfo.timesRotated] - Previous rotation count.
- * @param {boolean} refreshGrant - Whether this is a token rotation scenario.
- * @param {"iframe" | "popup"} type
- * @returns {Promise<import('next/server').NextResponse>} - A Next.js HTML response with token info.
- */
 export async function createSessionAndReturnTokenResponse(
   userAndSessionInfo,
   refreshGrant,
@@ -44,13 +42,6 @@ export async function createSessionAndReturnTokenResponse(
   return buildTokenResponse({ accessToken, userId }, type);
 }
 
-/**
- * Stores a new session in the database.
- * @param {string} userId - ID of the user.
- * @param {string} refreshToken - Newly issued refresh token.
- * @param {number} timesRotated - Number of times the refresh token has been rotated.
- * @returns {Promise<boolean>} - Whether the session was successfully created.
- */
 export async function storeSession(userId, refreshToken, timesRotated) {
   const inserted = await db('sessions')
     .insert(
@@ -66,11 +57,6 @@ export async function storeSession(userId, refreshToken, timesRotated) {
   return inserted.length > 0;
 }
 
-/**
- * Sets the secure HTTP-only refresh token cookie.
- * @param {object} cookieStore - Object for setting cookies.
- * @param {string} refreshToken - Refresh token to store in the cookie.
- */
 export async function setRefreshTokenCookie(refreshToken) {
   const cookieStore = await cookies();
 
@@ -84,13 +70,6 @@ export async function setRefreshTokenCookie(refreshToken) {
   });
 }
 
-/**
- * Builds an HTML response that posts the access token to the opener window and closes the popup.
- * @param {string} accessToken - Access token to be sent to the frontend.
- * @param {string} userId
- * @param {"iframe" | "popup"} type
- * @returns {import('next/server').NextResponse} - An HTML response with embedded script.
- */
 export function buildTokenResponse(payload, type) {
   const html = `<!DOCTYPE html>
 <html>
@@ -120,4 +99,58 @@ export function buildTokenResponse(payload, type) {
       'Content-type': 'text/html; charset=utf-8',
     },
   });
+}
+
+export async function createNewUserWithOAuth(
+  linkUserId,
+  username,
+  providerUserId,
+  accessToken,
+  refreshToken,
+  provider
+) {
+  let userId = linkUserId;
+  if (!linkUserId) {
+    const userInsertResult = await db('users')
+      .insert({ username: `${provider}-${username}` })
+      .returning('id');
+
+    if (!userInsertResult.length) {
+      throw new AppError({
+        code: ERROR_CODES.DATABASE_ERROR,
+        message: 'Failed to create new user',
+        status: 500,
+      });
+    }
+
+    userId = userInsertResult[0].id;
+  }
+
+  const oauthInsertResult = await db('oauth_accounts')
+    .insert(
+      camelKeysToSnakeKeys({
+        userId,
+        provider,
+        providerUserId: providerUserId,
+        accessToken: accessToken,
+        accessTokenExpiration: new Date(
+          Date.now() + MS_IN_HOUR - MS_IN_15_MINUTES
+        ),
+        refreshToken: refreshToken,
+        refreshTokenExpiration: new Date(
+          Date.now() + MS_IN_MONTH - MS_IN_15_MINUTES
+        ),
+      })
+    )
+    .returning('id');
+
+  if (!oauthInsertResult.length) {
+    throw new AppError({
+      code: ERROR_CODES.DATABASE_ERROR,
+      message: 'Failed to link Anilist account',
+      status: 500,
+    });
+  }
+
+  return userId;
 }

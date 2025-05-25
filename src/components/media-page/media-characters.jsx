@@ -1,13 +1,13 @@
-import { useMediaCharacters } from '@/lib/client/hooks/react_query/graphql/use-media-characters';
-import { Button, Grid } from '@yamada-ui/react';
+import { useMediaCharacters } from '@/lib/client/hooks/react_query/get/media/related/characters';
+import { debounce } from '@/utils/general';
+import { Button, Grid, Loading } from '@yamada-ui/react';
 import CharacterCard from './character-card';
-import { debounce } from '@/lib/client/utils';
 
 export default function MediaCharacters(props) {
-  const { mediaId } = props;
+  const { mediaId, mediaType } = props;
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetched } =
-    useMediaCharacters(mediaId);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useMediaCharacters({ mediaId, mediaType });
 
   const fetchMore = debounce(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -28,31 +28,26 @@ export default function MediaCharacters(props) {
         }}
         gap="md"
       >
-        {isFetched
-          ? (data?.pages.flatMap((page) => page.characters) ?? []).map(
-              (char) => (
-                <CharacterCard
-                  key={char.node.id}
-                  id={char.node.id}
-                  image={char.node.image.large}
-                  name={char.node.name.userPreferred}
-                  role={char.role}
-                />
-              )
-            )
-          : 'Loading...'}
-
+        {(data?.pages.flatMap((page) => page.characters) ?? []).map((char) => (
+          <CharacterCard
+            key={char.node.id}
+            id={char.node.id}
+            image={char.node.image.large}
+            name={char.node.name.userPreferred}
+            role={char.role}
+          />
+        ))}
+      </Grid>
+      {hasNextPage && (
         <Button
+          w={'full'}
+          mt={'2'}
           onClick={fetchMore}
           disabled={isFetchingNextPage || !hasNextPage}
         >
-          {isFetchingNextPage
-            ? 'Loading more...'
-            : hasNextPage
-            ? 'Load More'
-            : 'Nothing more to load'}
+          {isFetchingNextPage ? <Loading variant="grid" /> : 'Load More'}
         </Button>
-      </Grid>
+      )}
     </>
   );
 }

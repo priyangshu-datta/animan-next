@@ -1,4 +1,4 @@
-import { useViewReviews } from '@/lib/client/hooks/react_query/review/media/use-view-reviews';
+import { useMediaReviewsPaginated } from '@/lib/client/hooks/react_query/get/media/review/paginated';
 import {
   Button,
   Center,
@@ -10,42 +10,28 @@ import {
 } from '@yamada-ui/react';
 import ReviewCard from './review-card';
 import { PencilIcon, Trash2Icon } from '@yamada-ui/lucide';
-import { useEffect } from 'react';
 
 export default function ReviewList({
   subjectType,
   mediaId,
   mediaType,
-  setEditorContext,
+  setCurrentReviewMetadata,
   onDrawerOpen,
   setDelReview,
   onOpenReviewDeleteModal,
 }) {
-  const viewReviews = useViewReviews({
+  const viewReviews = useMediaReviewsPaginated({
     mediaId,
     mediaType,
     subjectType,
   });
 
   function handleUpdate(review) {
-    const editorContext = {
-      id: review.id,
-      unit: mediaType === 'ANIME' ? review.episodeNumber : review.chapterNumber,
-      rating: review.rating,
-      emotions: (review.emotions ?? '').split(';').filter((s) => s.length),
-      review: review.reviewText,
-      favourite: review.favourite,
-      subject: review.subjectType,
-      volume: review.volume,
-    };
-
-    setEditorContext(editorContext);
     onDrawerOpen();
+    setCurrentReviewMetadata({ id: review.id });
   }
 
-  return viewReviews.isFetching ? (
-    <Loading fontSize={'lg'} />
-  ) : (
+  return (
     <>
       {viewReviews.data.pages
         .flatMap((page) => page.data.reviews)
@@ -78,23 +64,29 @@ export default function ReviewList({
           );
         })}
 
-      <Button
-        onClick={() => {
-          if (viewReviews.hasNextPage && !viewReviews.isFetchingNextPage) {
-            fetchNextPage();
+      {viewReviews.hasNextPage && (
+        <Button
+          w={'full'}
+          mt={'2'}
+          onClick={() => {
+            if (viewReviews.hasNextPage && !viewReviews.isFetchingNextPage) {
+              viewReviews.fetchNextPage();
+            }
+          }}
+          disabled={viewReviews.isFetchingNextPage || !viewReviews.hasNextPage}
+          visibility={
+            !viewReviews.isFetchingNextPage &&
+            !viewReviews.hasNextPage &&
+            'collapse'
           }
-        }}
-        disabled={viewReviews.isFetchingNextPage || !viewReviews.hasNextPage}
-        visibility={
-          !viewReviews.isFetchingNextPage &&
-          !viewReviews.hasNextPage &&
-          'collapse'
-        }
-      >
-        {viewReviews.isFetchingNextPage
-          ? 'Loading more...'
-          : viewReviews.hasNextPage && 'Load More'}
-      </Button>
+        >
+          {viewReviews.isFetchingNextPage ? (
+            <Loading variant="dots" />
+          ) : (
+            'Load More'
+          )}
+        </Button>
+      )}
     </>
   );
 }

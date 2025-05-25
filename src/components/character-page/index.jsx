@@ -3,7 +3,7 @@ import { Card, Flex, Image, useDisclosure } from '@yamada-ui/react';
 import { useState } from 'react';
 import CharacterInfo from './character-info';
 import TabSection from './tab-section';
-import ReviewEditor from './review_editor';
+import ReviewEditor from './review-editor';
 
 export default function CharacterPage() {
   const character = useCharacter();
@@ -14,7 +14,7 @@ export default function CharacterPage() {
     onClose: onReviewEditorClose,
   } = useDisclosure();
 
-  const [editorContext, setEditorContext] = useState({});
+  const [currentReviewMetadata, setCurrentReviewMetadata] = useState(null);
 
   return (
     <>
@@ -37,19 +37,21 @@ export default function CharacterPage() {
           />
           <CharacterInfo
             onReviewEditorOpen={onOpenReviewEditor}
-            setEditorContext={setEditorContext}
+            setCurrentReviewMetadata={setCurrentReviewMetadata}
           />
         </Card>
         <TabSection
-          setEditorContext={setEditorContext}
           onDrawerOpen={onOpenReviewEditor}
+          setCurrentReviewMetadata={setCurrentReviewMetadata}
         />
       </Flex>
-      <ReviewEditor
-        editorContext={editorContext}
-        openReviewEditor={openReviewEditor}
-        onReviewEditorClose={onReviewEditorClose}
-      />
+      {openReviewEditor && (
+        <ReviewEditor
+          currentReviewMetadata={currentReviewMetadata}
+          openReviewEditor={openReviewEditor}
+          onReviewEditorClose={onReviewEditorClose}
+        />
+      )}
     </>
   );
 }

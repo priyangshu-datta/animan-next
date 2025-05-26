@@ -1,17 +1,14 @@
 import { assocMedia } from '@/stores/assoc-media';
 import { sentenceCase } from '@/utils/general';
 import {
+  Box,
   Card,
   CardBody,
   CardHeader,
-  Text,
   Image,
+  Text,
   Tooltip,
-  Box,
   VStack,
-  Collapse,
-  useDisclosure,
-  Button,
 } from '@yamada-ui/react';
 import Link from 'next/link';
 import Spoiler from '../spoiler';

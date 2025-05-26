@@ -1,15 +1,16 @@
 'use client';
 
-import { useUpdateUserInfo } from '@/lib/client/hooks/react_query/patch/user/info';
 import { useUserInfo } from '@/lib/client/hooks/react_query/get/user/info';
+import { useUpdateUserInfo } from '@/lib/client/hooks/react_query/patch/user/info';
 
 import AnilistIcon from '@/components/icons/anilist';
+import { useCheckUsername } from '@/lib/client/hooks/react_query/get/user/check-username';
+import { SNACK_DURATION } from '@/lib/constants';
 import { debounce, fuzzyRegexMatch, sentenceCase } from '@/utils/general';
 import {
   CheckIcon,
   ComputerIcon,
   MoonIcon,
-  SaveIcon,
   SunIcon,
   XIcon,
 } from '@yamada-ui/lucide';
@@ -24,10 +25,8 @@ import {
   Flex,
   FormControl,
   Heading,
-  IconButton,
   Input,
   InputGroup,
-  InputRightAddon,
   InputRightElement,
   Loading,
   Text,
@@ -35,11 +34,9 @@ import {
   useNotice,
   VStack,
 } from '@yamada-ui/react';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import ReactSelect from 'react-select';
-import { useCheckUsername } from '@/lib/client/hooks/react_query/get/user/check-username';
-import { SNACK_DURATION } from '@/lib/constants';
 
 /* Locales and time zone. */
 
@@ -47,6 +44,7 @@ export default function Profile() {
   useEffect(() => {
     document.title = 'Settings';
   }, []);
+
   return (
     <Suspense fallback={<Loading />}>
       <Page />
@@ -56,10 +54,10 @@ export default function Profile() {
 
 function Page() {
   const userInfo = useUserInfo();
+
   const {
     control,
     reset,
-    getValues,
     formState: { errors, isDirty, dirtyFields, defaultValues },
     handleSubmit,
     watch,
@@ -67,10 +65,10 @@ function Page() {
     resetField,
   } = useForm({
     defaultValues: {
-      username: userInfo.data.data.username,
-      locale: userInfo.data.data.locale ?? '',
-      timezone: userInfo.data.data.timezone ?? '',
-      colorScheme: userInfo.data.data.colorScheme,
+      username: userInfo.data?.data?.username,
+      locale: userInfo.data?.data?.locale ?? '',
+      timezone: userInfo.data?.data?.timezone ?? '',
+      colorScheme: userInfo.data?.data?.colorScheme,
     },
   });
 
@@ -107,8 +105,8 @@ function Page() {
   const { internalColorMode, changeColorMode, colorMode } = useColorMode();
 
   useEffect(() => {
-    if (userInfo.data.data.colorScheme) {
-      changeColorMode(userInfo.data.data.colorScheme);
+    if (userInfo.data?.data?.colorScheme) {
+      changeColorMode(userInfo.data?.data?.colorScheme);
     }
   }, [userInfo.data, changeColorMode]);
 
@@ -348,14 +346,18 @@ function Page() {
           <DataListDescription>
             <Flex alignItems={'center'} gap="4">
               <AnilistIcon />
-              <Text>{sentenceCase(userInfo.data.data.providerName)}</Text>
+              <Text>
+                {sentenceCase(userInfo.data?.data?.providerName ?? '')}
+              </Text>
             </Flex>
           </DataListDescription>
         </DataListItem>
         <DataListItem>
           <DataListTerm>User ID</DataListTerm>
           <DataListDescription>
-            <Text>{sentenceCase(userInfo.data.data.providerUserId)}</Text>
+            <Text>
+              {sentenceCase(userInfo.data?.data?.providerUserId ?? '')}
+            </Text>
           </DataListDescription>
         </DataListItem>
         <DataListItem>
@@ -375,7 +377,7 @@ function Page() {
                 dateStyle: 'full',
                 timeStyle: 'long',
               }
-            ).format(Date.parse(userInfo.data.data.createdAt))}
+            ).format(Date.parse(userInfo.data?.data?.createdAt ?? 0))}
           </DataListDescription>
         </DataListItem>
       </DataList>

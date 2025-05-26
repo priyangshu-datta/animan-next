@@ -55,7 +55,7 @@ import {
   VStack,
 } from '@yamada-ui/react';
 import Link from 'next/link';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import {
   Controller,
   FormProvider,
@@ -90,7 +90,8 @@ function getFuzzyDate(date) {
 }
 
 function Search() {
-  document.title = "Search"
+  document.title = 'Search';
+
   const methods = useForm({
     defaultValues: {
       query: '',

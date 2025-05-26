@@ -1,14 +1,14 @@
-import db from '@/db/index'
-import { getAnilistClient } from '@/lib/server/anilist'
+import db from '@/db/index';
+import { getAnilistClient } from '@/lib/server/anilist';
 import {
   buildTokenResponse,
   createNewUserWithOAuth,
   createSessionAndReturnTokenResponse,
   handleError,
-} from '@/utils/auth'
-import { snakeKeysToCamelKeys } from '@/utils/general'
-import * as arctic from 'arctic'
-import { cookies } from 'next/headers'
+} from '@/utils/auth';
+import { snakeKeysToCamelKeys } from '@/utils/general';
+import * as arctic from 'arctic';
+import { cookies } from 'next/headers';
 
 export async function GET(request) {
   try {

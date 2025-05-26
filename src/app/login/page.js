@@ -14,15 +14,19 @@ import {
   Text,
 } from '@yamada-ui/react';
 import { initiateAuthPopupFlow } from '@/lib/client/auth/auth-flow-async';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authStore } from '@/stores/auth-store';
 
-/**
- * LoginPage component renders the login page with options to sign in using different providers.
- * @returns {import("react").ReactElement} The rendered login page component.
- */
-export default function LoginPage() {
+export default function LoginPageWrapper() {
+  return (
+    <Suspense>
+      <LoginPage />
+    </Suspense>
+  );
+}
+
+function LoginPage() {
   const params = useSearchParams();
   const router = useRouter();
 
@@ -46,7 +50,7 @@ export default function LoginPage() {
   return (
     <Flex py="8" className="min-h-screen w-screen">
       <Card className="m-auto">
-        <CardHeader display={"flex"} justifyContent={"center"}>
+        <CardHeader display={'flex'} justifyContent={'center'}>
           <Image src={'/animan-logo.png'} width={'32'} alt={'AniMan'} />
           {nextRoute !== '/' && (
             <>

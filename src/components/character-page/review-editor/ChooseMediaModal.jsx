@@ -9,8 +9,8 @@ import {
 import CharacterMedia from '../character-media';
 import { MEDIA_TYPES } from '@/lib/constants';
 import { useCharacter } from '@/context/use-character';
-import { useState } from 'react';
-import { sentenceCase } from '@/utils/general'
+import { Suspense, useState } from 'react';
+import { sentenceCase } from '@/utils/general';
 
 export function ChooseMediaModal({ onClose, open }) {
   const character = useCharacter();
@@ -29,11 +29,13 @@ export function ChooseMediaModal({ onClose, open }) {
             value: sentenceCase(mType),
           }))}
         />
-        <CharacterMedia
-          characterId={character.id}
-          mediaType={mediaType}
-          style={'list'}
-        />
+        <Suspense fallback={<Loading />}>
+          <CharacterMedia
+            characterId={character.id}
+            mediaType={mediaType}
+            style={'list'}
+          />
+        </Suspense>
       </ModalBody>
 
       <ModalFooter>

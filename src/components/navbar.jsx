@@ -36,9 +36,9 @@ export default function NavBar({}) {
 
   const { snack, snacks } = useSnacks();
 
-  const {
-    data: { data: userData },
-  } = useUserInfo();
+  const userInfo = useUserInfo();
+
+  const userData = userInfo?.data?.data;
 
   const snackRef = useRef(null);
 
@@ -65,9 +65,9 @@ export default function NavBar({}) {
         variant: 'solid',
       });
     } else if (!(locale && timezone)) {
-      if (userData.locale.length > 0 && userData.timezone.length > 0) {
-        localStorage.setItem('animan-locale', userData.locale);
-        localStorage.setItem('animan-timezone', userData.timezone);
+      if (userData?.locale.length > 0 && userData?.timezone.length > 0) {
+        localStorage.setItem('animan-locale', userData?.locale);
+        localStorage.setItem('animan-timezone', userData?.timezone);
       }
     } else {
       snack.closeAll();
@@ -83,12 +83,12 @@ export default function NavBar({}) {
 
         <Menu>
           <MenuButton as={Button} variant={'link'} h="full" ml="auto">
-            <Avatar name={userData.username} />
+            <Avatar name={userData?.username} />
           </MenuButton>
 
           <MenuList>
             <Box px="3" py="2">
-              User: {userData.username}
+              User: {userData?.username}
             </Box>
             <MenuItem as={NextLink} href="/profile">
               Profile Settings

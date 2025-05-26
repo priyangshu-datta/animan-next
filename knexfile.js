@@ -3,15 +3,15 @@
  * @type { import("knex").Knex.Config }
  */
 export const development = {
-  client: 'cockroachdb',
-  connection: 'postgresql://root@localhost:26257/animan?sslmode=disable',
-  // connection: {
-  //   host: '127.0.0.1',
-  //   port: '5432',
-  //   user: 'postgres',
-  //   database: 'animan',
-  //   password: '2007',
-  // },
+  client: 'pg',
+  // connection: 'postgresql://root@localhost:26257/animan?sslmode=disable',
+  connection: {
+    host: '127.0.0.1',
+    port: '5432',
+    user: 'postgres',
+    database: 'animan',
+    password: '2007',
+  },
   migrations: {
     directory: './src/db/migrations',
   },

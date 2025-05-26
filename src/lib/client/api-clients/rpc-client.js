@@ -15,6 +15,10 @@ export async function rpcRequest({ action, context, metadata }) {
 
     return response.data;
   } catch (error) {
+    if (typeof window === 'undefined') {
+      console.log('SSR tried it.');
+      return;
+    }
     const responseError = error.response.data.error;
     console.error({ error: responseError });
     throw responseError;

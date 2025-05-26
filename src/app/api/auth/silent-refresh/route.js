@@ -21,7 +21,6 @@ async function AuthRefreshFlow() {
     const cookieStore = await cookies();
     const refreshToken = cookieStore.get('refresh_token');
 
-
     if (!refreshToken) {
       throw new AppError({
         code: ERROR_CODES.NO_REFRESH_TOKEN,
@@ -61,7 +60,7 @@ async function AuthRefreshFlow() {
       'iframe'
     );
   } catch (err) {
-    console.error({err})
+    console.error({ err });
     return respondError(err);
   }
 }

@@ -1,11 +1,9 @@
-import db from '@/db';
-import { AppError } from '@/lib/server/errors/AppError';
-import { ERROR_CODES } from '@/lib/server/errors/errorCodes';
-import { respondError, respondSuccess } from '@/lib/server/responses';
-import { isAnimanTokenValid } from '@/utils/auth';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { NextResponse } from 'next/server';
+import db from '@/db'
+import { AppError } from '@/lib/server/errors/AppError'
+import { ERROR_CODES } from '@/lib/server/errors/errorCodes'
+import { respondError, respondSuccess } from '@/lib/server/responses'
+import { isAnimanTokenValid } from '@/utils/auth'
+import { cookies } from 'next/headers'
 
 export async function DELETE(request) {
   const trxProvider = db.transactionProvider();

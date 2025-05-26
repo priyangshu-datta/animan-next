@@ -154,8 +154,8 @@ export default function MediaInfo({
   );
 }
 
-function MediaRating({ score, maxScore = 10, label = '' } = {}) {
-  const normalizedScore = (5 * score) / maxScore;
+function MediaRating({ stars = 5, score, maxScore = 10, label = '' } = {}) {
+  const normalizedScore = (stars * score) / maxScore;
   let locale;
   useEffect(() => {
     locale = localStorage.getItem('animan-locale');
@@ -164,9 +164,9 @@ function MediaRating({ score, maxScore = 10, label = '' } = {}) {
     <Tooltip
       label={`${label}${new Intl.NumberFormat(locale, {
         style: 'percent',
-      }).format(normalizedScore)}`}
+      }).format(normalizedScore / stars)}`}
     >
-      <Rating readOnly value={normalizedScore} fractions={maxScore} />
+      <Rating readOnly value={normalizedScore} fractions={maxScore} items={stars} />
     </Tooltip>
   );
 }

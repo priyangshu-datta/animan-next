@@ -2,7 +2,7 @@
 
 import MediaCard from '@/components/media-card';
 import { useUserMediaList } from '@/lib/client/hooks/react_query/get/user/media/list';
-import { MEDIA_LIST_STATUS } from '@/lib/constants'
+import { MEDIA_LIST_STATUS } from '@/lib/constants';
 import { debounce } from '@/utils/general';
 import {
   Box,
@@ -12,8 +12,9 @@ import {
   Loading,
   Option,
   Select,
+  Skeleton,
 } from '@yamada-ui/react';
-import { Suspense, useState } from 'react';
+import { useState } from 'react';
 
 export default function Home() {
   const [mediaType, setMediaType] = useState('ANIME');
@@ -34,18 +35,13 @@ export default function Home() {
           items={MEDIA_LIST_STATUS[mediaType.toLocaleLowerCase()]}
         />
       </Flex>
-      <Suspense fallback={<Loading />}>
-        <MediaCardList
-          mediaListStatus={mediaListStatus}
-          mediaType={mediaType}
-        />
-      </Suspense>
+      <MediaCardList mediaListStatus={mediaListStatus} mediaType={mediaType} />
     </Box>
   );
 }
 
 function MediaCardList({ mediaType, mediaListStatus }) {
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetched } =
     useUserMediaList({ mediaType, mediaListStatus });
 
   const fetchMore = debounce(() => {
@@ -62,25 +58,33 @@ function MediaCardList({ mediaType, mediaListStatus }) {
       placeItems={'center'}
       gridTemplateColumns={'repeat(auto-fill, minmax(220px, 1fr))'}
     >
-      {data.pages
-        .flatMap((page) => page.mediaList)
-        .map((listEntry) => (
-          <MediaCard
-            listEntry={listEntry}
-            coverImage={listEntry.media.coverImage.large}
-            title={listEntry.media.title.userPreferred}
-            mediaStatus={listEntry.media.status}
-            totalEpisodes={
-              listEntry.media.nextAiringEpisode?.episode - 1 ||
-              listEntry.media.episodes
-            }
-            progress={listEntry.progress}
-            nextAiringAt={listEntry.media.nextAiringEpisode?.airingAt ?? ''}
-            mediaId={listEntry.media.id}
-            mediaType={mediaType}
-            key={listEntry.media.id}
-          />
-        ))}
+      {isFetched
+        ? data.pages
+            .flatMap((page) => page.mediaList)
+            .map((listEntry) => (
+              <MediaCard
+                listEntry={listEntry}
+                coverImage={listEntry?.media?.coverImage?.large}
+                title={listEntry?.media?.title?.userPreferred}
+                mediaStatus={listEntry?.media?.status}
+                totalEpisodes={
+                  listEntry?.media?.nextAiringEpisode?.episode - 1 ||
+                  listEntry?.media?.episodes
+                }
+                progress={listEntry?.progress}
+                nextAiringAt={
+                  listEntry?.media?.nextAiringEpisode?.airingAt ?? ''
+                }
+                mediaId={listEntry?.media?.id}
+                mediaType={mediaType}
+                key={listEntry?.media?.id}
+              />
+            ))
+        : Array.from({ length: 5 }).map(() => (
+            <Box key={Math.random()} padding={'4'}>
+              <Skeleton h={'xs'} w={'150px'} />
+            </Box>
+          ))}
       {hasNextPage && (
         <Button
           onClick={fetchMore}

@@ -1,6 +1,6 @@
 import { useCharacterMedia } from '@/lib/client/hooks/react_query/get/character/related/media';
 import { debounce, fuzzyRegexMatch } from '@/utils/general';
-import { Button, Grid, Input } from '@yamada-ui/react';
+import { Box, Button, Grid, Input, Skeleton } from '@yamada-ui/react';
 import MediaCard from './media-card';
 import { useEffect, useState } from 'react';
 import { useDebounce } from '@/lib/client/hooks/use-debounce';
@@ -62,7 +62,10 @@ export default function CharacterMedia({ characterId, mediaType, style }) {
 
   return (
     <>
-      <Input onChange={(ev) => setSearchTerm(ev.target.value)} />
+      <Input
+        placeholder="Search related Media"
+        onChange={(ev) => setSearchTerm(ev.target.value)}
+      />
 
       <Grid
         overflow={'auto'}
@@ -85,15 +88,25 @@ export default function CharacterMedia({ characterId, mediaType, style }) {
                 <MediaCard key={media.id} media={media} style={style} />
               ))
             : 'No result.'
-          : 'Loading...'}
+          : Array.from({ length: 5 }).map(() => (
+              <Box key={Math.random()} padding={'4'}>
+                <Skeleton
+                  h={style === 'list' ? '24' : 'xs'}
+                  w={style === 'list' ? 'full' : '150px'}
+                />
+              </Box>
+            ))}
 
-        <Button
-          onClick={fetchMore}
-          disabled={isFetchingNextPage || !hasNextPage}
-          visibility={!isFetchingNextPage && !hasNextPage && 'collapse'}
-        >
-          {isFetchingNextPage ? 'Loading more...' : hasNextPage && 'Load More'}
-        </Button>
+        {hasNextPage && (
+          <Button
+            w={'full'}
+            mt={'2'}
+            onClick={fetchMore}
+            disabled={isFetchingNextPage || !hasNextPage}
+          >
+            {isFetchingNextPage ? <Loading variant="grid" /> : 'Load More'}
+          </Button>
+        )}
       </Grid>
     </>
   );

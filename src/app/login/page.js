@@ -1,10 +1,9 @@
 'use client';
 
 import AnilistIcon from '@/components/icons/anilist';
-import MALIcon from '@/components/icons/mal';
-import KitsuIcon from '@/components/icons/kitsu';
+import { initiateAuthPopupFlow } from '@/lib/client/auth/auth-flow-async';
+import { authStore } from '@/stores/auth-store';
 import {
-  Box,
   Button,
   Card,
   CardBody,
@@ -13,10 +12,8 @@ import {
   Image,
   Text,
 } from '@yamada-ui/react';
-import { initiateAuthPopupFlow } from '@/lib/client/auth/auth-flow-async';
-import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { authStore } from '@/stores/auth-store';
+import { Suspense, useEffect, useState } from 'react';
 
 export default function LoginPageWrapper() {
   return (

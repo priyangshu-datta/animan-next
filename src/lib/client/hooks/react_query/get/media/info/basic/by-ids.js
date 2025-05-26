@@ -1,9 +1,9 @@
 import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 export function useMediaBasicDetailsByIds({ mediaIds, mediaType }) {
   mediaIds.sort();
-  return useSuspenseQuery({
+  return useQuery({
     queryKey: [
       'get:media:basic-details:{mediaIds,mediaType}',
       mediaIds,
@@ -17,5 +17,6 @@ export function useMediaBasicDetailsByIds({ mediaIds, mediaType }) {
           mediaType,
         },
       }),
+    enabled: !!mediaIds && !!mediaType && typeof window !== 'undefined',
   });
 }

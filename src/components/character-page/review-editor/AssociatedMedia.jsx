@@ -12,13 +12,12 @@ import {
 import { Controller, useFormContext } from 'react-hook-form';
 import { ChooseMediaModal } from './ChooseMediaModal';
 import { useAssociatedMedia } from './hooks';
-import { assocMedia } from '@/stores/assoc-media'
-import { sentenceCase } from '@/utils/general'
+import { assocMedia } from '@/stores/assoc-media';
+import { sentenceCase } from '@/utils/general';
 
 export function AssociatedMedia() {
   const { setValue: setFormValue, control } = useFormContext();
   const { open, onClose, onOpen } = useDisclosure();
-
   const assocMediaData = assocMedia();
 
   useAssociatedMedia(setFormValue);
@@ -26,7 +25,6 @@ export function AssociatedMedia() {
   return (
     <>
       <AssocMediaDummyInputs control={control} />
-
       <HStack
         alignItems={'flex-start'}
         onClick={onOpen}

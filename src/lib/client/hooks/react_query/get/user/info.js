@@ -1,12 +1,13 @@
 import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 export function useUserInfo() {
-  return useSuspenseQuery({
+  return useQuery({
     queryKey: ['get:user:info'],
     queryFn: () =>
       rpcRequest({
         action: 'get:user:info',
       }),
+    enabled: typeof window !== 'undefined',
   });
 }

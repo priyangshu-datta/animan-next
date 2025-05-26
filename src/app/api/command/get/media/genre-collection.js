@@ -11,5 +11,5 @@ export async function getMediaGenreCollection() {
     query: MEDIA_GENRE_COLLECTION_QUERY,
   });
 
-  return respondSuccess({ genres: respone.data.data.GenreCollection });
+  return respondSuccess(respone.data.data.GenreCollection);
 }

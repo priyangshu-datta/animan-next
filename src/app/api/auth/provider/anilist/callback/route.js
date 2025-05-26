@@ -1,7 +1,6 @@
 import db from '@/db/index';
 import { getAnilistClient } from '@/lib/server/anilist';
 import {
-  buildTokenResponse,
   createNewUserWithOAuth,
   createSessionAndReturnTokenResponse,
   handleError,

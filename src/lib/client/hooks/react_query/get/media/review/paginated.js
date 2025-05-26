@@ -1,8 +1,8 @@
 import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
-import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 
 export function useMediaReviewsPaginated({ mediaId, mediaType, subjectType }) {
-  return useSuspenseInfiniteQuery({
+  return useInfiniteQuery({
     queryKey: [
       'get:media:[subjectType]:reviews-paginated:{mediaId,mediaType,subjectType,cursor,limit}',
       mediaId,
@@ -23,5 +23,10 @@ export function useMediaReviewsPaginated({ mediaId, mediaType, subjectType }) {
     getNextPageParam: (lastPage) => {
       return lastPage.meta.nextCursor;
     },
+    enabled:
+      !!mediaId &&
+      !!mediaType &&
+      !!subjectType &&
+      typeof window !== 'undefined',
   });
 }

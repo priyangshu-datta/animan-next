@@ -10,7 +10,6 @@ import {
   MenuList,
   Skeleton,
 } from '@yamada-ui/react';
-import { Suspense } from 'react';
 import ReviewCard from './review-card';
 
 export default function ReviewList({
@@ -20,7 +19,10 @@ export default function ReviewList({
   setDelReview,
   onOpenReviewDeleteModal,
 }) {
-  const viewReviews = useCharacterReviewsPaginated({ characterId });
+  const { data, isFetchingNextPage, hasNextPage, isFetched } =
+    useCharacterReviewsPaginated({
+      characterId,
+    });
 
   function handleUpdate(review) {
     setCurrentReviewMetadata({ id: review.id });
@@ -30,56 +32,56 @@ export default function ReviewList({
   return (
     <>
       <Grid gap={'2'}>
-        {viewReviews.data.pages
-          .flatMap((page) => page.data.reviews)
-          .map((review) => {
-            return (
-              <ContextMenu key={review.id}>
-                <ContextMenuTrigger as={Center} w="full" rounded="md">
-                  <Suspense fallback={<Skeleton h={'32'} />}>
-                    <ReviewCard review={review} key={review.id} />
-                  </Suspense>
-                </ContextMenuTrigger>
-                <MenuList>
-                  <MenuItem
-                    icon={<PencilIcon />}
-                    onClick={() => handleUpdate(review)}
-                  >
-                    Edit
-                  </MenuItem>
-                  <MenuItem
-                    icon={<Trash2Icon color={'red'} />}
-                    color={'red'}
-                    onClick={() => {
-                      setDelReview(review);
-                      onOpenReviewDeleteModal();
-                    }}
-                  >
-                    Remove
-                  </MenuItem>
-                </MenuList>
-              </ContextMenu>
-            );
-          })}
+        {isFetched
+          ? data.pages
+              .flatMap((page) => page.data.reviews)
+              .map((review) => {
+                return (
+                  <ContextMenu key={review.id}>
+                    <ContextMenuTrigger as={Center} w="full" rounded="md">
+                      <ReviewCard review={review} key={review.id} />
+                    </ContextMenuTrigger>
+                    <MenuList>
+                      <MenuItem
+                        icon={<PencilIcon />}
+                        onClick={() => handleUpdate(review)}
+                      >
+                        Edit
+                      </MenuItem>
+                      <MenuItem
+                        icon={<Trash2Icon color={'red'} />}
+                        color={'red'}
+                        onClick={() => {
+                          setDelReview(review);
+                          onOpenReviewDeleteModal();
+                        }}
+                      >
+                        Remove
+                      </MenuItem>
+                    </MenuList>
+                  </ContextMenu>
+                );
+              })
+          : Array.from({ length: 5 }).map(() => (
+              <Skeleton w={'full'} h={'20'} />
+            ))}
       </Grid>
 
-      <Button
-        onClick={() => {
-          if (viewReviews.hasNextPage && !viewReviews.isFetchingNextPage) {
-            fetchNextPage();
-          }
-        }}
-        disabled={viewReviews.isFetchingNextPage || !viewReviews.hasNextPage}
-        visibility={
-          !viewReviews.isFetchingNextPage &&
-          !viewReviews.hasNextPage &&
-          'collapse'
-        }
-      >
-        {viewReviews.isFetchingNextPage
-          ? 'Loading more...'
-          : viewReviews.hasNextPage && 'Load More'}
-      </Button>
+      {hasNextPage && (
+        <Button
+          w={'full'}
+          mt={'2'}
+          onClick={() => {
+            if (hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }}
+          disabled={isFetchingNextPage || !hasNextPage}
+          visibility={!isFetchingNextPage && !hasNextPage && 'collapse'}
+        >
+          {isFetchingNextPage ? <Loading variant="dots" /> : 'Load More'}
+        </Button>
+      )}
     </>
   );
 }

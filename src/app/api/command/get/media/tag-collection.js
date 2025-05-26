@@ -17,5 +17,5 @@ export async function getMediaTagCollection() {
     query: MEDIA_TAG_COLLECTION_QUERY,
   });
 
-  return respondSuccess({ tags: respone.data.data.MediaTagCollection });
+  return respondSuccess(respone.data.data.MediaTagCollection);
 }

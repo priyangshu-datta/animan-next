@@ -1,8 +1,8 @@
 import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
-import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 
 export function useUserMediaList({ mediaType, mediaListStatus }) {
-  return useSuspenseInfiniteQuery({
+  return useInfiniteQuery({
     queryKey: [
       'get:user:media:list:{mediaType,mediaListStatus}',
       mediaType,
@@ -14,17 +14,16 @@ export function useUserMediaList({ mediaType, mediaListStatus }) {
         context: { mediaType, mediaListStatus, page: pageParam, perPage: 10 },
       });
 
-      const { data, meta } = response;
-
       return {
-        mediaList: data,
-        hasNextPage: meta.hasNextPage,
-        currentPage: meta.currentPage,
+        mediaList: response?.data,
+        hasNextPage: response?.meta.hasNextPage,
+        currentPage: response?.meta.currentPage,
       };
     },
     getNextPageParam: (lastPage) => {
       return lastPage.hasNextPage ? lastPage.currentPage + 1 : undefined;
     },
     initialPageParam: 1,
+    enabled: !!mediaType && !!mediaListStatus && typeof window !== 'undefined',
   });
 }

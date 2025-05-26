@@ -1,8 +1,8 @@
-import { useCharacter } from '@/context/use-character';
-import { useDeleteMediaReview } from '@/lib/client/hooks/react_query/delete/character/review';
+import { useCharacter } from '@/context/use-character'
+import { useDeleteMediaReview } from '@/lib/client/hooks/react_query/delete/character/review'
+import { SNACK_DURATION } from '@/lib/constants'
 import {
   Button,
-  Loading,
   Modal,
   ModalBody,
   ModalFooter,
@@ -14,17 +14,19 @@ import {
   TabPanel,
   Tabs,
   useDisclosure,
-  useNotice,
-} from '@yamada-ui/react';
-import { Suspense, useMemo, useState } from 'react';
-import CharacterMedia from './character-media';
-import ReviewList from './review-list';
-import { SNACK_DURATION } from '@/lib/constants'
+  useNotice
+} from '@yamada-ui/react'
+import { useMemo, useState } from 'react'
+import CharacterMedia from './character-media'
+import ReviewList from './review-list'
 
 export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
   const character = useCharacter();
 
-  const memoedDescription = useMemo(() => ({ __html: character.description }));
+  const memoedDescription = useMemo(
+    () => ({ __html: character?.description }),
+    [character]
+  );
 
   const {
     open: openReviewDeleteModal,
@@ -102,24 +104,20 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
             <Option value="ANIME">Anime</Option>
             <Option value="MANGA">Manga</Option>
           </Select>
-          <Suspense fallback={<Loading />}>
-            <CharacterMedia
-              characterId={character.id}
-              mediaType={mediaType}
-              style={'default'}
-            />
-          </Suspense>
+          <CharacterMedia
+            characterId={character.id}
+            mediaType={mediaType}
+            style={'default'}
+          />
         </TabPanel>
         <TabPanel>
-          <Suspense fallback={<Loading />}>
-            <ReviewList
-              characterId={character.id}
-              setCurrentReviewMetadata={setCurrentReviewMetadata}
-              onDrawerOpen={onDrawerOpen}
-              setDelReview={setDelReview}
-              onOpenReviewDeleteModal={onOpenReviewDeleteModal}
-            />
-          </Suspense>
+          <ReviewList
+            characterId={character.id}
+            setCurrentReviewMetadata={setCurrentReviewMetadata}
+            onDrawerOpen={onDrawerOpen}
+            setDelReview={setDelReview}
+            onOpenReviewDeleteModal={onOpenReviewDeleteModal}
+          />
         </TabPanel>
       </Tabs>
 

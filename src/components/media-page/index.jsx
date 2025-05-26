@@ -1,29 +1,21 @@
 'use client';
 
-import { MediaProvider } from '@/context/use-media';
-import { useMediaFullInfoById } from '@/lib/client/hooks/react_query/get/media/info/full-by-id';
-import { Center, Flex, useDisclosure } from '@yamada-ui/react';
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import MediaInfo from './media-info';
-import ReviewEditor from './review-editor';
-import TabSection from './tab-section';
+import { MediaProvider } from '@/context/use-media'
+import { useMediaFullInfoById } from '@/lib/client/hooks/react_query/get/media/info/full-by-id'
+import { Center, Flex, useDisclosure } from '@yamada-ui/react'
+import { useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import MediaInfo from './media-info'
+import ReviewEditor from './review-editor'
+import TabSection from './tab-section'
 
 export default function MediaPage() {
   const searchParams = useSearchParams();
 
-  const {
-    data: { data: mediaData },
-  } = useMediaFullInfoById({
+  const mediaFullInfo = useMediaFullInfoById({
     mediaId: parseInt(searchParams.get('id')),
     mediaType: searchParams.get('type'),
   });
-
-  useEffect(() => {
-    if (mediaData) {
-      document.title = mediaData.title.userPreferred;
-    }
-  }, [mediaData]);
 
   const {
     open: openReviewEditor,
@@ -36,7 +28,12 @@ export default function MediaPage() {
   return (
     <>
       <Center>
-        <MediaProvider value={mediaData}>
+        <MediaProvider
+          value={{
+            ...mediaFullInfo.data?.data,
+            isLoading: mediaFullInfo.isLoading,
+          }}
+        >
           <Flex
             direction={'column'}
             maxW={{ sm: '100%', xl: '90%', '2xl': '80%', base: '60%' }}

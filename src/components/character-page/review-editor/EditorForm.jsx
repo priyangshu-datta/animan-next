@@ -1,26 +1,23 @@
+import { EMOTIONS } from '@/lib/constants';
 import {
   FormControl,
   Input,
-  Loading,
   MultiSelect,
   Tag,
   Textarea,
 } from '@yamada-ui/react';
-import { AssociatedMedia } from './AssociatedMedia';
 import { Controller, useFormContext } from 'react-hook-form';
-import { EMOTIONS } from '@/lib/constants';
-import { Suspense } from 'react';
+import { AssociatedMedia } from './AssociatedMedia';
 
 export function EditorForm() {
   const {
     formState: { errors },
     control,
   } = useFormContext();
+  
   return (
     <>
-      <Suspense fallback={<Loading />}>
-        <AssociatedMedia />
-      </Suspense>
+      <AssociatedMedia />
       <FormControl
         required
         label="Rating"

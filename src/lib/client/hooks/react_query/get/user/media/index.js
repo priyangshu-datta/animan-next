@@ -1,13 +1,14 @@
 import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 export function useUserMedia({ mediaId, mediaType }) {
-  return useSuspenseQuery({
+  return useQuery({
     queryKey: ['get:user:media:{mediaId,mediaType}', mediaId, mediaType],
     queryFn: () =>
       rpcRequest({
         action: 'get:user:media:{mediaId,mediaType}',
         context: { mediaId, mediaType },
       }),
+    enabled: !!mediaId && !!mediaType && typeof window !== 'undefined',
   });
 }

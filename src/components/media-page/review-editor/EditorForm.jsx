@@ -1,8 +1,10 @@
+import { useMedia } from '@/context/use-media';
+import { EMOTIONS } from '@/lib/constants';
+import { HeartIcon } from '@yamada-ui/lucide';
 import {
   FormControl,
   HStack,
   Input,
-  Loading,
   MultiSelect,
   Tag,
   Textarea,
@@ -10,9 +12,6 @@ import {
   VStack,
 } from '@yamada-ui/react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { EMOTIONS } from '@/lib/constants';
-import { useMedia } from '@/context/use-media';
-import { HeartIcon } from '@yamada-ui/lucide';
 
 export function EditorForm() {
   const media = useMedia();

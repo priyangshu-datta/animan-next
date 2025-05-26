@@ -8,7 +8,7 @@ import Joi from 'joi';
 export async function getCharacterRelatedMedia(context) {
   const contextSchema = Joi.object({
     characterId: Joi.number(),
-    mediaType: Joi.string().valid('ANIME', 'MANGA'),
+    mediaType: Joi.string().valid('ANIME', 'MANGA').uppercase(),
     page: Joi.number(),
     perPage: Joi.number(),
   });

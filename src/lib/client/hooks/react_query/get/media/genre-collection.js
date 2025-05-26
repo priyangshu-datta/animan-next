@@ -1,12 +1,13 @@
 import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 export function useGenreCollection() {
-  return useSuspenseQuery({
-    queryKey: ["genres"],
+  return useQuery({
+    queryKey: ['genres'],
     queryFn: () =>
       rpcRequest({
         action: 'get:media:genre-collection',
       }),
+    enabled: typeof window !== 'undefined',
   });
 }

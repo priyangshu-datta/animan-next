@@ -1,8 +1,8 @@
 import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
-import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 
 export function useCharacterReviewsPaginated({ characterId }) {
-  return useSuspenseInfiniteQuery({
+  return useInfiniteQuery({
     queryKey: [
       'get:character:reviews-paginated:{characterId,cursor,limit}',
       characterId,
@@ -16,5 +16,6 @@ export function useCharacterReviewsPaginated({ characterId }) {
     getNextPageParam: (lastPage) => {
       return lastPage.meta.nextCursor;
     },
+    enabled: !!characterId && typeof window !== 'undefined',
   });
 }

@@ -11,34 +11,19 @@ import {
 
 export default function ReviewCard({ review }) {
   const emotionList = review.emotions ? review.emotions.split(';') : [];
-  const score = Math.floor(
-    1 / (5 * (review.rating / 10) - Math.floor(5 * (review.rating / 10)))
-  );
 
   return (
-    <Box
-      borderWidth="1px"
-      borderRadius="md"
-      p="4"
-      w="full"
-      shadow="sm"
-      _hover={{ shadow: 'md' }}
-      transition="all 0.2s"
-    >
+    <Container>
       <Flex justify="space-between" align="start" mb="2">
         <HStack spacing="2">
           {!['anime', 'manga'].includes(review.subjectType) && (
             <Badge colorScheme="primary" variant="solid">
-              {review.subjectType === 'chapter' && `Ch ${review.chapterNumber}`}
-              {review.subjectType === 'episode' && `Ep ${review.episodeNumber}`}
-              {review.subjectType === 'volume' && `Vl ${review.volume}`}
+              {review.subjectType === 'chapter' && `Ch. ${review.chapterNumber}`}
+              {review.subjectType === 'episode' && `Ep. ${review.episodeNumber}`}
+              {review.subjectType === 'volume' && `Vl. ${review.volume}`}
             </Badge>
           )}
-          <Rating
-            readOnly
-            value={5 * (review.rating / 10)}
-            fractions={score === Infinity ? null : score}
-          />
+          <Rating readOnly value={5 * (review.rating / 10)} fractions={10} />
         </HStack>
 
         {review.favourite && <HeartIcon color={'red'} fill={'red'} />}
@@ -76,6 +61,22 @@ export default function ReviewCard({ review }) {
           {new Date(review.updatedAt).toLocaleString()}
         </Text>
       </VStack>
+    </Container>
+  );
+}
+
+function Container({ children }) {
+  return (
+    <Box
+      borderWidth="1px"
+      borderRadius="md"
+      p="4"
+      w="full"
+      shadow="sm"
+      _hover={{ shadow: 'md' }}
+      transition="all 0.2s"
+    >
+      {children}
     </Box>
   );
 }

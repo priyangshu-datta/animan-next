@@ -1,10 +1,9 @@
 import './globals.css';
 
-import { Geist, Geist_Mono as GeistMono } from 'next/font/google';
-import { ReactQueryClientProvider } from '@/providers/react-query-client-provider';
-import { Box, ColorModeScript, Loading, UIProvider } from '@yamada-ui/react';
 import NavBar from '@/components/navbar';
-import { Suspense } from 'react';
+import { ReactQueryClientProvider } from '@/providers/react-query-client-provider';
+import { Box, ColorModeScript, UIProvider } from '@yamada-ui/react';
+import { Geist, Geist_Mono as GeistMono } from 'next/font/google';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -21,13 +20,12 @@ export default function RootLayoutWrapper({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
+        <ColorModeScript />
         <ReactQueryClientProvider>
-          <ColorModeScript />
           <UIProvider>
-            <Suspense fallback={<Loading />}>
-              <NavBar />
-            </Suspense>
+            <NavBar />
             <Box>{children}</Box>
           </UIProvider>
         </ReactQueryClientProvider>

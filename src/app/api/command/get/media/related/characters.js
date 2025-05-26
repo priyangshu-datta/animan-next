@@ -8,19 +8,18 @@ import Joi from 'joi';
 export async function getMediaRelatedCharacters(context) {
   const contextSchema = Joi.object({
     mediaId: Joi.number(),
-    mediaType: Joi.string().valid('ANIME', 'MANGA'),
+    mediaType: Joi.string().valid('ANIME', 'MANGA').uppercase(),
     page: Joi.number(),
     perPage: Joi.number(),
   });
 
-  const { error: contextError, value: contextValue } =
-    contextSchema.validate(context);
-  if (contextError) {
+  const { error, value } = contextSchema.validate(context);
+  if (error) {
     throw new AppError({
       code: ERROR_CODES.VALIDATION_ERROR,
-      message: contextError.message,
-      details: contextError.details,
-      stack: contextError.stack,
+      message: error.message,
+      details: error.details,
+      stack: error.stack,
       status: 400,
     });
   }
@@ -37,6 +36,10 @@ export async function getMediaRelatedCharacters(context) {
         node {
           id
           name {
+            full
+            alternative
+            alternativeSpoiler
+            native
             userPreferred
           }
           image {
@@ -48,19 +51,24 @@ export async function getMediaRelatedCharacters(context) {
   }
 }`;
 
+  const { mediaId, mediaType, page, perPage } = value;
+
   const response = await axios.post(ANILIST_GRAPHQL_ENDPOINT, {
     query: MEDIA_CHARACTERS_QUERY,
     variables: {
-      mediaId: contextValue.mediaId,
-      mediaType: contextValue.mediaType,
-      page: contextValue.page,
-      perPage: contextValue.perPage,
+      mediaId: mediaId,
+      mediaType: mediaType,
+      page: page,
+      perPage: perPage,
     },
   });
 
   const baseData = response.data.data.Media.characters;
 
-  const data = baseData.edges;
+  const data = baseData.edges.map((edge) => ({
+    role: edge.role,
+    ...edge.node,
+  }));
   const meta = baseData.pageInfo;
 
   return respondSuccess(data, null, 200, meta);

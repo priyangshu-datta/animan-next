@@ -1,3 +1,6 @@
+import { useCharacter } from '@/context/use-character';
+import { MEDIA_TYPES } from '@/lib/constants';
+import { sentenceCase } from '@/utils/general';
 import {
   Button,
   Modal,
@@ -6,11 +9,8 @@ import {
   ModalHeader,
   Select,
 } from '@yamada-ui/react';
+import { useState } from 'react';
 import CharacterMedia from '../character-media';
-import { MEDIA_TYPES } from '@/lib/constants';
-import { useCharacter } from '@/context/use-character';
-import { Suspense, useState } from 'react';
-import { sentenceCase } from '@/utils/general';
 
 export function ChooseMediaModal({ onClose, open }) {
   const character = useCharacter();
@@ -19,25 +19,21 @@ export function ChooseMediaModal({ onClose, open }) {
   return (
     <Modal open={open} onClose={onClose} size={'6xl'}>
       <ModalHeader>Choose Associated Media</ModalHeader>
-
       <ModalBody>
         <Select
           defaultValue={mediaType}
           onChange={(option) => setMediaType(option)}
           items={MEDIA_TYPES.map((mType) => ({
-            label: mType,
-            value: sentenceCase(mType),
+            value: mType,
+            label: sentenceCase(mType),
           }))}
         />
-        <Suspense fallback={<Loading />}>
-          <CharacterMedia
-            characterId={character.id}
-            mediaType={mediaType}
-            style={'list'}
-          />
-        </Suspense>
+        <CharacterMedia
+          characterId={character.id}
+          mediaType={mediaType}
+          style={'list'}
+        />
       </ModalBody>
-
       <ModalFooter>
         <Button variant="ghost" type="button" onClick={onClose}>
           Close

@@ -1,21 +1,12 @@
-import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
 import db from '@/db/index';
 import { createSessionAndReturnTokenResponse } from '@/lib/server/auth/create_session';
-import axios from 'axios';
 import { AppError } from '@/lib/server/errors/AppError';
 import { ERROR_CODES } from '@/lib/server/errors/errorCodes';
 import { respondError } from '@/lib/server/responses';
 import { snakeKeysToCamelKeys } from '@/utils/general';
+import axios from 'axios';
+import { cookies } from 'next/headers';
 
-/**
- * All these take place in a popup
- *
- * This is the soul of auth system in AniMan. This handles whether session should renew or redirect to login
- *
- * @param {NextRequest} request
- * @returns {Promise<NextResponse>}
- */
 async function AuthRefreshFlow() {
   try {
     const cookieStore = await cookies();

@@ -1,7 +1,7 @@
-import Spoiler from '@/components/spoiler';
-import { useMediaBasicDetailsByIds } from '@/lib/client/hooks/react_query/get/media/info/basic/by-ids';
-import { assocMedia } from '@/stores/assoc-media';
-import { Trash2Icon } from '@yamada-ui/lucide';
+import Spoiler from '@/components/spoiler'
+import { useMediaBasicDetailsByIds } from '@/lib/client/hooks/react_query/get/media/info/basic/by-ids'
+import { assocMedia } from '@/stores/assoc-media'
+import { Trash2Icon } from '@yamada-ui/lucide'
 import {
   Box,
   Card,
@@ -10,29 +10,20 @@ import {
   Grid,
   IconButton,
   Image,
+  Skeleton,
   Text,
   VStack,
-} from '@yamada-ui/react';
-import { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+} from '@yamada-ui/react'
+import { useState } from 'react'
+import { useFormContext } from 'react-hook-form'
 
 export function DraftPanel({ drafts, setDrafts, changeTab }) {
   const { setValue: setFormValue } = useFormContext();
   if (drafts.length < 1) {
     return 'No Drafts';
   }
-  // const {
-  //   data: { data: allMedia },
-  // } = useMediaBasicDetailsByIds({
-  //   mediaIds: drafts
-  //     .map(([_, draft]) => draft.associatedMediaId)
-  //     .filter((id) => !!id),
-  //   mediaType: drafts[0].assocMediaType,
-  // });
 
-  const {
-    data: { data: allAnime },
-  } = useMediaBasicDetailsByIds({
+  const basicAnimeDetails = useMediaBasicDetailsByIds({
     mediaIds: drafts
       .filter(
         ([_, draft]) =>
@@ -42,9 +33,7 @@ export function DraftPanel({ drafts, setDrafts, changeTab }) {
     mediaType: 'ANIME',
   });
 
-  const {
-    data: { data: allManga },
-  } = useMediaBasicDetailsByIds({
+  const basicMangaDetails = useMediaBasicDetailsByIds({
     mediaIds: drafts
       .filter(
         ([_, draft]) =>
@@ -54,7 +43,10 @@ export function DraftPanel({ drafts, setDrafts, changeTab }) {
     mediaType: 'MANGA',
   });
 
-  const allMedia = [...allManga, ...allAnime];
+  const allMedia = [
+    ...(basicAnimeDetails.data?.data ?? []),
+    ...(basicMangaDetails.data?.data ?? []),
+  ];
 
   drafts = drafts
     .map(([key, draft]) => {
@@ -86,15 +78,25 @@ export function DraftPanel({ drafts, setDrafts, changeTab }) {
         >
           <CardBody>
             <Flex gap={'3'} align={'start'} w={'full'}>
-              {draft.media && (
-                <Box justifyContent="center" aspectRatio={2 / 3} w={'24'}>
-                  <Image
-                    src={draft.media.coverImage.extraLarge}
-                    objectFit="cover"
-                    w={'full'}
-                    h={'full'}
-                  />
-                </Box>
+              {draft.associatedMediaId ? (
+                draft.media ? (
+                  <Box justifyContent="center" aspectRatio={2 / 3} w={'24'}>
+                    <Image
+                      src={draft.media.coverImage.extraLarge}
+                      objectFit="cover"
+                      w={'full'}
+                      h={'full'}
+                    />
+                  </Box>
+                ) : (
+                  <Skeleton>
+                    <Box justifyContent="center" aspectRatio={2 / 3} w={'24'}>
+                      <Image objectFit="cover" w={'full'} h={'full'} />
+                    </Box>
+                  </Skeleton>
+                )
+              ) : (
+                ''
               )}
               <VStack gap={'2'}>
                 {draft.media && (

@@ -34,25 +34,11 @@ import {
   useNotice,
   VStack,
 } from '@yamada-ui/react';
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
-/* Locales and time zone. */
-
-export default function Profile() {
-  useEffect(() => {
-    document.title = 'Settings';
-  }, []);
-
-  return (
-    <Suspense fallback={<Loading />}>
-      <Page />
-    </Suspense>
-  );
-}
-
-function Page() {
+function ProfilePage() {
   const userInfo = useUserInfo();
 
   const {

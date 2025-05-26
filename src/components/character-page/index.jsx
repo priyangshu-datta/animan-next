@@ -2,16 +2,23 @@
 
 import { CharacterProvider } from '@/context/use-character';
 import { useCharacterFullInfoById } from '@/lib/client/hooks/react_query/get/character/info/full-by-id';
-import { Card, Center, Flex, Image, useDisclosure } from '@yamada-ui/react';
+import {
+  Card,
+  Center,
+  Flex,
+  Image,
+  Loading,
+  useDisclosure,
+} from '@yamada-ui/react';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import ReviewEditor from './review-editor'
-import TabSection from './tab-section'
-import CharacterInfo from './character-info'
+import ReviewEditor from './review-editor';
+import TabSection from './tab-section';
+import CharacterInfo from './character-info';
 
 export default function CharacterPage() {
   const searchParams = useSearchParams();
-  const { data } = useCharacterFullInfoById({
+  const { data, isLoading } = useCharacterFullInfoById({
     characterId: parseInt(searchParams.get('id')),
   });
 
@@ -25,7 +32,7 @@ export default function CharacterPage() {
 
   return (
     <Center>
-      <CharacterProvider value={data.data.Character}>
+      <CharacterProvider value={{ ...data?.data?.Character, isLoading }}>
         <Flex
           direction={'column'}
           maxW={{ sm: '100%', xl: '90%', '2xl': '80%', base: '60%' }}
@@ -38,7 +45,7 @@ export default function CharacterPage() {
             alignItems={{ md: 'center' }}
           >
             <Image
-              src={data.data.Character.image.large}
+              src={data?.data?.Character?.image.large}
               objectFit="cover"
               minW={'40'}
               maxW={'68'}

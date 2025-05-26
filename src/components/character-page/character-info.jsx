@@ -12,27 +12,36 @@ import {
   DataListTerm,
   Heading,
   Loading,
+  Skeleton,
+  SkeletonText,
   Toggle,
   VStack,
 } from '@yamada-ui/react';
 
-export default function CharacterInfo({ onReviewEditorOpen, setCurrentReviewMetadata }) {
+export default function CharacterInfo({
+  onReviewEditorOpen,
+  setCurrentReviewMetadata,
+}) {
   const character = useCharacter();
-
-  const { day, month, year } = character.dateOfBirth;
 
   const {
     characterIsFavourite,
     toggleCharacterFavourite,
     togglingCharacterFavourite,
   } = useOptimisticToggleCharacterFavourite({
-    characterIsFavourite: character.isFavourite,
+    characterIsFavourite: !!character?.isFavourite,
   });
 
   return (
     <VStack gap="0">
       <CardHeader>
-        <Heading size="lg">{character.name.userPreferred}</Heading>
+        {character.isLoading ? (
+          <SkeletonText lineClamp={1}>
+            <Heading size="lg">Monkey D. Luffy</Heading>
+          </SkeletonText>
+        ) : (
+          <Heading size="lg">{character?.name?.userPreferred}</Heading>
+        )}
         <Toggle
           borderRadius={'full'}
           value="favourite"
@@ -48,39 +57,7 @@ export default function CharacterInfo({ onReviewEditorOpen, setCurrentReviewMeta
       </CardHeader>
 
       <CardBody>
-        <DataList
-          col={2}
-          variant={'subtle'}
-          size={{ base: 'lg' }}
-          gapY={{ base: '4', lg: '2' }}
-        >
-          {character.gender && (
-            <DataListItem>
-              <DataListTerm>Gender</DataListTerm>
-              <DataListDescription>{character.gender}</DataListDescription>
-            </DataListItem>
-          )}
-          {character.age && (
-            <DataListItem>
-              <DataListTerm>Age</DataListTerm>
-              <DataListDescription>{character.age}</DataListDescription>
-            </DataListItem>
-          )}
-          {character.bloodType && (
-            <DataListItem>
-              <DataListTerm>Blood Type</DataListTerm>
-              <DataListDescription>{character.bloodType}</DataListDescription>
-            </DataListItem>
-          )}
-          {(day || month || year) && (
-            <DataListItem>
-              <DataListTerm>Date of Birth</DataListTerm>
-              <DataListDescription>
-                {day ?? ''} {month ? MONTH_NAMES[month - 1] : ''} {year ?? ''}
-              </DataListDescription>
-            </DataListItem>
-          )}
-        </DataList>
+        <CharacterInfoDataList />
 
         <Button
           onClick={() => {
@@ -92,5 +69,93 @@ export default function CharacterInfo({ onReviewEditorOpen, setCurrentReviewMeta
         </Button>
       </CardBody>
     </VStack>
+  );
+}
+
+function CharacterInfoDataList() {
+  const character = useCharacter();
+  if (character.isLoading) {
+    return (
+      <DataList
+        col={2}
+        variant={'subtle'}
+        size={{ base: 'lg' }}
+        gapY={{ base: '4', lg: '2' }}
+      >
+        <DataListItem>
+          <SkeletonText lineClamp={1}>
+            <DataListTerm>Gender</DataListTerm>
+          </SkeletonText>
+          <SkeletonText lineClamp={1}>
+            <DataListDescription>Male</DataListDescription>
+          </SkeletonText>
+        </DataListItem>
+        <DataListItem>
+          <SkeletonText lineClamp={1}>
+            <DataListTerm>Age</DataListTerm>
+          </SkeletonText>
+          <SkeletonText lineClamp={1}>
+            <DataListDescription>19</DataListDescription>
+          </SkeletonText>
+        </DataListItem>
+        <DataListItem>
+          <SkeletonText lineClamp={1}>
+            <DataListTerm>Blood Type</DataListTerm>
+          </SkeletonText>
+          <SkeletonText lineClamp={1}>
+            <DataListDescription>F</DataListDescription>
+          </SkeletonText>
+        </DataListItem>
+        <DataListItem>
+          <SkeletonText lineClamp={1}>
+            <DataListTerm>Date of Birth</DataListTerm>
+          </SkeletonText>
+          <SkeletonText lineClamp={1}>
+            <DataListDescription>May 5</DataListDescription>
+          </SkeletonText>
+        </DataListItem>
+      </DataList>
+    );
+  }
+  return (
+    <DataList
+      col={2}
+      variant={'subtle'}
+      size={{ base: 'lg' }}
+      gapY={{ base: '4', lg: '2' }}
+    >
+      {character.gender && (
+        <DataListItem>
+          <DataListTerm>Gender</DataListTerm>
+          <DataListDescription>{character.gender}</DataListDescription>
+        </DataListItem>
+      )}
+      {character.age && (
+        <DataListItem>
+          <DataListTerm>Age</DataListTerm>
+          <DataListDescription>{character.age}</DataListDescription>
+        </DataListItem>
+      )}
+      {character.bloodType && (
+        <DataListItem>
+          <DataListTerm>Blood Type</DataListTerm>
+          <DataListDescription>{character.bloodType}</DataListDescription>
+        </DataListItem>
+      )}
+      {(character?.dateOfBirth?.day ||
+        character?.dateOfBirth?.month ||
+        character?.dateOfBirth?.year) && (
+        <DataListItem>
+          <DataListTerm>Date of Birth</DataListTerm>
+          <DataListDescription>
+            {character?.dateOfBirth?.day ?? ''}
+            {character?.dateOfBirth?.month
+              ? MONTH_NAMES[character.dateOfBirth.month - 1]
+              : ''}{' '}
+            {character?.dateOfBirth?.year ?? ''}
+          </DataListDescription>
+        </DataListItem>
+      )}
+    </DataList>
   );
 }

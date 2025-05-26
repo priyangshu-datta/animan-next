@@ -1,8 +1,8 @@
 import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
-import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 
 export function useMediaCharacters({ mediaId, mediaType }) {
-  return useSuspenseInfiniteQuery({
+  return useInfiniteQuery({
     queryKey: [
       'get:media:characters-paginated:{mediaId,mediaType,page,perPage}',
       mediaId,
@@ -26,6 +26,6 @@ export function useMediaCharacters({ mediaId, mediaType }) {
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage ? lastPage.currentPage + 1 : undefined,
-    enabled: !!mediaId,
+    enabled: !!mediaId && !!mediaType && typeof window !== 'undefined',
   });
 }

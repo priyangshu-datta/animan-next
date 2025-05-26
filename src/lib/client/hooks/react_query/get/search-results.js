@@ -1,9 +1,8 @@
-import { rpcRequest } from '@/lib/client/api-clients/rpc-client'
-import { useSuspenseInfiniteQuery } from '@tanstack/react-query'
-
+import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
+import { useInfiniteQuery } from '@tanstack/react-query';
 
 export function useSearch({ searchOptions }) {
-  return useSuspenseInfiniteQuery({
+  return useInfiniteQuery({
     queryKey: ['search', searchOptions],
     queryFn: async ({ pageParam }) => {
       const response = await rpcRequest({
@@ -27,5 +26,6 @@ export function useSearch({ searchOptions }) {
     getNextPageParam: (lastPage) => {
       return lastPage.hasNextPage ? lastPage.currentPage + 1 : undefined;
     },
+    enabled: !!searchOptions && typeof window !== 'undefined',
   });
 }

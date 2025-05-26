@@ -72,7 +72,7 @@ export default function NavBar({}) {
     } else {
       snack.closeAll();
     }
-  }, [userData, pathname, localStorage]);
+  }, [userData, pathname]);
 
   return (
     <>

@@ -44,8 +44,8 @@ import {
   Input,
   InputGroup,
   InputLeftAddon,
-  Loading,
   Separator,
+  Skeleton,
   Text,
   Tooltip,
   useColorMode,
@@ -55,7 +55,7 @@ import {
   VStack,
 } from '@yamada-ui/react';
 import Link from 'next/link';
-import { Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Controller,
   FormProvider,
@@ -63,14 +63,6 @@ import {
   useFormContext,
 } from 'react-hook-form';
 import ReactSelect from 'react-select';
-
-export default function Page() {
-  return (
-    <Suspense fallback={<Loading />}>
-      <Search />
-    </Suspense>
-  );
-}
 
 function getFuzzyDate(date) {
   if (!(date instanceof Date) || isNaN(date.getTime())) {
@@ -89,9 +81,7 @@ function getFuzzyDate(date) {
   };
 }
 
-function Search() {
-  document.title = 'Search';
-
+export default function SearchPage() {
   const methods = useForm({
     defaultValues: {
       query: '',
@@ -217,16 +207,8 @@ function Search() {
   const { open: advancedOptionsOpen, onToggle: advancedOptionsToggle } =
     useDisclosure();
 
-  const {
-    data: {
-      data: { genres: genres },
-    },
-  } = useGenreCollection();
-  const {
-    data: {
-      data: { tags: tags },
-    },
-  } = useTagCollection();
+  const genresInfo = useGenreCollection();
+  const tagsInfo = useTagCollection();
 
   const [advLabelAnim, setAdvLabelAnim] = useDynamicAnimation({
     open: {
@@ -298,7 +280,16 @@ function Search() {
     },
   });
 
-  const tagCategories = Array.from(new Set(tags.flatMap((t) => t.category)));
+  const [tagCategories, setTagCategories] = useState();
+
+  useEffect(() => {
+    if (tagsInfo.data) {
+      setTagCategories(
+        Array.from(new Set(tagsInfo.data.data.flatMap((t) => t.category)))
+      );
+    }
+  }, [tagsInfo.data]);
+
   return (
     <>
       <Center>
@@ -366,7 +357,9 @@ function Search() {
                       <SeasonYearSelector />
                     </Flex>
                     <Flex gap="4" w="full">
-                      <GenreSelector genres={genres} />
+                      {genresInfo.isFetched && (
+                        <GenreSelector genres={genresInfo.data.data} />
+                      )}
                       <MediaSortMethodSelector />
                     </Flex>
                     <Flex gap="4" w="full">
@@ -407,11 +400,12 @@ function Search() {
                       <DateSelector name={'start'} />
                       <DateSelector name={'end'} />
                     </Flex>
-
-                    <MediaTagSelector
-                      tagCategories={tagCategories}
-                      tags={tags}
-                    />
+                    {tagsInfo.isFetched && (
+                      <MediaTagSelector
+                        tagCategories={tagCategories}
+                        tags={tagsInfo.data.data}
+                      />
+                    )}
                     <MediaTagCategorySelector tagCategories={tagCategories} />
                     <Grid
                       w="full"
@@ -456,11 +450,7 @@ function Search() {
               </Collapse>
             )}
           </FormProvider>
-          {searchOptions && (
-            <Suspense fallback={<Loading />}>
-              <SearchResult searchOptions={searchOptions} />
-            </Suspense>
-          )}
+          {searchOptions && <SearchResult searchOptions={searchOptions} />}
         </Box>
       </Center>
     </>
@@ -468,9 +458,10 @@ function Search() {
 }
 
 function SearchResult({ searchOptions }) {
-  const { data, hasNextPage, fetchNextPage, isFetchingNextPage } = useSearch({
-    searchOptions,
-  });
+  const { data, hasNextPage, fetchNextPage, isFetchingNextPage, isFetched } =
+    useSearch({
+      searchOptions,
+    });
 
   const fetchMore = debounce(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -487,90 +478,60 @@ function SearchResult({ searchOptions }) {
         placeItems={'center'}
         gridTemplateColumns={'repeat(auto-fill, minmax(220px, 1fr))'}
       >
-        {data.pages
-          .flatMap((page) => page.searchResults)
-          .map((result) => {
-            return (
-              <Card maxW="md" variant={'outline'} key={result.id}>
-                <CardHeader>
-                  <Image
-                    src={result.coverImage.extraLarge}
-                    objectFit="cover"
-                    minW={'40'}
-                    maxW={'80'}
-                    w="full"
-                    aspectRatio={2 / 3}
-                    alt={result.title.userPreferred}
-                  />
-                </CardHeader>
-                <CardBody>
-                  <Tooltip label={result.title.userPreferred}>
-                    <Link href={`/media?id=${result.id}&type=${result.type}`}>
-                      <Text lineClamp={1} fontSize={'xl'}>
-                        {result.title.userPreferred}
-                      </Text>
-                    </Link>
-                  </Tooltip>
-                  <DataList
-                    col={2}
-                    variant={'subtle'}
-                    size={{ base: 'lg' }}
-                    gapY={{ base: '4', lg: '2' }}
-                  >
-                    {/* <DataListItem>
-                <DataListTerm>
-                  {result.status === 'NOT_YET_RELEASED'
-                    ? 'Release in'
-                    : 'Progress'}
-                </DataListTerm>
-                <DataListDescription>
-                  {result.status === 'NOT_YET_RELEASED' ? (
-                    computeStartDate(listEntry.media.startDate) ?? 'N/A'
-                  ) : (
-                    <Flex gap={'1'} alignItems={'center'}>
-                      {totalEpisodes - progress > 0 ? (
-                        <Tooltip
-                          label={`Behind ${totalEpisodes - progress} epsiodes`}
+        {isFetched
+          ? data.pages
+              .flatMap((page) => page.searchResults)
+              .map((result) => {
+                return (
+                  <Card maxW="md" variant={'outline'} key={result.id}>
+                    <CardHeader>
+                      <Image
+                        src={result.coverImage.extraLarge}
+                        objectFit="cover"
+                        minW={'40'}
+                        maxW={'80'}
+                        w="full"
+                        aspectRatio={2 / 3}
+                        alt={result.title.userPreferred}
+                      />
+                    </CardHeader>
+                    <CardBody>
+                      <Tooltip label={result.title.userPreferred}>
+                        <Link
+                          href={`/media?id=${result.id}&type=${result.type}`}
                         >
-                          <span className="decoration-dashed underline-offset-2 underline">
-                            {progress}
-                          </span>
-                        </Tooltip>
-                      ) : (
-                        progress
-                      )}
-                      <Button
-                        variant={'link'}
-                        onClick={() => {
-                          updateMediaProgress({
-                            mediaId,
-                            progress: progress + 1,
-                          });
-                        }}
-                        disabled={updatingMediaProgress}
+                          <Text lineClamp={1} fontSize={'xl'}>
+                            {result.title.userPreferred}
+                          </Text>
+                        </Link>
+                      </Tooltip>
+                      <DataList
+                        col={2}
+                        variant={'subtle'}
+                        size={{ base: 'lg' }}
+                        gapY={{ base: '4', lg: '2' }}
                       >
-                        {updatingMediaProgress ? '...' : '+'}
-                      </Button>
-                    </Flex>
-                  )}
-                </DataListDescription>
-              </DataListItem> */}
-                    <DataListItem>
-                      <DataListTerm>
-                        {result.status === 'RELEASING' &&
-                        result.type !== 'MANGA'
-                          ? 'Time Left'
-                          : 'Status'}
-                      </DataListTerm>
-                      <DataListDescription>
-                        {sentenceCase(result.status.replaceAll('_', ' '))}
-                      </DataListDescription>
-                    </DataListItem>
-                  </DataList>
-                </CardBody>
-              </Card>
-            );
-          })}
+                        <DataListItem>
+                          <DataListTerm>
+                            {result.status === 'RELEASING' &&
+                            result.type !== 'MANGA'
+                              ? 'Time Left'
+                              : 'Status'}
+                          </DataListTerm>
+                          <DataListDescription>
+                            {sentenceCase(result.status.replaceAll('_', ' '))}
+                          </DataListDescription>
+                        </DataListItem>
+                      </DataList>
+                    </CardBody>
+                  </Card>
+                );
+              })
+          : Array.from({ length: 5 }).map(() => (
+              <Box key={Math.random()} padding={'4'}>
+                <Skeleton h={'xs'} w={'150px'} />
+              </Box>
+            ))}
       </Grid>
       <Button
         w={'full'}

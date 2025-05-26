@@ -18,9 +18,6 @@ import Spoiler from '../spoiler';
 
 export default function ReviewCard({ review }) {
   const emotionList = review.emotions ? review.emotions.split(';') : [];
-  const score = Math.floor(
-    1 / (5 * (review.rating / 10) - Math.floor(5 * (review.rating / 10)))
-  );
 
   let associatedMedia = null;
 
@@ -35,14 +32,29 @@ export default function ReviewCard({ review }) {
     <Container>
       <Flex align="start" mb="2">
         {review.associatedMediaId && associatedMedia?.isFetching && (
-          <>
-            <HStack>
-              <Skeleton>
-                <Box h={'36'} w={'28'}></Box>
-              </Skeleton>
-              <SkeletonText lineClamp={1} />
-            </HStack>
-          </>
+          <HStack alignItems={'flex-start'}>
+            <Skeleton>
+              <Box
+                justifyContent="center"
+                aspectRatio={9 / 13}
+                w={'28'}
+                flexShrink={0}
+              ></Box>
+            </Skeleton>
+            <VStack gap={'6'} py="2">
+              <VStack gap={'4'}>
+                <SkeletonText lineClamp={1}>
+                  <Heading>One Piece</Heading>
+                </SkeletonText>
+                <SkeletonText lineClamp={1}>
+                  <Heading>Character Role</Heading>
+                </SkeletonText>
+              </VStack>
+              <Box mt="5">
+                <RatingWithEmotions rating={null} emotionList={null} />
+              </Box>
+            </VStack>
+          </HStack>
         )}
 
         <HStack alignItems={'flex-start'}>
@@ -73,8 +85,7 @@ export default function ReviewCard({ review }) {
               </VStack>
             )}
             <RatingWithEmotions
-              review={review}
-              score={score}
+              rating={review.rating}
               emotionList={emotionList}
             />
           </VStack>
@@ -85,9 +96,6 @@ export default function ReviewCard({ review }) {
 
       <VStack align="start" spacing="2">
         <Spoiler text={review.reviewText} />
-        {/* <Text fontSize="md" fontWeight="medium">
-          {}
-        </Text> */}
 
         <Text fontSize="sm" color="gray.200" mt="2">
           Last edited:{' '}
@@ -102,22 +110,37 @@ export default function ReviewCard({ review }) {
   );
 }
 
-function RatingWithEmotions({ review, score, emotionList }) {
+function RatingWithEmotions({ rating, emotionList }) {
+  const normalizedScore = (5 * rating) / 10;
+  const fractions = Math.floor(
+    1 / (5 * (rating / 10) - Math.floor(5 * (rating / 10)))
+  );
   return (
     <VStack gap={'2'}>
       <Rating
         readOnly
-        defaultValue={5 * (review.rating / 10)}
-        fractions={score === Infinity ? null : score}
+        defaultValue={5 * normalizedScore}
+        fractions={fractions === Infinity ? null : fractions}
       />
-      {emotionList.length > 0 && (
-        <HStack spacing="1" flexWrap="wrap">
-          {emotionList.map((emotion) => (
-            <Badge key={emotion} colorScheme="pink" variant="subtle">
-              {emotion}
-            </Badge>
-          ))}
-        </HStack>
+      {emotionList ? (
+        emotionList.length > 0 && (
+          <HStack spacing="1" flexWrap="wrap">
+            {emotionList.map((emotion) => (
+              <Badge key={emotion} colorScheme="pink" variant="subtle">
+                {emotion}
+              </Badge>
+            ))}
+          </HStack>
+        )
+      ) : (
+        <Badge
+          key={'default-emotion'}
+          colorScheme="pink"
+          variant="subtle"
+          w={'fit-content'}
+        >
+          <Skeleton h={'5'} w={'10'} />
+        </Badge>
       )}
     </VStack>
   );

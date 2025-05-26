@@ -1,13 +1,12 @@
 import { useMedia } from '@/context/use-media';
 import { useDeleteMediaReview } from '@/lib/client/hooks/react_query/delete/media/review';
+import { REVIEW_CATEGORIES, SNACK_DURATION } from '@/lib/constants';
 import {
   Button,
-  Loading,
   Modal,
   ModalBody,
   ModalFooter,
   ModalHeader,
-  Option,
   Select,
   Tab,
   TabList,
@@ -16,10 +15,9 @@ import {
   useDisclosure,
   useNotice,
 } from '@yamada-ui/react';
-import { Suspense, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import MediaCharacters from './media-characters';
 import ReviewList from './review-list';
-import { SNACK_DURATION } from '@/lib/constants'
 
 export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
   const media = useMedia();
@@ -65,9 +63,11 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
     });
   }
 
-  const [subjectType, setSubjectType] = useState(
-    media.type === 'ANIME' ? 'episode' : 'chapter'
-  );
+  const [subjectType, setSubjectType] = useState();
+
+  useEffect(() => {
+    setSubjectType(media.type === 'ANIME' ? 'episode' : 'chapter');
+  }, [media]);
 
   return (
     <>
@@ -86,35 +86,24 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
 
         <TabPanel dangerouslySetInnerHTML={memoedDescription} />
         <TabPanel>
-          <Suspense fallback={<Loading fontSize={'2xl'} />}>
-            <MediaCharacters mediaId={media.id} mediaType={media.type} />
-          </Suspense>
+          <MediaCharacters mediaId={media.id} mediaType={media.type} />
         </TabPanel>
         <TabPanel>
           <Select
             defaultValue={subjectType}
             onChange={(option) => setSubjectType(option)}
-          >
-            <Option value={media.type === 'ANIME' ? 'anime' : 'manga'}>
-              {media.type === 'ANIME' ? 'Anime' : 'Manga'}
-            </Option>
-            {media.type === 'MANGA' && <Option value="volume">Volume</Option>}
-            <Option value={media.type === 'ANIME' ? 'episode' : 'chapter'}>
-              {media.type === 'ANIME' ? 'Episode' : 'Chapter'}
-            </Option>
-          </Select>
+            items={REVIEW_CATEGORIES[media.type?.toLowerCase()]}
+          />
 
-          <Suspense fallback={<Loading />}>
-            <ReviewList
-              subjectType={subjectType}
-              mediaType={media.type}
-              mediaId={media.id}
-              onDrawerOpen={onDrawerOpen}
-              setCurrentReviewMetadata={setCurrentReviewMetadata}
-              setDelReview={setDelReview}
-              onOpenReviewDeleteModal={onOpenReviewDeleteModal}
-            />
-          </Suspense>
+          <ReviewList
+            subjectType={subjectType}
+            mediaType={media.type}
+            mediaId={media.id}
+            onDrawerOpen={onDrawerOpen}
+            setCurrentReviewMetadata={setCurrentReviewMetadata}
+            setDelReview={setDelReview}
+            onOpenReviewDeleteModal={onOpenReviewDeleteModal}
+          />
         </TabPanel>
       </Tabs>
 

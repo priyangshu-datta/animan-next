@@ -40,6 +40,8 @@ import {
   PopoverTrigger,
   Rating,
   Separator,
+  Skeleton,
+  SkeletonText,
   Tag,
   Toggle,
   Tooltip,
@@ -48,7 +50,7 @@ import {
   VStack,
 } from '@yamada-ui/react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ListEditor from './list-editor';
 
 function computeProgressString(progress, total, latest) {
@@ -97,19 +99,31 @@ export default function MediaInfo({
       alignItems={{ md: 'center', base: 'start' }}
     >
       <CardHeader>
-        <Image
-          src={media.coverImage.extraLarge}
-          objectFit="cover"
-          minW={'40'}
-          maxW={'68'}
-        />
+        {media.isLoading ? (
+          <Skeleton minW={'40'} maxW={'68'} h={'max-content'} />
+        ) : (
+          <>
+            <Image
+              src={media.coverImage?.extraLarge}
+              objectFit="cover"
+              minW={'40'}
+              maxW={'68'}
+            />
+          </>
+        )}
       </CardHeader>
 
       <CardBody>
         <VStack gap="0">
           {media.listEntry && <MediaListEntryStatus />}
           <HStack>
-            <Heading size="lg">{media.title.userPreferred}</Heading>
+            {media.isLoading ? (
+              <SkeletonText>
+                <Heading size="lg">One Piece</Heading>
+              </SkeletonText>
+            ) : (
+              <Heading size="lg">{media.title?.userPreferred}</Heading>
+            )}
 
             <MediaToggleFavourite />
 
@@ -121,7 +135,7 @@ export default function MediaInfo({
             return <Tag key={genre}>{genre}</Tag>;
           })}
 
-          <MediaTags tags={media.tags} onToggle={onToggle} open={open} />
+          <MediaTags tags={media.tags ?? []} onToggle={onToggle} open={open} />
         </Flex>
 
         <MediaInfoDataList />
@@ -141,24 +155,18 @@ export default function MediaInfo({
 }
 
 function MediaRating({ score, maxScore = 10, label = '' } = {}) {
-  const normalizedScore = score / maxScore;
-  const fractions = Math.floor(
-    1 / (5 * normalizedScore - Math.floor(5 * normalizedScore))
-  );
+  const normalizedScore = (5 * score) / maxScore;
+  let locale;
+  useEffect(() => {
+    locale = localStorage.getItem('animan-locale');
+  }, []);
   return (
     <Tooltip
-      label={`${label}${new Intl.NumberFormat(
-        localStorage.getItem('animan-locale') ?? undefined,
-        {
-          style: 'percent',
-        }
-      ).format(normalizedScore)}`}
+      label={`${label}${new Intl.NumberFormat(locale, {
+        style: 'percent',
+      }).format(normalizedScore)}`}
     >
-      <Rating
-        readOnly
-        value={5 * normalizedScore}
-        fractions={fractions === Infinity ? null : fractions}
-      />
+      <Rating readOnly value={normalizedScore} fractions={maxScore} />
     </Tooltip>
   );
 }
@@ -398,6 +406,49 @@ function PlanningComponent({ isPending, mutate }) {
 function MediaInfoDataList() {
   const media = useMedia();
   const timeLeft = useCountDownTimer(media.nextAiringEpisode?.airingAt);
+  if (media.isLoading) {
+    return (
+      <DataList
+        col={2}
+        variant={'subtle'}
+        size={{ base: 'lg' }}
+        gapY={{ base: '4', lg: '2' }}
+      >
+        <DataListItem>
+          <SkeletonText lineClamp={1}>
+            <DataListTerm>Type</DataListTerm>
+          </SkeletonText>
+          <SkeletonText lineClamp={1}>
+            <DataListDescription>ANIME</DataListDescription>
+          </SkeletonText>
+        </DataListItem>
+        <DataListItem>
+          <SkeletonText lineClamp={1}>
+            <DataListTerm>Format</DataListTerm>
+          </SkeletonText>
+          <SkeletonText lineClamp={1}>
+            <DataListDescription>TV</DataListDescription>
+          </SkeletonText>
+        </DataListItem>
+        <DataListItem>
+          <SkeletonText lineClamp={1}>
+            <DataListTerm>Score</DataListTerm>
+          </SkeletonText>
+          <SkeletonText lineClamp={1}>
+            <DataListDescription>F</DataListDescription>
+          </SkeletonText>
+        </DataListItem>
+        <DataListItem>
+          <SkeletonText lineClamp={1}>
+            <DataListTerm>Date of Birth</DataListTerm>
+          </SkeletonText>
+          <SkeletonText lineClamp={1}>
+            <DataListDescription>May 5</DataListDescription>
+          </SkeletonText>
+        </DataListItem>
+      </DataList>
+    );
+  }
   return (
     <DataList
       col={2}

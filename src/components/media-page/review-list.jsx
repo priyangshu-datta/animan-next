@@ -4,9 +4,11 @@ import {
   Center,
   ContextMenu,
   ContextMenuTrigger,
+  Grid,
   Loading,
   MenuItem,
   MenuList,
+  Skeleton,
 } from '@yamada-ui/react';
 import ReviewCard from './review-card';
 import { PencilIcon, Trash2Icon } from '@yamada-ui/lucide';
@@ -20,71 +22,69 @@ export default function ReviewList({
   setDelReview,
   onOpenReviewDeleteModal,
 }) {
-  const viewReviews = useMediaReviewsPaginated({
-    mediaId,
-    mediaType,
-    subjectType,
-  });
+  const { data, isFetchingNextPage, hasNextPage, isFetched } =
+    useMediaReviewsPaginated({
+      mediaId,
+      mediaType,
+      subjectType,
+    });
 
   function handleUpdate(review) {
-    onDrawerOpen();
     setCurrentReviewMetadata({ id: review.id });
+    onDrawerOpen();
   }
 
   return (
     <>
-      {viewReviews.data.pages
-        .flatMap((page) => page.data.reviews)
-        .map((review) => {
-          return (
-            <ContextMenu key={review.id}>
-              <ContextMenuTrigger as={Center} w="full" rounded="md">
-                <ReviewCard review={review} key={review.id} />
-              </ContextMenuTrigger>
+      <Grid gap={'2'}>
+        {isFetched
+          ? data.pages
+              .flatMap((page) => page.data.reviews)
+              .map((review) => {
+                return (
+                  <ContextMenu key={review.id}>
+                    <ContextMenuTrigger as={Center} w="full" rounded="md">
+                      <ReviewCard review={review} key={review.id} />
+                    </ContextMenuTrigger>
+                    <MenuList>
+                      <MenuItem
+                        icon={<PencilIcon />}
+                        onClick={() => handleUpdate(review)}
+                      >
+                        Edit
+                      </MenuItem>
+                      <MenuItem
+                        icon={<Trash2Icon color={'red'} />}
+                        color={'red'}
+                        onClick={() => {
+                          setDelReview(review);
+                          onOpenReviewDeleteModal();
+                        }}
+                      >
+                        Remove
+                      </MenuItem>
+                    </MenuList>
+                  </ContextMenu>
+                );
+              })
+          : Array.from({ length: 5 }).map(() => (
+              <Skeleton w={'full'} h={'20'} />
+            ))}
+      </Grid>
 
-              <MenuList>
-                <MenuItem
-                  icon={<PencilIcon />}
-                  onClick={() => handleUpdate(review)}
-                >
-                  Edit
-                </MenuItem>
-                <MenuItem
-                  icon={<Trash2Icon color={'red'} />}
-                  color={'red'}
-                  onClick={() => {
-                    setDelReview(review);
-                    onOpenReviewDeleteModal();
-                  }}
-                >
-                  Remove
-                </MenuItem>
-              </MenuList>
-            </ContextMenu>
-          );
-        })}
-
-      {viewReviews.hasNextPage && (
+      {hasNextPage && (
         <Button
           w={'full'}
           mt={'2'}
           onClick={() => {
-            if (viewReviews.hasNextPage && !viewReviews.isFetchingNextPage) {
-              viewReviews.fetchNextPage();
+            if (hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
             }
           }}
-          disabled={viewReviews.isFetchingNextPage || !viewReviews.hasNextPage}
-          visibility={
-            !viewReviews.isFetchingNextPage &&
-            !viewReviews.hasNextPage &&
-            'collapse'
-          }
+          disabled={isFetchingNextPage || !hasNextPage}
+          visibility={!isFetchingNextPage && !hasNextPage && 'collapse'}
         >
-          {viewReviews.isFetchingNextPage ? (
-            <Loading variant="dots" />
-          ) : (
-            'Load More'
-          )}
+          {isFetchingNextPage ? <Loading variant="dots" /> : 'Load More'}
         </Button>
       )}
     </>

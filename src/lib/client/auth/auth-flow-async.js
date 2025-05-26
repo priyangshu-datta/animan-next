@@ -65,9 +65,9 @@ async function trySilentRefreshFlow() {
     }
 
     const iframe = document.createElement('iframe');
-    iframe.style.display = 'block'; // Or 'none' if you truly want it hidden
+    iframe.style.display = 'none'; // Keep it hidden
     iframe.src = `/api/auth/silent-refresh`;
-    document.body.appendChild(iframe); // <-- Accessing document.body
+    document.body.appendChild(iframe);
 
     function handler(event) {
       if (event.origin !== process.env.NEXT_PUBLIC_APP_URL) return;
@@ -86,7 +86,7 @@ async function trySilentRefreshFlow() {
 
     const cleanup = () => {
       window.removeEventListener('message', handler);
-      iframe.remove(); // <-- Accessing iframe.remove()
+      iframe.remove();
     };
 
     window.addEventListener('message', handler);
@@ -104,63 +104,103 @@ function isFirstPageLoad() {
 }
 
 export async function getValidAccessToken() {
-  // IMPORTANT: The entire `getValidAccessToken` function (and thus its calls to
-  // `trySilentRefreshFlow` and `isFirstPageLoad`) needs to be executed ONLY on the client.
-  //
-  // You need to ensure that whatever component or hook calls `getValidAccessToken`
-  // is a client component and calls it within a `useEffect` hook.
-  // Example:
-  // "use client";
-  // import { useEffect } from 'react';
-  // import { getValidAccessToken } from '@/utils/auth'; // Assuming this file path
-  //
-  // function MyClientComponent() {
-  //   useEffect(() => {
-  //     getValidAccessToken().then(token => {
-  //       // Use token
-  //     }).catch(err => {
-  //       // Handle error
-  //     });
-  //   }, []);
-  //   return null;
-  // }
-  // export default MyClientComponent;
+  const state = authStore.getState();
+  let accessToken = state.accessToken;
 
-  try {
-    let accessToken = authStore.getState().accessToken;
-
-    if (accessToken) {
+  // 1. Check if token is valid and not expired
+  if (accessToken) {
+    try {
       const { exp } = decodeJwt(accessToken);
       if (exp > Date.now() / 1000) {
-        return accessToken;
+        return accessToken; // Token is valid, return it immediately
       }
-    }
-
-    // `trySilentRefreshFlow` is now guarded internally, but it should only be called on client.
-    const authObject = await trySilentRefreshFlow(); // iframe
-
-    authStore.setState(authObject);
-
-    return authObject.accessToken;
-  } catch (err) {
-    console.error(err);
-    console.log('Silent Refresh failed.');
-
-    // isFirstPageLoad is now guarded internally
-    if (isFirstPageLoad()) {
-      console.log('Redirecting to login page.');
-      // window.location access needs to be client-side
-      if (typeof window !== 'undefined') {
-        const currentPath = window.location.href; // Use .href for the full URL
-        window.location.href = `/login?next=${encodeURIComponent(currentPath)}`;
-      }
-      return new Promise(() => {}); // Never resolve — we're navigating
-    } else {
-      console.log('Trying fresh login via popup.');
-      // initiateAuthPopupFlow is now guarded internally
-      const authObject = await initiateAuthPopupFlow('anilist');
-      authStore.setState(authObject);
-      return authObject.accessToken;
+    } catch (e) {
+      // If JWT decoding fails, the token is likely malformed or invalid
+      console.warn('Malformed access token, attempting refresh.', e);
+      accessToken = null; // Invalidate current token to force refresh
     }
   }
+
+  // 2. If a refresh is already in progress, wait for it
+  if (state.isRefreshing && state.refreshPromise) {
+    console.log('Refresh already in progress, waiting for it to complete...');
+    try {
+      await state.refreshPromise;
+      // After waiting, re-check the access token in case it was updated
+      const newState = authStore.getState();
+      if (newState.accessToken) {
+        return newState.accessToken;
+      }
+      // If no token even after refresh, proceed to error handling/new refresh
+    } catch (err) {
+      console.error('Waiting for refresh promise failed:', err);
+      // Fall through to initiate a new refresh or handle failure
+    }
+  }
+
+  // 3. No valid token and no refresh in progress, initiate a new silent refresh
+  if (
+    !accessToken ||
+    (accessToken && decodeJwt(accessToken).exp <= Date.now() / 1000)
+  ) {
+    console.log('Initiating new silent refresh...');
+    authStore.getState().setIsRefreshing(true); // Set the flag
+    let refreshOperation;
+    try {
+      refreshOperation = trySilentRefreshFlow();
+      authStore.getState().setRefreshPromise(refreshOperation); // Store the promise
+
+      const authObject = await refreshOperation;
+
+      authStore.getState().setTokens(authObject.accessToken, authObject.userId);
+      return authObject.accessToken;
+    } catch (err) {
+      console.error('Silent Refresh failed:', err);
+      console.log('Silent Refresh failed, handling error...');
+
+      // Important: Clear the refresh promise and flag even on failure
+      authStore.getState().setRefreshPromise(null);
+      authStore.getState().setIsRefreshing(false);
+
+      if (isFirstPageLoad()) {
+        console.log(
+          'First page load failed authentication, redirecting to login page.'
+        );
+        if (typeof window !== 'undefined') {
+          const currentPath = window.location.href;
+          window.location.href = `/login?next=${encodeURIComponent(
+            currentPath
+          )}`;
+        }
+        return new Promise(() => {}); // Never resolve — we're navigating
+      } else {
+        console.log('Non-first page load, trying fresh login via popup.');
+        try {
+          // This path should ideally be rare if silent refresh is robust
+          const authObject = await initiateAuthPopupFlow('anilist');
+          authStore
+            .getState()
+            .setTokens(authObject.accessToken, authObject.userId);
+          return authObject.accessToken;
+        } catch (popupErr) {
+          console.error('Popup authentication failed:', popupErr);
+          // If popup also fails, redirect to login
+          if (typeof window !== 'undefined') {
+            const currentPath = window.location.href;
+            window.location.href = `/login?next=${encodeURIComponent(
+              currentPath
+            )}`;
+          }
+          return new Promise(() => {}); // Never resolve
+        }
+      }
+    } finally {
+      // Ensure the refreshing state is reset even if there's an unexpected error
+      authStore.getState().setRefreshPromise(null);
+      authStore.getState().setIsRefreshing(false);
+    }
+  }
+
+  // This should ideally not be reached if logic is correct, but as a fallback
+  return null;
 }

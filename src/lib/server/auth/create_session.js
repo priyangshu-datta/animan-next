@@ -1,11 +1,8 @@
 import db from '@/db/index';
 import { NextResponse } from 'next/server';
-import { AppError } from '../errors/AppError';
-import { ERROR_CODES } from '../errors/errorCodes';
-import {
-  issueAccessToken,
-  issueRefreshToken,
-} from '../../../utils/token-utils';
+import { AppError } from '@/lib/server/errors/AppError';
+import { ERROR_CODES } from '@/lib/server/errors/errorCodes';
+import { issueAccessToken, issueRefreshToken } from '@/utils/token-utils';
 import {
   MS_IN_15_MINUTES,
   MS_IN_HOUR,

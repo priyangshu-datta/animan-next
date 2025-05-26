@@ -38,7 +38,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
-function ProfilePage() {
+export default function ProfilePage() {
   const userInfo = useUserInfo();
 
   const {

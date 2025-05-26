@@ -10,10 +10,6 @@ const nextConfig = {
   images: {
     remotePatterns: [new URL("https://s4.anilist.co/**")],
   },
-  webpack: (config) => {
-    config.resolve.alias["@"] = path.resolve(__dirname, "src");
-    return config;
-  },
 };
 
 export default nextConfig;

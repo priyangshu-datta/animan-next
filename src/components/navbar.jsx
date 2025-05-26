@@ -48,7 +48,7 @@ export default function NavBar({}) {
 
     if (
       userData &&
-      !(userData.locale.length > 0 && userData.timezone.length > 0)
+      !(userData?.locale?.length > 0 && userData.timezone.length > 0)
     ) {
       snackRef.current = snack({
         status: 'warning',
@@ -65,7 +65,7 @@ export default function NavBar({}) {
         variant: 'solid',
       });
     } else if (!(locale && timezone)) {
-      if (userData?.locale.length > 0 && userData?.timezone.length > 0) {
+      if (userData?.locale?.length > 0 && userData?.timezone?.length > 0) {
         localStorage.setItem('animan-locale', userData?.locale);
         localStorage.setItem('animan-timezone', userData?.timezone);
       }

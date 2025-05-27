@@ -18,6 +18,7 @@ import {
   useSnacks,
   Link,
   Image,
+  useMediaQuery,
 } from '@yamada-ui/react';
 import axios from 'axios';
 import NextLink from 'next/link';
@@ -74,13 +75,37 @@ export default function NavBar({}) {
     }
   }, [userData, pathname]);
 
+  const [isSmallScreen] = useMediaQuery(['(width < 786px)']);
+
   return (
     <>
-      <Flex w="full" bgColor={bgColor} p="4" mb="4">
-        <Link as={NextLink} href="/">
+      <Flex
+        w="full"
+        bgColor={bgColor}
+        p="4"
+        mb="4"
+        alignItems={'center'}
+        gap="2"
+      >
+        <Link as={NextLink} href="/" display={'initial'}>
           <Image src={'/animan-logo.png'} width={'12'} />
         </Link>
-
+        {!isSmallScreen && <Text>AniMan</Text>}
+        <Flex ml="auto" gap="2">
+          {pathname !== '/browse' && (
+            <Link
+              as={NextLink}
+              href={'/browse'}
+              ml="auto"
+              textDecoration={'underline'}
+            >
+              Browse Entities
+            </Link>
+          )}
+          <Link as={NextLink} href={'/browse'} textDecoration={'underline'}>
+            Browse Reviews
+          </Link>
+        </Flex>
         <Menu>
           <MenuButton as={Button} variant={'link'} h="full" ml="auto">
             <Avatar name={userData?.username} />

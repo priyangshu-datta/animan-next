@@ -1,7 +1,8 @@
 'use client';
 
-import { sentenceCase } from '@/utils/general';
+import { useUpdateUserMedia } from '@/lib/client/hooks/react_query/patch/user/media';
 import { MONTH_NAMES } from '@/lib/constants';
+import { sentenceCase } from '@/utils/general';
 import {
   Button,
   Card,
@@ -15,10 +16,10 @@ import {
   Image,
   Text,
   Tooltip,
+  useNotice,
 } from '@yamada-ui/react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useOptimisticUpdateMediaProgress } from '@/lib/client/hooks/react_query/patch/user/media/progress';
 
 /**
  *
@@ -50,17 +51,29 @@ function formatTimeLeft(nextAiringAt) {
   }
 }
 
-export default function MediaCard({
-  title,
-  coverImage,
-  totalEpisodes,
-  nextAiringAt,
-  mediaId,
-  mediaType,
-  mediaStatus,
-  listEntry,
-}) {
+function computeStartDate({ year, month, day }) {
+  let startDate = '';
+  if (year) {
+    startDate = year;
+  }
+  if (month) {
+    startDate = MONTH_NAMES[month - 1] + ' ' + startDate;
+  }
+  if (day) {
+    startDate = day + ' ' + startDate;
+  }
+
+  return startDate.length < 1 ? 'N/A' : startDate;
+}
+
+export default function MediaCard({ listEntry }) {
   const [timeLeft, setTimeLeft] = useState();
+
+  const totalEpisodes =
+    listEntry?.media?.nextAiringEpisode?.episode - 1 ||
+    listEntry?.media?.episodes;
+
+  const nextAiringAt = listEntry?.media?.nextAiringEpisode?.airingAt ?? '';
 
   useEffect(() => {
     if (!nextAiringAt) return;
@@ -75,30 +88,32 @@ export default function MediaCard({
     return () => clearInterval(interval);
   }, [nextAiringAt]);
 
-  const { progress, updateMediaProgress, updatingMediaProgress } =
-    useOptimisticUpdateMediaProgress({ mediaProgress: listEntry.progress });
+  // const { progress, updateMediaProgress, updatingMediaProgress } =
+  //   useOptimisticUpdateMediaProgress({ mediaProgress: listEntry.progress });
+  const notice = useNotice();
 
-  function computeStartDate({ year, month, day }) {
-    let startDate = '';
-    if (year) {
-      startDate = year;
-    }
-    if (month) {
-      startDate = MONTH_NAMES[month - 1] + ' ' + startDate;
-    }
-    if (day) {
-      startDate = day + ' ' + startDate;
-    }
-
-    return startDate.length < 1 ? 'N/A' : startDate;
-  }
+  const { mutate, isPending } = useUpdateUserMedia({
+    handleSuccess: () => {
+      notice({
+        status: 'success',
+        description: 'Media List Entry Updated',
+      });
+    },
+    handleError: (error) => {
+      notice({
+        status: 'error',
+        description: error.message,
+        title: error.name,
+      });
+    },
+  });
 
   return (
     <Flex direction={'column'} w={'full'}>
       <Card maxW="md" variant={'outline'}>
         <CardHeader>
           <Image
-            src={coverImage}
+            src={listEntry?.media?.coverImage?.large}
             objectFit="cover"
             minW={'40'}
             maxW={'80'}
@@ -107,10 +122,12 @@ export default function MediaCard({
           />
         </CardHeader>
         <CardBody>
-          <Tooltip label={title}>
-            <Link href={`/media?id=${mediaId}&type=${mediaType}`}>
+          <Tooltip label={listEntry?.media?.title?.userPreferred}>
+            <Link
+              href={`/media?id=${listEntry.media.id}&type=${listEntry.media.type}`}
+            >
               <Text lineClamp={1} fontSize={'xl'}>
-                {title}
+                {listEntry?.media?.title?.userPreferred}
               </Text>
             </Link>
           </Tooltip>
@@ -122,35 +139,40 @@ export default function MediaCard({
           >
             <DataListItem>
               <DataListTerm>
-                {mediaStatus === 'NOT_YET_RELEASED' ? 'Release in' : 'Progress'}
+                {listEntry.media.status === 'NOT_YET_RELEASED'
+                  ? 'Release in'
+                  : 'Progress'}
               </DataListTerm>
               <DataListDescription>
-                {mediaStatus === 'NOT_YET_RELEASED' ? (
-                  computeStartDate(listEntry.media.startDate) ?? 'N/A'
+                {listEntry.media.status === 'NOT_YET_RELEASED' ? (
+                  computeStartDate(listEntry.startDate) ?? 'N/A'
                 ) : (
                   <Flex gap={'1'} alignItems={'center'}>
-                    {totalEpisodes - progress > 0 ? (
+                    {totalEpisodes - listEntry.progress > 0 ? (
                       <Tooltip
-                        label={`Behind ${totalEpisodes - progress} epsiodes`}
+                        label={`Behind ${
+                          totalEpisodes - listEntry.progress
+                        } epsiodes`}
                       >
                         <span className="decoration-dashed underline-offset-2 underline">
-                          {progress}
+                          {listEntry.progress}
                         </span>
                       </Tooltip>
                     ) : (
-                      progress
+                      listEntry.progress
                     )}
                     <Button
                       variant={'link'}
                       onClick={() => {
-                        updateMediaProgress({
-                          mediaId,
-                          progress: progress + 1,
+                        mutate({
+                          mediaId: listEntry.media.id,
+                          mediaType: listEntry.media.type,
+                          progress: listEntry.progress + 1,
                         });
                       }}
-                      disabled={updatingMediaProgress}
+                      disabled={isPending}
                     >
-                      {updatingMediaProgress ? '...' : '+'}
+                      {isPending ? '...' : '+'}
                     </Button>
                   </Flex>
                 )}
@@ -158,12 +180,14 @@ export default function MediaCard({
             </DataListItem>
             <DataListItem>
               <DataListTerm>
-                {mediaStatus === 'RELEASING' && listEntry.media.type !== 'MANGA'
+                {listEntry.media.status === 'RELEASING' &&
+                listEntry.media.type !== 'MANGA'
                   ? 'Time Left'
                   : 'Status'}
               </DataListTerm>
               <DataListDescription>
-                {timeLeft ?? sentenceCase(mediaStatus.replaceAll('_', ' '))}
+                {timeLeft ??
+                  sentenceCase(listEntry.media.status.replaceAll('_', ' '))}
               </DataListDescription>
             </DataListItem>
           </DataList>

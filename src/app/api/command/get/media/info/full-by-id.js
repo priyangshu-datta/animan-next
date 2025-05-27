@@ -29,6 +29,7 @@ export async function getFullMediaInfoById(
   const FULL_MEDIA_QUERY = `query($id: Int!, $type: MediaType) {
   Media(id: $id, type: $type) {
     id
+    idMal
     episodes
     type
     format

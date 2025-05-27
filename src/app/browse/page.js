@@ -3,6 +3,7 @@
 import { useGenreCollection } from '@/lib/client/hooks/react_query/get/media/genre-collection';
 import { useTagCollection } from '@/lib/client/hooks/react_query/get/media/tag-collection';
 import { useSearch } from '@/lib/client/hooks/react_query/get/search-results';
+import { useDebounce } from '@/lib/client/hooks/use-debounce';
 import {
   COUNTRY_OF_ORIGIN,
   MEDIA_FORMAT,
@@ -55,7 +56,8 @@ import {
   VStack,
 } from '@yamada-ui/react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Controller,
   FormProvider,
@@ -117,6 +119,7 @@ export default function SearchPage() {
       startDate: null,
       endDateComparator: '',
       endDate: null,
+      booleans: ["onList"],
     },
   });
 
@@ -280,15 +283,375 @@ export default function SearchPage() {
     },
   });
 
-  const [tagCategories, setTagCategories] = useState();
+  const tagCategories = useMemo(
+    () =>
+      Array.from(
+        new Set((tagsInfo.data?.data ?? []).flatMap((t) => t.category))
+      ),
+    [tagsInfo.data]
+  );
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const debouncedFormValues = useDebounce(methods.watch());
 
   useEffect(() => {
-    if (tagsInfo.data) {
-      setTagCategories(
-        Array.from(new Set(tagsInfo.data.data.flatMap((t) => t.category)))
-      );
+    const {
+      mediaType,
+      query,
+      countryOfOrigin,
+      mediaSource,
+      mediaSort,
+      popularityLesser,
+      popularityGreater,
+      scoreLesser,
+      scoreGreater,
+      mediaTagIn,
+      mediaTagNotIn,
+      mediaTagCategoryIn,
+      mediaTagCategoryNotIn,
+      genresIn,
+      genresNotIn,
+
+      season,
+      seasonYear,
+      mediaFormatIn,
+      mediaFormatNotIn,
+      mediaStatusIn,
+      mediaStatusNotIn,
+      episodesLesser,
+      episodesGreater,
+      durationLesser,
+      durationGreater,
+      chaptersLesser,
+      chaptersGreater,
+      volumesLesser,
+      volumesGreater,
+
+      startDate,
+      startDateLesser,
+      startDateGreater,
+      endDate,
+      endDateLesser,
+      endDateGreater,
+
+      isAdult,
+      isLicensed,
+      onList,
+    } = Object.fromEntries(searchParams.entries());
+
+    const formValues = {};
+
+    if (mediaType && MEDIA_TYPES.includes(mediaType.toUpperCase())) {
+      formValues['mediaType'] = mediaType.toUpperCase();
     }
-  }, [tagsInfo.data]);
+
+    if (query) {
+      formValues['query'] = query;
+    }
+
+    if (
+      countryOfOrigin &&
+      COUNTRY_OF_ORIGIN.map((coo) => coo.value).includes(
+        countryOfOrigin.toUpperCase()
+      )
+    ) {
+      formValues['countryOfOrigin'] = countryOfOrigin.toUpperCase();
+    }
+
+    if (mediaSource && MEDIA_SOURCE.includes(mediaSource.toUpperCase())) {
+      formValues['mediaSource'] = mediaSource.toLocaleUpperCase();
+    }
+
+    if (
+      mediaSort &&
+      mediaSort
+        .split(',')
+        .every((msUrl) =>
+          MEDIA_SORT.map((ms) => ms.value).includes(msUrl.trim().toUpperCase())
+        )
+    ) {
+      formValues['mediaSort'] = mediaSort
+        .split(',')
+        .map((msUrl) => msUrl.trim().toUpperCase());
+    }
+
+    if (
+      mediaFormatIn &&
+      mediaFormatIn
+        .split(',')
+        .every((mfUrl) =>
+          MEDIA_FORMAT[formValues['mediaType'] ?? 'anime']
+            .map((mf) => mf.value)
+            .includes(mfUrl.trim().toUpperCase())
+        )
+    ) {
+      formValues['mediaFormatInclusion'] = true;
+      formValues['mediaFormat'] = mediaFormatIn
+        .split(',')
+        .map((mfUrl) => mfUrl.trim().toUpperCase());
+    }
+
+    if (
+      mediaFormatNotIn &&
+      mediaFormatNotIn
+        .split(',')
+        .every((mfUrl) =>
+          MEDIA_FORMAT[formValues['mediaType'] ?? 'anime']
+            .map((mf) => mf.value)
+            .includes(mfUrl.trim().toUpperCase())
+        )
+    ) {
+      formValues['mediaFormatInclusion'] = false;
+      formValues['mediaFormat'] = mediaFormatNotIn
+        .split(',')
+        .map((mfUrl) => mfUrl.trim().toUpperCase());
+    }
+
+    if (
+      mediaStatusIn &&
+      mediaStatusIn
+        .split(',')
+        .every((mstUrl) =>
+          MEDIA_STATUS[formValues['mediaType'] ?? 'anime']
+            .map((mst) => mst.value)
+            .includes(mstUrl.trim().toUpperCase())
+        )
+    ) {
+      formValues['mediaStatusInclusion'] = true;
+      formValues['mediaStatus'] = mediaStatusIn
+        .split(',')
+        .map((mstUrl) => mstUrl.trim().toUpperCase());
+    }
+
+    if (
+      mediaStatusNotIn &&
+      mediaStatusNotIn
+        .split(',')
+        .every((mstUrl) =>
+          MEDIA_STATUS[formValues['mediaType'] ?? 'anime']
+            .map((mst) => mst.value)
+            .includes(mstUrl.trim().toUpperCase())
+        )
+    ) {
+      formValues['mediaStatusInclusion'] = false;
+      formValues['mediaStatus'] = mediaStatusNotIn
+        .split(',')
+        .map((mstUrl) => mstUrl.trim().toUpperCase());
+    }
+
+    if (popularityLesser) {
+      formValues['popularityLesser'] = popularityLesser;
+    }
+
+    if (popularityGreater) {
+      formValues['popularityGreater'] = popularityGreater;
+    }
+
+    if (scoreLesser) {
+      formValues['scoreLesser'] = scoreLesser;
+    }
+
+    if (scoreGreater) {
+      formValues['scoreGreater'] = scoreGreater;
+    }
+
+    if (episodesLesser) {
+      formValues['episodesLesser'] = episodesLesser;
+    }
+
+    if (episodesGreater) {
+      formValues['episodesGreater'] = episodesGreater;
+    }
+
+    if (durationLesser) {
+      formValues['durationLesser'] = durationLesser;
+    }
+
+    if (durationGreater) {
+      formValues['durationGreater'] = durationGreater;
+    }
+
+    if (chaptersLesser) {
+      formValues['chaptersLesser'] = chaptersLesser;
+    }
+
+    if (chaptersGreater) {
+      formValues['chaptersGreater'] = chaptersGreater;
+    }
+
+    if (volumesLesser) {
+      formValues['volumesLesser'] = volumesLesser;
+    }
+
+    if (volumesGreater) {
+      formValues['volumesGreater'] = volumesGreater;
+    }
+
+    if (season && MEDIA_SEASONS.includes(season.toUpperCase())) {
+      formValues['season'] = season.toUpperCase();
+    }
+
+    if (seasonYear && !!seasonYear.match(/\d{4}/)) {
+      formValues['seasonYear'] = new Date(Date.parse(seasonYear));
+    }
+
+    if (
+      tagsInfo.data?.data &&
+      mediaTagIn &&
+      mediaTagIn
+        .split(',')
+        .map((tagUrl) =>
+          tagsInfo
+            .map((tag) => tag.name.toUpperCase())
+            .includes(tagUrl.trim().toUpperCase())
+        )
+    ) {
+      // if needed change all of them to sentenceCase, both here and inMediaTagSelector
+      formValues['mediaTagInclusion'] = true;
+      formValues['mediaTag'] = mediaTagIn
+        .split(',')
+        .map((tagUrl) => tagUrl.trim());
+    }
+
+    if (
+      tagsInfo.data?.data &&
+      mediaTagNotIn &&
+      mediaTagNotIn
+        .split(',')
+        .map((tagUrl) =>
+          tagsInfo
+            .map((tag) => tag.name.toUpperCase())
+            .includes(tagUrl.trim().toUpperCase())
+        )
+    ) {
+      // if needed change all of them to sentenceCase, both here and inMediaTagSelector
+      formValues['mediaTagInclusion'] = false;
+      formValues['mediaTag'] = mediaTagNotIn
+        .split(',')
+        .map((tagUrl) => tagUrl.trim());
+    }
+
+    if (
+      tagCategories &&
+      mediaTagCategoryIn &&
+      mediaTagCategoryIn
+        .split(',')
+        .map((tagCatUrl) =>
+          tagCategories
+            .map((tagCat) => tagCat.toUpperCase())
+            .includes(tagCatUrl.trim().toUpperCase())
+        )
+    ) {
+      // if needed change all of them to sentenceCase, both here and inMediaTagSelector
+      formValues['mediaTagCategoryInclusion'] = true;
+      formValues['mediaTagCategory'] = mediaTagCategoryIn
+        .split(',')
+        .map((tagCatUrl) => tagCatUrl.trim());
+    }
+
+    if (
+      tagCategories &&
+      mediaTagCategoryNotIn &&
+      mediaTagCategoryNotIn
+        .split(',')
+        .map((tagCatUrl) =>
+          tagCategories
+            .map((tagCat) => tagCat.toUpperCase())
+            .includes(tagCatUrl.trim().toUpperCase())
+        )
+    ) {
+      // if needed change all of them to sentenceCase, both here and inMediaTagSelector
+      formValues['mediaTagCategoryInclusion'] = false;
+      formValues['mediaTagCategory'] = mediaTagCategoryNotIn
+        .split(',')
+        .map((tagCatUrl) => tagCatUrl.trim());
+    }
+
+    if (
+      genresInfo.data?.data &&
+      genresIn &&
+      genresIn
+        .split(',')
+        .map((genreUrl) =>
+          genresInfo.data?.data
+            .map((genre) => genre.toUpperCase())
+            .includes(genreUrl.trim().toUpperCase())
+        )
+    ) {
+      // if needed change all of them to sentenceCase, both here and inMediaTagSelector
+      formValues['genresInclusion'] = true;
+      formValues['genres'] = genresIn
+        .split(',')
+        .map((genreUrl) => genreUrl.trim());
+    }
+
+    if (
+      genresInfo.data?.data &&
+      genresNotIn &&
+      genresNotIn
+        .split(',')
+        .map((genreUrl) =>
+          genresInfo.data?.data
+            .map((genre) => genre.toUpperCase())
+            .includes(genreUrl.trim().toUpperCase())
+        )
+    ) {
+      // if needed change all of them to sentenceCase, both here and inMediaTagSelector
+      formValues['genresInclusion'] = false;
+      formValues['genres'] = genresNotIn
+        .split(',')
+        .map((genreUrl) => genreUrl.trim());
+    }
+
+    if (startDate && Date.parse(startDate)) {
+      formValues['startDateComparator'] = 'is';
+      formValues['startDate'] = new Date(Date.parse(startDate));
+    }
+
+    if (startDateLesser && Date.parse(startDateLesser)) {
+      formValues['startDateComparator'] = 'before';
+      formValues['startDate'] = new Date(Date.parse(startDateLesser));
+    }
+
+    if (startDateGreater && Date.parse(startDateGreater)) {
+      formValues['startDateComparator'] = 'after';
+      formValues['startDate'] = new Date(Date.parse(startDateGreater));
+    }
+
+    if (endDate && Date.parse(endDate)) {
+      formValues['endDateComparator'] = 'is';
+      formValues['endDate'] = new Date(Date.parse(endDate));
+    }
+
+    if (endDateLesser && Date.parse(endDateLesser)) {
+      formValues['endDateComparator'] = 'before';
+      formValues['endDate'] = new Date(Date.parse(endDateLesser));
+    }
+
+    if (endDateGreater && Date.parse(endDateGreater)) {
+      formValues['endDateComparator'] = 'after';
+      formValues['endDate'] = new Date(Date.parse(endDateGreater));
+    }
+
+    formValues['booleans'] = [];
+
+    if (isAdult?.length === 0 || isAdult === 'true') {
+      formValues['booleans'].push('isAdult');
+    }
+    if (onList?.length === 0 || onList === 'true') {
+      formValues['booleans'].push('onList');
+    }
+    if (isLicensed?.length === 0 || isLicensed === 'true') {
+      formValues['booleans'].push('isLicensed');
+    }
+
+    console.log({ ...methods.formState.defaultValues, ...formValues });
+
+    methods.reset({ ...methods.formState.defaultValues, ...formValues });
+  }, [searchParams, tagsInfo.data, genresInfo.data, tagCategories]);
+
+  useEffect(() => {}, []);
 
   return (
     <>
@@ -300,8 +663,15 @@ export default function SearchPage() {
           onSubmit={methods.handleSubmit(onSubmit)}
         >
           <FormProvider {...methods}>
-            <Flex gap="2" alignItems={'flex-start'}>
-              <MediaTypeSelector />
+            <Flex
+              gap="2"
+              alignItems={'flex-start'}
+              flexWrap={{ base: 'nowrap', md: 'wrap' }}
+              p="2"
+            >
+              <Box w={{ base: 'max-content', md: 'full' }}>
+                <MediaTypeSelector />
+              </Box>
               <VStack gap="2">
                 <Controller
                   name="query"
@@ -309,7 +679,12 @@ export default function SearchPage() {
                     <Input {...field} type="search" autoFocus />
                   )}
                 />
-                <Flex gap="2" alignSelf={'flex-end'}>
+                <Flex
+                  gap="2"
+                  alignSelf={'flex-end'}
+                  alignItems={'center'}
+                  flexWrap={{ base: 'nowrap', md: 'wrap' }}
+                >
                   <Button
                     variant={'link'}
                     onClick={() => {
@@ -322,7 +697,7 @@ export default function SearchPage() {
                     <ChevronUpIcon animation={basicLabelAnim} />
                     Basic Options
                   </Button>
-                  |
+                  <Separator orientation="vertical" h={'4'} />
                   <Button
                     variant={'link'}
                     onClick={() => {
@@ -337,7 +712,12 @@ export default function SearchPage() {
                   </Button>
                 </Flex>
               </VStack>
-              <Button type="submit" colorScheme={'primary'} variant={'outline'}>
+              <Button
+                type="submit"
+                colorScheme={'primary'}
+                variant={'outline'}
+                w={{ base: 'max-content', md: 'full' }}
+              >
                 Search
               </Button>
             </Flex>
@@ -352,17 +732,29 @@ export default function SearchPage() {
                     <Heading size={'md'}>Basic Options</Heading>
                   </CardHeader>
                   <CardBody>
-                    <Flex gap="4" w="full">
+                    <Flex
+                      gap="4"
+                      w="full"
+                      flexWrap={{ base: 'nowrap', md: 'wrap' }}
+                    >
                       <SeasonSelector />
                       <SeasonYearSelector />
                     </Flex>
-                    <Flex gap="4" w="full">
+                    <Flex
+                      gap="4"
+                      w="full"
+                      flexWrap={{ base: 'nowrap', md: 'wrap' }}
+                    >
                       {genresInfo.isFetched && (
                         <GenreSelector genres={genresInfo.data.data} />
                       )}
                       <MediaSortMethodSelector />
                     </Flex>
-                    <Flex gap="4" w="full">
+                    <Flex
+                      gap="4"
+                      w="full"
+                      flexWrap={{ base: 'nowrap', md: 'wrap' }}
+                    >
                       <MediaStatusSelector />
                       <MediaFormatSelector />
                     </Flex>
@@ -627,41 +1019,23 @@ function SeasonYearSelector() {
 function Booleans() {
   const { control } = useFormContext();
   return (
-    <CheckboxGroup direction="row" w="full" alignItems={'center'}>
-      <FormControl>
-        <Controller
-          name="isAdult"
-          control={control}
-          render={({ field }) => (
-            <Checkbox {...field} checked={field.value} value="isAdult">
-              Adult
-            </Checkbox>
-          )}
-        />
-      </FormControl>
-      <FormControl>
-        <Controller
-          name="onList"
-          control={control}
-          render={({ field }) => (
-            <Checkbox {...field} checked={field.value} value="onList">
-              On List
-            </Checkbox>
-          )}
-        />
-      </FormControl>
-      <FormControl>
-        <Controller
-          name="isLicensed"
-          control={control}
-          render={({ field }) => (
-            <Checkbox {...field} checked={field.value} value="isLicensed">
-              Licensed
-            </Checkbox>
-          )}
-        />
-      </FormControl>
-    </CheckboxGroup>
+    <Controller
+      name="booleans"
+      control={control}
+      render={({ field }) => (
+        <CheckboxGroup {...field} direction="row" w="full" alignItems={'center'}>
+          <Checkbox checked={field.value} {...field} value="isAdult">
+            Adult
+          </Checkbox>
+          <Checkbox checked={field.value} {...field} value="onList">
+            On List
+          </Checkbox>
+          <Checkbox checked={field.value} {...field} value="isLicensed">
+            Licensed
+          </Checkbox>
+        </CheckboxGroup>
+      )}
+    />
   );
 }
 
@@ -969,7 +1343,7 @@ function MediaTagSelector({ tagCategories, tags }) {
             }}
             isMulti
             closeMenuOnSelect={false}
-            options={tagCategories.map((tc) => ({
+            options={(tagCategories ?? []).map((tc) => ({
               label: tc,
               options: tags
                 .filter((t) => t.category === tc)
@@ -1002,7 +1376,7 @@ function MediaTagCategorySelector({ tagCategories }) {
             }}
             isMulti
             closeMenuOnSelect={false}
-            options={tagCategories.map((tc) => ({
+            options={(tagCategories ?? []).map((tc) => ({
               label: tc,
               value: tc,
             }))}
@@ -1024,6 +1398,7 @@ function MediaTypeSelector() {
       render={({ field }) => (
         <ReactSelectCustom
           {...field}
+          className="w-full"
           components={{
             IndicatorSeparator: null,
             DropdownIndicator: null,

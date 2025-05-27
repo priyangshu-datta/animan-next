@@ -21,7 +21,7 @@ export default function Home() {
   const [mediaListStatus, setMediaListStatus] = useState('CURRENT');
   return (
     <Box as={'section'} className="max-w-6xl mx-auto px-4">
-      <Flex>
+      <Flex gap="2">
         <Select
           defaultValue={mediaType}
           onChange={(option) => setMediaType(option)}

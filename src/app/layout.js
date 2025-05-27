@@ -1,9 +1,9 @@
 import './globals.css';
 
 import NavBar from '@/components/navbar';
-import { ReactQueryClientProvider } from '@/providers/react-query-client-provider';
 import { Box, ColorModeScript, UIProvider } from '@yamada-ui/react';
 import { Geist, Geist_Mono as GeistMono } from 'next/font/google';
+import Providers from './providers';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -23,12 +23,12 @@ export default function RootLayoutWrapper({ children }) {
         suppressHydrationWarning
       >
         <ColorModeScript />
-        <ReactQueryClientProvider>
-          <UIProvider>
+        <UIProvider>
+          <Providers>
             <NavBar />
             <Box>{children}</Box>
-          </UIProvider>
-        </ReactQueryClientProvider>
+          </Providers>
+        </UIProvider>
       </body>
     </html>
   );

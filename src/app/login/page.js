@@ -47,7 +47,11 @@ function LoginPage() {
   return (
     <Flex py="8" className="min-h-screen w-screen">
       <Card className="m-auto">
-        <CardHeader display={'flex'} justifyContent={'center'}>
+        <CardHeader
+          display={'flex'}
+          justifyContent={'center'}
+          flexWrap={'wrap'}
+        >
           <Image src={'/animan-logo.png'} width={'32'} alt={'AniMan'} />
           {nextRoute !== '/' && (
             <>

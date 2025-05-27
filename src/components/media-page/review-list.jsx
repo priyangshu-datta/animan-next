@@ -68,7 +68,7 @@ export default function ReviewList({
                 );
               })
           : Array.from({ length: 5 }).map(() => (
-              <Skeleton w={'full'} h={'20'} />
+              <Skeleton w={'full'} h={'20'} key={Math.random()} />
             ))}
       </Grid>
 

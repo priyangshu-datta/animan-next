@@ -64,6 +64,10 @@ export async function getSearchResults(
       month: Joi.number(),
       day: Joi.number(),
     }),
+
+    isAdult: Joi.bool(),
+    onList: Joi.bool(),
+    isLicensed: Joi.bool()
   })
     .when(Joi.object({ mediaType: 'ANIME' }).unknown(), {
       then: Joi.object({

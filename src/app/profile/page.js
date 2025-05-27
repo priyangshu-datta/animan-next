@@ -15,6 +15,7 @@ import {
   XIcon,
 } from '@yamada-ui/lucide';
 import {
+  Box,
   Button,
   ButtonGroup,
   Container,
@@ -30,7 +31,9 @@ import {
   InputRightElement,
   Loading,
   Text,
+  useAnimation,
   useColorMode,
+  useColorModeValue,
   useNotice,
   VStack,
 } from '@yamada-ui/react';
@@ -42,16 +45,30 @@ import {
   useFormContext,
 } from 'react-hook-form';
 import ReactSelect from 'react-select';
+import AppStorage from '@/utils/local-storage';
+
+/*
+
+  saving things temporarily, indicator for unsaved changes
+
+*/
 
 export default function ProfilePage() {
   const userInfo = useUserInfo();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (userInfo.data) {
+      setIsLoading(false);
+    }
+  }, [userInfo.data]);
 
   const methods = useForm({
     defaultValues: {
-      username: userInfo.data?.data?.username,
-      locale: userInfo.data?.data?.locale ?? '',
-      timezone: userInfo.data?.data?.timezone ?? '',
-      colorScheme: userInfo.data?.data?.colorScheme,
+      username: '',
+      locale: '',
+      timezone: '',
+      colorScheme: '',
     },
   });
 
@@ -72,26 +89,36 @@ export default function ProfilePage() {
         duration: SNACK_DURATION,
       });
     },
-    handleSuccess: ({ variables }) => {
+    handleSuccess: () => {
       notice({
         status: 'success',
         description: 'Updated successfully',
         duration: SNACK_DURATION,
       });
-      localStorage.setItem('animan-locale', methods.watch('locale'));
-      localStorage.setItem('animan-timezone', methods.watch('timezone'));
+      AppStorage.get('locale', methods.watch('locale'));
+      AppStorage.get('timezone', methods.watch('timezone'));
 
       methods.reset({ ...methods.watch() });
       resetCheckUsername();
     },
   });
 
-  const { changeColorMode } = useColorMode();
+  const { internalColorMode, changeColorMode } = useColorMode();
 
   useEffect(() => {
     if (userInfo.data?.data?.colorScheme) {
-      changeColorMode(userInfo.data?.data?.colorScheme);
+      methods.reset({
+        username: userInfo.data?.data?.username,
+        locale: userInfo.data?.data?.locale ?? '',
+        timezone: userInfo.data?.data?.timezone ?? '',
+        colorScheme: userInfo.data?.data?.colorScheme,
+      });
     }
+    methods.setValue('colorScheme', internalColorMode, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
   }, [userInfo.data, changeColorMode]);
 
   function onSubmit(data) {
@@ -125,42 +152,85 @@ export default function ProfilePage() {
   const checkUsername = useMemo(() => debounce(mutate), []);
 
   useEffect(() => {
-    if (methods.watch('username') && methods.formState.isDirty) {
+    if ('username' in methods.formState.dirtyFields) {
       checkUsername({ username: methods.watch('username') });
+    } else {
+      resetCheckUsername()
     }
   }, [methods.watch('username'), checkUsername]);
 
+  const animation = useAnimation({
+    keyframes: {
+      '0%': {
+        opacity: 0.2 /* Fully visible */,
+      },
+      '50%': {
+        opacity: 1 /* Fully transparent */,
+      },
+      '100%': {
+        opacity: 0.2 /* Fully visible again, completes one cycle */,
+      },
+    },
+    iterationCount: 'infinite',
+    duration: '1.4s',
+  });
+
   return (
     <Container maxW={'min(80%, 1200px)'} minW={{ md: 'full' }} m={'auto'}>
-      <Heading>Profile</Heading>
+      <Flex justifyContent={'space-between'}>
+        <Heading>Profile</Heading>
+        {isLoading && (
+          <Flex>
+            <Text>Fetching from Server</Text>
+            <Text animation={animation} animationDelay={'0s'}>
+              .
+            </Text>
+            <Text animation={animation} animationDelay={'0.43s'}>
+              .
+            </Text>
+            <Text animation={animation} animationDelay={'0.93s'}>
+              .
+            </Text>
+          </Flex>
+        )}
+      </Flex>
       <FormProvider {...methods}>
         <VStack as={'form'} onSubmit={methods.handleSubmit(onSubmit)}>
           <Username
             checkedUsername={checkedUsername}
             checkingUsername={checkingUsername}
             isUsernameExists={isUsernameExists}
+            isLoading={isLoading}
           />
 
-          <ColorScheme />
+          <ColorScheme isLoading={isLoading} />
 
           <Flex gap="4">
             <LocaleSelector
               setValidLocale={setValidLocale}
               validLocale={validLocale}
+              isLoading={isLoading}
             />
 
-            <TimezoneSelector />
+            <TimezoneSelector isLoading={isLoading} />
           </Flex>
 
-          <FormButtons resetCheckUsername={resetCheckUsername} />
+          <FormButtons
+            resetCheckUsername={resetCheckUsername}
+            isLoading={isLoading}
+          />
         </VStack>
-        <UserDetails userInfo={userInfo} validLocale={validLocale} />
+        <UserDetails
+          userInfo={userInfo}
+          validLocale={validLocale}
+          isLoading={isLoading}
+        />
       </FormProvider>
     </Container>
   );
 }
 
-function ColorSchemeButtonGroup({ setFormControlValue }) {
+function ColorSchemeButtonGroup({ setFormControlValue, isLoading }) {
   const { internalColorMode, changeColorMode } = useColorMode();
   return (
     <ButtonGroup
@@ -171,7 +241,7 @@ function ColorSchemeButtonGroup({ setFormControlValue }) {
     >
       <Button
         type="button"
-        disabled={internalColorMode === 'dark'}
+        disabled={internalColorMode === 'dark' || isLoading}
         startIcon={<MoonIcon />}
         onClick={() => {
           changeColorMode('dark');
@@ -186,7 +256,7 @@ function ColorSchemeButtonGroup({ setFormControlValue }) {
       </Button>
       <Button
         type="button"
-        disabled={internalColorMode === 'system'}
+        disabled={internalColorMode === 'system' || isLoading}
         startIcon={<ComputerIcon />}
         onClick={() => {
           changeColorMode('system');
@@ -201,7 +271,7 @@ function ColorSchemeButtonGroup({ setFormControlValue }) {
       </Button>
       <Button
         type="button"
-        disabled={internalColorMode === 'light'}
+        disabled={internalColorMode === 'light' || isLoading}
         startIcon={<SunIcon />}
         onClick={() => {
           changeColorMode('light');
@@ -218,63 +288,117 @@ function ColorSchemeButtonGroup({ setFormControlValue }) {
   );
 }
 
-function UserDetails({ userInfo, validLocale }) {
+function UserDetails({ userInfo, validLocale, isLoading }) {
   const {
     formState: { defaultValues },
     watch,
   } = useFormContext();
+
+  const loadingBg = useColorModeValue(
+    {
+      backgroundColor: 'rgba(243, 243, 243, 0.8)', // Light grey, slightly opaque
+      backdropFilter: 'blur(2px) saturate(0.9) brightness(1.05)',
+      backgroundImage:
+        'linear-gradient(to bottom right, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.02))',
+    },
+    {
+      backgroundColor: 'rgba(29, 29, 29, 0.8)', // Dark grey, slightly opaque
+      backdropFilter: 'blur(12px) saturate(1.2) brightness(0.85)',
+      backgroundImage:
+        'linear-gradient(to bottom right, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.05))',
+    }
+  );
+
   return (
     <>
-      {' '}
       <Heading size={'md'} as={'h2'}>
         Provider Information
       </Heading>
-      <DataList size={'md'} col={2} w="full" variant={'grid'}>
-        <DataListItem>
-          <DataListTerm>Signed in using</DataListTerm>
-          <DataListDescription>
-            <Flex alignItems={'center'} gap="4">
-              <AnilistIcon />
+      {isLoading ? (
+        <Box position="relative">
+          <Flex
+            position={'absolute'}
+            w="full"
+            h="full"
+            {...loadingBg}
+            justifyContent={'center'}
+            alignItems={'center'}
+          >
+            <Loading fontSize={'5xl'} />
+          </Flex>
+          <DataList size={'md'} col={2} w="full" variant={'grid'}>
+            <DataListItem>
+              <DataListTerm>Signed in using</DataListTerm>
+              <DataListDescription>
+                <Flex alignItems={'center'} gap="4">
+                  <Text></Text>
+                </Flex>
+              </DataListDescription>
+            </DataListItem>
+            <DataListItem>
+              <DataListTerm>User ID</DataListTerm>
+              <DataListDescription>
+                <Text></Text>
+              </DataListDescription>
+            </DataListItem>
+            <DataListItem>
+              <DataListTerm>Member since</DataListTerm>
+              <DataListDescription></DataListDescription>
+            </DataListItem>
+          </DataList>
+        </Box>
+      ) : (
+        <DataList size={'md'} col={2} w="full" variant={'grid'}>
+          <DataListItem>
+            <DataListTerm>Signed in using</DataListTerm>
+            <DataListDescription>
+              <Flex alignItems={'center'} gap="4">
+                {userInfo.data?.data?.providerName === 'anilist' && (
+                  <AnilistIcon />
+                )}
+                <Text>
+                  {sentenceCase(userInfo.data?.data?.providerName ?? '')}
+                </Text>
+              </Flex>
+            </DataListDescription>
+          </DataListItem>
+          <DataListItem>
+            <DataListTerm>User ID</DataListTerm>
+            <DataListDescription>
               <Text>
-                {sentenceCase(userInfo.data?.data?.providerName ?? '')}
+                {sentenceCase(userInfo.data?.data?.providerUserId ?? '')}
               </Text>
-            </Flex>
-          </DataListDescription>
-        </DataListItem>
-        <DataListItem>
-          <DataListTerm>User ID</DataListTerm>
-          <DataListDescription>
-            <Text>
-              {sentenceCase(userInfo.data?.data?.providerUserId ?? '')}
-            </Text>
-          </DataListDescription>
-        </DataListItem>
-        <DataListItem>
-          <DataListTerm>Memeber since</DataListTerm>
-          <DataListDescription>
-            {Intl.DateTimeFormat(
-              validLocale
-                ? watch('locale').length < 2
+            </DataListDescription>
+          </DataListItem>
+          <DataListItem>
+            <DataListTerm>Member since</DataListTerm>
+            <DataListDescription>
+              {Intl.DateTimeFormat(
+                validLocale
+                  ? watch('locale').length < 2
+                    ? undefined
+                    : watch('locale')
+                  : defaultValues.locale.length < 2
                   ? undefined
-                  : watch('locale')
-                : defaultValues.locale.length < 2
-                ? undefined
-                : defaultValues.locale,
-              {
-                timeZone:
-                  watch('timezone').length < 2 ? undefined : watch('timezone'),
-                dateStyle: 'full',
-                timeStyle: 'long',
-              }
-            ).format(Date.parse(userInfo.data?.data?.createdAt ?? 0))}
-          </DataListDescription>
-        </DataListItem>
-      </DataList>
+                  : defaultValues.locale,
+                {
+                  timeZone:
+                    watch('timezone').length < 2
+                      ? undefined
+                      : watch('timezone'),
+                  dateStyle: 'full',
+                  timeStyle: 'long',
+                }
+              ).format(Date.parse(userInfo.data?.data?.createdAt ?? 0))}
+            </DataListDescription>
+          </DataListItem>
+        </DataList>
+      )}
     </>
   );
 }
 
-function FormButtons({ resetCheckUsername }) {
+function FormButtons({ isLoading, resetCheckUsername }) {
   const {
     formState: { isDirty },
     reset,
@@ -285,12 +409,12 @@ function FormButtons({ resetCheckUsername }) {
         type="submit"
         flexGrow={1}
         colorScheme={'primary'}
-        disabled={!isDirty}
+        disabled={!isDirty || isLoading}
       >
         Save
       </Button>
       <Button
-        disabled={!isDirty}
+        disabled={!isDirty || isLoading}
         flexGrow={1}
         onClick={() => {
           reset();
@@ -304,7 +428,12 @@ function FormButtons({ resetCheckUsername }) {
   );
 }
 
-function Username({ checkedUsername, checkingUsername, isUsernameExists }) {
+function Username({
+  isLoading,
+  checkedUsername,
+  checkingUsername,
+  isUsernameExists,
+}) {
   const {
     control,
     formState: { errors },
@@ -321,7 +450,7 @@ function Username({ checkedUsername, checkingUsername, isUsernameExists }) {
         render={({ field }) => {
           return (
             <InputGroup>
-              <Input {...field} placeholder="Username" />
+              <Input {...field} placeholder="Username" disabled={isLoading} />
               <InputRightElement>
                 {checkingUsername ? (
                   <Loading />
@@ -343,7 +472,7 @@ function Username({ checkedUsername, checkingUsername, isUsernameExists }) {
   );
 }
 
-function ColorScheme() {
+function ColorScheme({ isLoading }) {
   const {
     control,
     formState: { errors },
@@ -359,9 +488,10 @@ function ColorScheme() {
       <Controller
         name="colorScheme"
         control={control}
-        render={({ field }) => <Input {...field} hidden />}
+        render={({ field }) => <Input {...field} hidden disabled={isLoading} />}
       />
       <ColorSchemeButtonGroup
+        isLoading={isLoading}
         setFormControlValue={setValue}
         internalColorMode={internalColorMode}
         changeColorMode={changeColorMode}
@@ -370,7 +500,7 @@ function ColorScheme() {
   );
 }
 
-function LocaleSelector({ setValidLocale, validLocale }) {
+function LocaleSelector({ isLoading, setValidLocale, validLocale }) {
   const {
     control,
     formState: { errors },
@@ -389,6 +519,7 @@ function LocaleSelector({ setValidLocale, validLocale }) {
           render={({ field }) => (
             <Input
               {...field}
+              disabled={isLoading}
               onInput={(ev) => {
                 const inputLocale = ev.currentTarget.value;
                 if (inputLocale.length > 0) {
@@ -413,7 +544,9 @@ function LocaleSelector({ setValidLocale, validLocale }) {
           )}
         />
         <InputRightElement>
-          {validLocale ? (
+          {isLoading ? (
+            <Loading />
+          ) : validLocale ? (
             <CheckIcon color="green.500" />
           ) : (
             <XIcon color="red.500" />
@@ -424,7 +557,7 @@ function LocaleSelector({ setValidLocale, validLocale }) {
   );
 }
 
-function TimezoneSelector() {
+function TimezoneSelector({ isLoading }) {
   const {
     control,
     formState: { errors },
@@ -445,6 +578,7 @@ function TimezoneSelector() {
         render={({ field }) => (
           <ReactSelect
             {...field}
+            isDisabled={isLoading}
             styles={
               colorMode === 'dark' && {
                 control: (styles) => ({

@@ -48,8 +48,9 @@ import {
   useDisclosure,
   useNotice,
   VStack,
+  Link,
 } from '@yamada-ui/react';
-import Link from 'next/link';
+import NextLink from 'next/link';
 import { useEffect, useState } from 'react';
 import ListEditor from './list-editor';
 
@@ -166,7 +167,12 @@ function MediaRating({ stars = 5, score, maxScore = 10, label = '' } = {}) {
         style: 'percent',
       }).format(normalizedScore / stars)}`}
     >
-      <Rating readOnly value={normalizedScore} fractions={maxScore} items={stars} />
+      <Rating
+        readOnly
+        value={normalizedScore}
+        fractions={maxScore}
+        items={stars}
+      />
     </Tooltip>
   );
 }
@@ -195,8 +201,8 @@ function MediaTags({ tags, onToggle, open }) {
                   <Tag
                     variant={'surface'}
                     colorScheme={tag.isMediaSpoiler ? 'green' : 'purple'}
-                    as={Link}
-                    href={`/tag?id=${tag.id}`}
+                    as={NextLink}
+                    href={`/browse?mediaTagIn=${tag.name}`}
                   >
                     {tag.name}
                   </Tag>
@@ -218,8 +224,6 @@ function ActionButtons({
   const notice = useNotice();
 
   const { mutate, isPending } = useUpdateUserMedia({
-    mediaId: media.id,
-    mediaType: media.type,
     handleSuccess: () => {
       notice({
         status: 'success',
@@ -405,6 +409,7 @@ function PlanningComponent({ isPending, mutate }) {
 
 function MediaInfoDataList() {
   const media = useMedia();
+  console.log({ media });
   const timeLeft = useCountDownTimer(media.nextAiringEpisode?.airingAt);
   if (media.isLoading) {
     return (
@@ -454,7 +459,7 @@ function MediaInfoDataList() {
       col={2}
       variant={'subtle'}
       size={{ base: 'lg' }}
-      gapY={{ base: '4', lg: '2' }}
+      gapY={{ base: '2', lg: '2' }}
     >
       <DataListItem>
         <DataListTerm>Type</DataListTerm>
@@ -512,6 +517,24 @@ function MediaInfoDataList() {
           </DataListDescription>
         </DataListItem>
       )}
+      <DataListItem>
+        <DataListTerm>Reference</DataListTerm>
+        <DataListDescription display={'flex'} gap="2">
+          <Link
+            as={NextLink}
+            href={`https://anilist.co/${media.type}/${media.id}`}
+          >
+            Anilist
+          </Link>
+          <Separator orientation="vertical" />
+          <Link
+            as={NextLink}
+            href={`https://myanimelist.net/${media.type}/${media.idMal}`}
+          >
+            MyAnimeList
+          </Link>
+        </DataListDescription>
+      </DataListItem>
     </DataList>
   );
 }

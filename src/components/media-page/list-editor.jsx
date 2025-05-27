@@ -50,8 +50,6 @@ function useListEditor({ onListEditorClose }) {
 
   const notice = useNotice();
   const updateMediaListEntry = useUpdateUserMedia({
-    mediaId: media.id,
-    mediaType: media.type,
     handleError: (error) => {
       snack({
         description: error.message,

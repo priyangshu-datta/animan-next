@@ -47,12 +47,14 @@ import {
   InputLeftAddon,
   Separator,
   Skeleton,
+  Snacks,
   Text,
   Tooltip,
   useColorMode,
   useColorModeValue,
   useDisclosure,
   useDynamicAnimation,
+  useSnacks,
   VStack,
 } from '@yamada-ui/react';
 import Link from 'next/link';
@@ -68,7 +70,7 @@ import ReactSelect from 'react-select';
 
 function getFuzzyDate(date) {
   if (!(date instanceof Date) || isNaN(date.getTime())) {
-    console.error('Invalid input: Please provide a valid Date object.');
+    // console.error('Invalid input: Please provide a valid Date object.');
     return null;
   }
 
@@ -119,7 +121,7 @@ export default function SearchPage() {
       startDate: null,
       endDateComparator: '',
       endDate: null,
-      booleans: ["onList"],
+      booleans: [],
     },
   });
 
@@ -148,12 +150,17 @@ export default function SearchPage() {
       endDateComparator,
       endDate,
 
+      seasonYear,
+
+      booleans,
+
       ...restData
     } = data;
 
-    const searchOptions = Object.fromEntries(
-      Object.entries({
+    const searchOptions = Object.fromEntries([
+      ...Object.entries({
         ...restData,
+        ...{ seasonYear: seasonYear?.getFullYear() },
         ...(mediaFormatInclusion
           ? { mediaFormatIn: mediaFormat }
           : { mediaFormatNotIn: mediaFormat }),
@@ -196,8 +203,9 @@ export default function SearchPage() {
           value !== false &&
           !Number.isNaN(value) &&
           (Array.isArray(value) ? value.length > 0 : true)
-      )
-    );
+      ),
+      ...booleans.map((b) => [b, true]),
+    ]);
 
     setSearchOptions(searchOptions);
   }
@@ -292,8 +300,6 @@ export default function SearchPage() {
   );
 
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const debouncedFormValues = useDebounce(methods.watch());
 
   useEffect(() => {
     const {
@@ -343,7 +349,7 @@ export default function SearchPage() {
     const formValues = {};
 
     if (mediaType && MEDIA_TYPES.includes(mediaType.toUpperCase())) {
-      formValues['mediaType'] = mediaType.toUpperCase();
+      formValues['mediaType'] = mediaType.toLowerCase();
     }
 
     if (query) {
@@ -502,7 +508,7 @@ export default function SearchPage() {
       mediaTagIn
         .split(',')
         .map((tagUrl) =>
-          tagsInfo
+          tagsInfo.data?.data
             .map((tag) => tag.name.toUpperCase())
             .includes(tagUrl.trim().toUpperCase())
         )
@@ -520,7 +526,7 @@ export default function SearchPage() {
       mediaTagNotIn
         .split(',')
         .map((tagUrl) =>
-          tagsInfo
+          tagsInfo.data?.data
             .map((tag) => tag.name.toUpperCase())
             .includes(tagUrl.trim().toUpperCase())
         )
@@ -646,206 +652,312 @@ export default function SearchPage() {
       formValues['booleans'].push('isLicensed');
     }
 
-    console.log({ ...methods.formState.defaultValues, ...formValues });
+    // console.log({ ...methods.formState.defaultValues, ...formValues });
 
     methods.reset({ ...methods.formState.defaultValues, ...formValues });
-  }, [searchParams, tagsInfo.data, genresInfo.data, tagCategories]);
+  }, [tagsInfo.data, genresInfo.data, tagCategories]);
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    const {
+      mediaFormat,
+      mediaFormatInclusion,
+      mediaTagCategory,
+      mediaTagCategoryInclusion,
+      mediaTag,
+      mediaTagInclusion,
+      mediaStatus,
+      mediaStatusInclusion,
+      genres,
+      genresInclusion,
+      startDateComparator,
+      startDate,
+      endDateComparator,
+      endDate,
+      booleans,
+      seasonYear,
+      ...restData
+    } = methods.getValues();
+    const searchOptions = Object.fromEntries([
+      ...Object.entries({
+        ...restData,
+        ...{ seasonYear: seasonYear?.getFullYear() },
+        ...(mediaFormatInclusion
+          ? { mediaFormatIn: mediaFormat }
+          : { mediaFormatNotIn: mediaFormat }),
+        ...(mediaTagCategoryInclusion
+          ? { mediaTagCategoryIn: mediaTagCategory }
+          : { mediaTagCategoryNotIn: mediaTagCategory }),
+        ...(mediaTagInclusion
+          ? { mediaTagIn: mediaTag }
+          : { mediaTagNotIn: mediaTag }),
+        ...(mediaStatusInclusion
+          ? { mediaStatusIn: mediaStatus }
+          : { mediaStatusNotIn: mediaStatus }),
+        ...(genresInclusion ? { genresIn: genres } : { genresNotIn: genres }),
+        ...(startDate
+          ? startDateComparator === 'is'
+            ? { startDate: Object.values(getFuzzyDate(startDate))?.join('-') }
+            : {
+                ...(startDateComparator === 'before' && {
+                  startDateLesser: Object.values(getFuzzyDate(startDate))?.join(
+                    '-'
+                  ),
+                }),
+                ...(startDateComparator === 'after' && {
+                  startDateGreater: Object.values(
+                    getFuzzyDate(startDate)
+                  )?.join('-'),
+                }),
+              }
+          : {}),
+        ...(endDate
+          ? endDateComparator === 'is'
+            ? { endDate: Object.values(getFuzzyDate(endDate))?.join('-') }
+            : {
+                ...(endDateComparator === 'before' && {
+                  endDateLesser: Object.values(getFuzzyDate(endDate))?.join(
+                    '-'
+                  ),
+                }),
+                ...(endDateComparator === 'after' && {
+                  endDateGreater: Object.values(getFuzzyDate(endDate))?.join(
+                    '-'
+                  ),
+                }),
+              }
+          : {}),
+      }).filter(
+        ([_, value]) =>
+          value !== '' &&
+          value !== 0 &&
+          value !== null &&
+          value !== undefined &&
+          value !== false &&
+          !Number.isNaN(value) &&
+          (Array.isArray(value) ? value.length > 0 : true)
+      ),
+      ...booleans.map((b) => [b, '']),
+    ]);
+
+    const newSearchParams = new URLSearchParams();
+    for (const key in searchOptions) {
+      const value = searchOptions[key];
+      newSearchParams.set(key, value);
+    }
+
+    if (methods.formState.isDirty) {
+      window.history.pushState(
+        null,
+        '',
+        `?${newSearchParams.toString().replaceAll(/=(&)|=$/g, '$1')}`
+      );
+    }
+  }, [methods.watch()]);
+
+  const { snack, snacks } = useSnacks();
+
+  useEffect(() => {
+    if (searchParams.toString().length > 0) {
+      snack({
+        status: 'info',
+        description: 'Please click on the Search button.',
+        duration: 5000,
+      });
+    }
+  }, []);
 
   return (
-    <>
-      <Center>
-        <Box
-          maxW={{ sm: '100%', xl: '90%', '2xl': '80%', base: '60%' }}
-          w="full"
-          as="form"
-          onSubmit={methods.handleSubmit(onSubmit)}
-        >
-          <FormProvider {...methods}>
-            <Flex
-              gap="2"
-              alignItems={'flex-start'}
-              flexWrap={{ base: 'nowrap', md: 'wrap' }}
-              p="2"
-            >
-              <Box w={{ base: 'max-content', md: 'full' }}>
-                <MediaTypeSelector />
-              </Box>
-              <VStack gap="2">
-                <Controller
-                  name="query"
-                  render={({ field }) => (
-                    <Input {...field} type="search" autoFocus />
-                  )}
-                />
-                <Flex
-                  gap="2"
-                  alignSelf={'flex-end'}
-                  alignItems={'center'}
-                  flexWrap={{ base: 'nowrap', md: 'wrap' }}
+    <Center>
+      <Box
+        maxW={{ sm: '100%', xl: '90%', '2xl': '80%', base: '60%' }}
+        w="full"
+        as="form"
+        onSubmit={methods.handleSubmit(onSubmit)}
+      >
+      <Snacks snacks={snacks} mb="2" />
+        <FormProvider {...methods}>
+          <Flex
+            gap="2"
+            alignItems={'flex-start'}
+            flexWrap={{ base: 'nowrap', md: 'wrap' }}
+            p="2"
+          >
+            <Box w={{ base: 'max-content', md: 'full' }}>
+              <MediaTypeSelector />
+            </Box>
+            <VStack gap="2">
+              <Controller
+                name="query"
+                render={({ field }) => (
+                  <Input {...field} type="search" autoFocus />
+                )}
+              />
+              <Flex
+                gap="2"
+                alignSelf={'flex-end'}
+                alignItems={'center'}
+                flexWrap={{ base: 'nowrap', md: 'wrap' }}
+              >
+                <Button
+                  variant={'link'}
+                  onClick={() => {
+                    basicOptionsToggle();
+                    setBasicLabelAnim((prev) =>
+                      prev === 'open' ? 'close' : 'open'
+                    );
+                  }}
                 >
-                  <Button
-                    variant={'link'}
-                    onClick={() => {
-                      basicOptionsToggle();
-                      setBasicLabelAnim((prev) =>
-                        prev === 'open' ? 'close' : 'open'
-                      );
-                    }}
+                  <ChevronUpIcon animation={basicLabelAnim} />
+                  Basic Options
+                </Button>
+                <Separator orientation="vertical" h={'4'} />
+                <Button
+                  variant={'link'}
+                  onClick={() => {
+                    setAdvLabelAnim((prev) =>
+                      prev === 'open' ? 'close' : 'open'
+                    );
+                    advancedOptionsToggle();
+                  }}
+                >
+                  <ChevronDownIcon animation={advLabelAnim} />
+                  Advanced Options
+                </Button>
+              </Flex>
+            </VStack>
+            <Button
+              type="submit"
+              colorScheme={'primary'}
+              variant={'outline'}
+              w={{ base: 'max-content', md: 'full' }}
+            >
+              Search
+            </Button>
+          </Flex>
+          {basicOptionsOpen && (
+            <Collapse
+              open={basicOptionsOpen}
+              style={{ overflow: 'visible' }}
+              mt="2"
+            >
+              <Card variant={'outline'}>
+                <CardHeader>
+                  <Heading size={'md'}>Basic Options</Heading>
+                </CardHeader>
+                <CardBody>
+                  <Flex
+                    gap="4"
+                    w="full"
+                    flexWrap={{ base: 'nowrap', md: 'wrap' }}
                   >
-                    <ChevronUpIcon animation={basicLabelAnim} />
-                    Basic Options
-                  </Button>
-                  <Separator orientation="vertical" h={'4'} />
-                  <Button
-                    variant={'link'}
-                    onClick={() => {
-                      setAdvLabelAnim((prev) =>
-                        prev === 'open' ? 'close' : 'open'
-                      );
-                      advancedOptionsToggle();
-                    }}
+                    <SeasonSelector />
+                    <SeasonYearSelector />
+                  </Flex>
+                  <Flex
+                    gap="4"
+                    w="full"
+                    flexWrap={{ base: 'nowrap', md: 'wrap' }}
                   >
-                    <ChevronDownIcon animation={advLabelAnim} />
-                    Advanced Options
-                  </Button>
-                </Flex>
-              </VStack>
-              <Button
-                type="submit"
-                colorScheme={'primary'}
-                variant={'outline'}
-                w={{ base: 'max-content', md: 'full' }}
-              >
-                Search
-              </Button>
-            </Flex>
-            {basicOptionsOpen && (
-              <Collapse
-                open={basicOptionsOpen}
-                style={{ overflow: 'visible' }}
-                mt="2"
-              >
-                <Card variant={'outline'}>
-                  <CardHeader>
-                    <Heading size={'md'}>Basic Options</Heading>
-                  </CardHeader>
-                  <CardBody>
-                    <Flex
-                      gap="4"
-                      w="full"
-                      flexWrap={{ base: 'nowrap', md: 'wrap' }}
-                    >
-                      <SeasonSelector />
-                      <SeasonYearSelector />
-                    </Flex>
-                    <Flex
-                      gap="4"
-                      w="full"
-                      flexWrap={{ base: 'nowrap', md: 'wrap' }}
-                    >
-                      {genresInfo.isFetched && (
-                        <GenreSelector genres={genresInfo.data.data} />
-                      )}
-                      <MediaSortMethodSelector />
-                    </Flex>
-                    <Flex
-                      gap="4"
-                      w="full"
-                      flexWrap={{ base: 'nowrap', md: 'wrap' }}
-                    >
-                      <MediaStatusSelector />
-                      <MediaFormatSelector />
-                    </Flex>
-                  </CardBody>
-                </Card>
-              </Collapse>
-            )}
-            {advancedOptionsOpen && (
-              <Collapse
-                open={advancedOptionsOpen}
-                style={{ overflow: 'visible' }}
-                mt="2"
-              >
-                <Card variant={'outline'}>
-                  <CardHeader>
-                    <Heading size={'md'}>Advanced Options</Heading>
-                  </CardHeader>
-                  <CardBody>
-                    <Flex
-                      gap="4"
-                      w="full"
-                      flexWrap={{ base: 'nowrap', md: 'wrap' }}
-                    >
-                      <Booleans />
-                      <CountrySelector />
-                      <MediaSourceSelector />
-                    </Flex>
-
-                    <Flex
-                      gap="4"
-                      w="full"
-                      justifyContent={'space-between'}
-                      flexWrap={{ base: 'nowrap', md: 'wrap' }}
-                    >
-                      <DateSelector name={'start'} />
-                      <DateSelector name={'end'} />
-                    </Flex>
-                    {tagsInfo.isFetched && (
-                      <MediaTagSelector
-                        tagCategories={tagCategories}
-                        tags={tagsInfo.data.data}
-                      />
+                    {genresInfo.isFetched && (
+                      <GenreSelector genres={genresInfo.data.data} />
                     )}
-                    <MediaTagCategorySelector tagCategories={tagCategories} />
-                    <Grid
-                      w="full"
-                      gap="2"
-                      justifyItems={'center'}
-                      gridTemplateColumns={{
-                        base: '1fr 10px 1fr',
-                        md: '1fr',
-                      }}
-                    >
-                      {methods.watch('mediaType') === 'anime' ? (
-                        <>
-                          <OpenEndedRange label={'episodes'} />
-                          <Separator
-                            orientation="vertical"
-                            display={{ md: 'none', base: 'block' }}
-                          />
+                    <MediaSortMethodSelector />
+                  </Flex>
+                  <Flex
+                    gap="4"
+                    w="full"
+                    flexWrap={{ base: 'nowrap', md: 'wrap' }}
+                  >
+                    <MediaStatusSelector />
+                    <MediaFormatSelector />
+                  </Flex>
+                </CardBody>
+              </Card>
+            </Collapse>
+          )}
+          {advancedOptionsOpen && (
+            <Collapse
+              open={advancedOptionsOpen}
+              style={{ overflow: 'visible' }}
+              mt="2"
+            >
+              <Card variant={'outline'}>
+                <CardHeader>
+                  <Heading size={'md'}>Advanced Options</Heading>
+                </CardHeader>
+                <CardBody>
+                  <Flex
+                    gap="4"
+                    w="full"
+                    flexWrap={{ base: 'nowrap', md: 'wrap' }}
+                  >
+                    <Booleans />
+                    <CountrySelector />
+                    <MediaSourceSelector />
+                  </Flex>
 
-                          <OpenEndedRange label={'duration'} />
-                        </>
-                      ) : (
-                        <>
-                          <OpenEndedRange label={'chapters'} />
-                          <Separator
-                            orientation="vertical"
-                            display={{ md: 'none', base: 'block' }}
-                          />
+                  <Flex
+                    gap="4"
+                    w="full"
+                    justifyContent={'space-between'}
+                    flexWrap={{ base: 'nowrap', md: 'wrap' }}
+                  >
+                    <DateSelector name={'start'} />
+                    <DateSelector name={'end'} />
+                  </Flex>
+                  {tagsInfo.isFetched && (
+                    <MediaTagSelector
+                      tagCategories={tagCategories}
+                      tags={tagsInfo.data.data}
+                    />
+                  )}
+                  <MediaTagCategorySelector tagCategories={tagCategories} />
+                  <Grid
+                    w="full"
+                    gap="2"
+                    justifyItems={'center'}
+                    gridTemplateColumns={{
+                      base: '1fr 10px 1fr',
+                      md: '1fr',
+                    }}
+                  >
+                    {methods.watch('mediaType') === 'anime' ? (
+                      <>
+                        <OpenEndedRange label={'episodes'} />
+                        <Separator
+                          orientation="vertical"
+                          display={{ md: 'none', base: 'block' }}
+                        />
 
-                          <OpenEndedRange label={'volumes'} />
-                        </>
-                      )}
-                      <OpenEndedRange label={'popularity'} />
-                      <Separator
-                        orientation="vertical"
-                        display={{ md: 'none', base: 'block' }}
-                      />
+                        <OpenEndedRange label={'duration'} />
+                      </>
+                    ) : (
+                      <>
+                        <OpenEndedRange label={'chapters'} />
+                        <Separator
+                          orientation="vertical"
+                          display={{ md: 'none', base: 'block' }}
+                        />
 
-                      <OpenEndedRange label={'score'} />
-                    </Grid>
-                  </CardBody>
-                </Card>
-              </Collapse>
-            )}
-          </FormProvider>
-          {searchOptions && <SearchResult searchOptions={searchOptions} />}
-        </Box>
-      </Center>
-    </>
+                        <OpenEndedRange label={'volumes'} />
+                      </>
+                    )}
+                    <OpenEndedRange label={'popularity'} />
+                    <Separator
+                      orientation="vertical"
+                      display={{ md: 'none', base: 'block' }}
+                    />
+
+                    <OpenEndedRange label={'score'} />
+                  </Grid>
+                </CardBody>
+              </Card>
+            </Collapse>
+          )}
+        </FormProvider>
+        {searchOptions && <SearchResult searchOptions={searchOptions} />}
+      </Box>
+    </Center>
   );
 }
 
@@ -1023,16 +1135,15 @@ function Booleans() {
       name="booleans"
       control={control}
       render={({ field }) => (
-        <CheckboxGroup {...field} direction="row" w="full" alignItems={'center'}>
-          <Checkbox checked={field.value} {...field} value="isAdult">
-            Adult
-          </Checkbox>
-          <Checkbox checked={field.value} {...field} value="onList">
-            On List
-          </Checkbox>
-          <Checkbox checked={field.value} {...field} value="isLicensed">
-            Licensed
-          </Checkbox>
+        <CheckboxGroup
+          {...field}
+          direction="row"
+          w="full"
+          alignItems={'center'}
+        >
+          <Checkbox value="isAdult">Adult</Checkbox>
+          <Checkbox value="onList">On List</Checkbox>
+          <Checkbox value="isLicensed">Licensed</Checkbox>
         </CheckboxGroup>
       )}
     />

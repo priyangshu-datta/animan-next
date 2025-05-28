@@ -1128,7 +1128,72 @@ function SeasonYearSelector() {
   );
 }
 
-function Booleans() {
+function IfInListSelector() {
+  const { control } = useFormContext();
+
+  return (
+    <Controller
+      control={control}
+      name="onList"
+      render={({ field }) => {
+        const TriStateCheckbox = ({ value, onChange, ref, labels }) => {
+          const stateIcons = {
+            NONE: <SquareIcon fontSize={'lg'} />,
+            YES: <SquareCheckIcon fontSize={'lg'} />,
+            NO: <SquareXIcon fontSize={'lg'} />,
+          };
+
+          const handleChange = (e) => {
+            e.preventDefault();
+            let fieldValue;
+            if (value === 'NONE') {
+              fieldValue = false;
+            } else if (value === 'NO') {
+              fieldValue = true;
+            } else if (value === 'YES') {
+              fieldValue = null;
+            }
+            onChange(fieldValue);
+          };
+
+          return (
+            <>
+              <Flex
+                ref={ref}
+                onClick={handleChange}
+                gap="2"
+                alignItems={'center'}
+                flexShrink={0}
+                w="max-content"
+                // justifyContent={'center'}
+              >
+                {stateIcons[value]}
+                {labels[value]}
+              </Flex>
+            </>
+          );
+        };
+
+        return (
+          <TriStateCheckbox
+            {...field}
+            labels={{ YES: 'In List', NO: 'Not in List', NONE: 'All' }}
+            onChange={(state) => field.onChange(state)}
+            value={
+              field.value === true
+                ? 'YES'
+                : field.value === false
+                ? 'NO'
+                : field.value ?? 'NONE'
+            }
+          />
+        );
+      }}
+    />
+  );
+}
+
+function CheckBoxes() {
   const { control } = useFormContext();
   return (
     <Controller

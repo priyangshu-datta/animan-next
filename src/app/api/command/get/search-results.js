@@ -204,7 +204,7 @@ export async function getSearchResults(
 	$scoreLesser: Int
 	$popularityGreater: Int
 	$popularityLesser: Int
-	$sourceIn: [MediaSource]
+	$mediaSource: [MediaSource]
 	$mediaSort: [MediaSort]
 ) {
 	Page(page: $page, perPage: $perPage) {
@@ -256,7 +256,7 @@ export async function getSearchResults(
 			averageScore_lesser: $scoreLesser
 			popularity_greater: $popularityGreater
 			popularity_lesser: $popularityLesser
-			source_in: $sourceIn
+			source_in: $mediaSource
 			sort: $mediaSort
 		) {
 			id

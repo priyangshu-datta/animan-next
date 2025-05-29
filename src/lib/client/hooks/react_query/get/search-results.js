@@ -1,7 +1,7 @@
 import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
 import { useInfiniteQuery } from '@tanstack/react-query';
 
-export function useSearch({ searchOptions }) {
+export function useSearchResults({ searchOptions }) {
   return useInfiniteQuery({
     queryKey: ['search', searchOptions],
     queryFn: async ({ pageParam }) => {

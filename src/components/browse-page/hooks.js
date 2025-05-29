@@ -46,9 +46,7 @@ const defaultFormValues = {
   onList: 'all',
 };
 
-export function useSearchForm({ snack }) {
-  const methods = useForm({ defaultValues: defaultFormValues });
-
+export function useSearchForm() {
   const searchParams = useSearchParams();
 
   const genresInfo = useGenreCollection();
@@ -62,6 +60,8 @@ export function useSearchForm({ snack }) {
     [tagsInfo.data]
   );
 
+  const methods = useForm({ defaultValues: defaultFormValues });
+
   useEffect(() => {
     const formValues = searchParamsToFormControlValues(
       searchParams,
@@ -70,15 +70,15 @@ export function useSearchForm({ snack }) {
       genresInfo.data?.data
     );
 
-    for (const [name, value] of Object.entries(formValues)) {
-      methods.setValue(name, value, {
-        shouldDirty: true,
-        shouldTouch: true,
-        shouldValidate: true,
-      });
-    }
+    // for (const [name, value] of Object.entries(formValues)) {
+    //   methods.setValue(name, value, {
+    //     shouldDirty: true,
+    //     shouldTouch: true,
+    //     shouldValidate: true,
+    //   });
+    // }
 
-    // methods.reset({ ...methods.formState.defaultValues, ...formValues });
+    methods.reset({ ...methods.formState.defaultValues, ...formValues });
   }, [tagsInfo.data, genresInfo.data, tagCategories]);
 
   useEffect(() => {
@@ -96,23 +96,6 @@ export function useSearchForm({ snack }) {
       `?${newSearchParams.toString().replaceAll(/=(&)|=$/g, '$1')}`
     );
   }, [methods.watch()]);
-
-  useEffect(() => {
-    const { mediaType, countryOfOrigin, ...rest } = Object.fromEntries(
-      searchParams.entries()
-    );
-    if (
-      (mediaType !== 'ANIME' && countryOfOrigin !== 'JP') ||
-      Object.entries(rest).length > 0
-    ) {
-      snack({
-        status: 'info',
-        description:
-          'Please click on the Search button, to complete the search.',
-        duration: 5000,
-      });
-    }
-  }, []);
 
   return { methods, tagCategories, tagsInfo, genresInfo, searchParams };
 }

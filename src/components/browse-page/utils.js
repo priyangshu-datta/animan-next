@@ -8,6 +8,95 @@ import {
   MEDIA_TYPES,
 } from '@/lib/constants';
 
+export function setSearchOptionOnSubmit(data) {
+  const {
+    mediaFormat,
+    mediaFormatInclusion,
+
+    mediaTagCategory,
+    mediaTagCategoryInclusion,
+
+    mediaTag,
+    mediaTagInclusion,
+
+    mediaStatus,
+    mediaStatusInclusion,
+
+    genres,
+    genresInclusion,
+
+    startDateComparator,
+    startDate,
+
+    endDateComparator,
+    endDate,
+
+    seasonYear,
+
+    checkboxes,
+
+    onList,
+
+    ...restData
+  } = data;
+
+  const searchOptions = Object.fromEntries([
+    ...Object.entries({
+      ...restData,
+      ...{ seasonYear: seasonYear?.getFullYear() },
+      ...(mediaFormatInclusion
+        ? { mediaFormatIn: mediaFormat }
+        : { mediaFormatNotIn: mediaFormat }),
+      ...(mediaTagCategoryInclusion
+        ? { mediaTagCategoryIn: mediaTagCategory }
+        : { mediaTagCategoryNotIn: mediaTagCategory }),
+      ...(mediaTagInclusion
+        ? { mediaTagIn: mediaTag }
+        : { mediaTagNotIn: mediaTag }),
+      ...(mediaStatusInclusion
+        ? { mediaStatusIn: mediaStatus }
+        : { mediaStatusNotIn: mediaStatus }),
+      ...(genresInclusion ? { genresIn: genres } : { genresNotIn: genres }),
+      ...(startDateComparator === 'is'
+        ? { startDate: getFuzzyDate(startDate) }
+        : {
+            ...(startDateComparator === 'before' && {
+              startDateLesser: getFuzzyDate(startDate),
+            }),
+            ...(startDateComparator === 'after' && {
+              startDateGreater: getFuzzyDate(startDate),
+            }),
+          }),
+      ...(endDateComparator === 'is'
+        ? { endDate: getFuzzyDate(endDate) }
+        : {
+            ...(endDateComparator === 'before' && {
+              endDateLesser: getFuzzyDate(endDate),
+            }),
+            ...(endDateComparator === 'after' && {
+              endDateGreater: getFuzzyDate(endDate),
+            }),
+          }),
+      ...(onList === 'inList'
+        ? { onList: true }
+        : onList === 'notInList'
+        ? { onList: false }
+        : {}),
+    }).filter(
+      ([_, value]) =>
+        value !== '' &&
+        value !== 0 &&
+        value !== null &&
+        value !== undefined &&
+        !Number.isNaN(value) &&
+        (Array.isArray(value) ? value.length > 0 : true)
+    ),
+    ...checkboxes.map((b) => [b, true]),
+  ]);
+
+  return searchOptions;
+}
+
 export function getFuzzyDate(date) {
   if (!(date instanceof Date) || isNaN(date.getTime())) {
     // console.error('Invalid input: Please provide a valid Date object.');

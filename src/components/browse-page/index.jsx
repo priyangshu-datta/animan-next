@@ -20,7 +20,7 @@ import {
   useSnacks,
   VStack,
 } from '@yamada-ui/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, FormProvider } from 'react-hook-form';
 import { SearchResults } from './search-results';
 import { CountryOfOriginSelector } from './selectors/country-of-origin';
@@ -40,101 +40,14 @@ import {
   OnListRadio,
   SeasonYearSelector,
 } from './small-components';
-import { animOptions, searchParamsToFormControlValues } from './utils';
+import {
+  animOptions,
+  searchParamsToFormControlValues,
+  setSearchOptionOnSubmit,
+} from './utils';
 import { useSearchForm } from './hooks';
 
-function setSearchOptionOnSubmit(data) {
-  const {
-    mediaFormat,
-    mediaFormatInclusion,
-
-    mediaTagCategory,
-    mediaTagCategoryInclusion,
-
-    mediaTag,
-    mediaTagInclusion,
-
-    mediaStatus,
-    mediaStatusInclusion,
-
-    genres,
-    genresInclusion,
-
-    startDateComparator,
-    startDate,
-
-    endDateComparator,
-    endDate,
-
-    seasonYear,
-
-    checkboxes,
-
-    onList,
-
-    ...restData
-  } = data;
-
-  const searchOptions = Object.fromEntries([
-    ...Object.entries({
-      ...restData,
-      ...{ seasonYear: seasonYear?.getFullYear() },
-      ...(mediaFormatInclusion
-        ? { mediaFormatIn: mediaFormat }
-        : { mediaFormatNotIn: mediaFormat }),
-      ...(mediaTagCategoryInclusion
-        ? { mediaTagCategoryIn: mediaTagCategory }
-        : { mediaTagCategoryNotIn: mediaTagCategory }),
-      ...(mediaTagInclusion
-        ? { mediaTagIn: mediaTag }
-        : { mediaTagNotIn: mediaTag }),
-      ...(mediaStatusInclusion
-        ? { mediaStatusIn: mediaStatus }
-        : { mediaStatusNotIn: mediaStatus }),
-      ...(genresInclusion ? { genresIn: genres } : { genresNotIn: genres }),
-      ...(startDateComparator === 'is'
-        ? { startDate: getFuzzyDate(startDate) }
-        : {
-            ...(startDateComparator === 'before' && {
-              startDateLesser: getFuzzyDate(startDate),
-            }),
-            ...(startDateComparator === 'after' && {
-              startDateGreater: getFuzzyDate(startDate),
-            }),
-          }),
-      ...(endDateComparator === 'is'
-        ? { endDate: getFuzzyDate(endDate) }
-        : {
-            ...(endDateComparator === 'before' && {
-              endDateLesser: getFuzzyDate(endDate),
-            }),
-            ...(endDateComparator === 'after' && {
-              endDateGreater: getFuzzyDate(endDate),
-            }),
-          }),
-      ...(onList === 'inList'
-        ? { onList: true }
-        : onList === 'notInList'
-        ? { onList: false }
-        : {}),
-    }).filter(
-      ([_, value]) =>
-        value !== '' &&
-        value !== 0 &&
-        value !== null &&
-        value !== undefined &&
-        !Number.isNaN(value) &&
-        (Array.isArray(value) ? value.length > 0 : true)
-    ),
-    ...checkboxes.map((b) => [b, true]),
-  ]);
-
-  return searchOptions;
-}
-
 export default function SearchPageComponent() {
-  const [searchOptions, setSearchOptions] = useState(null);
-
   const { open: basicOptionsOpen, onToggle: basicOptionsToggle } =
     useDisclosure({
       defaultOpen: true,
@@ -147,16 +60,26 @@ export default function SearchPageComponent() {
 
   const [basicLabelAnim, setBasicLabelAnim] = useDynamicAnimation(animOptions);
 
-  const { snack, snacks } = useSnacks();
-
   const { methods, genresInfo, tagCategories, tagsInfo, searchParams } =
-    useSearchForm({
-      snack,
-    });
+    useSearchForm();
 
-  function onSubmit(data) {
-    setSearchOptions(setSearchOptionOnSubmit(data));
+  const [searchOptions, setSearchOptions] = useState();
+
+  function onSubmit() {
+    methods.reset({
+      ...methods.formState.defaultValues,
+      ...searchParamsToFormControlValues(
+        searchParams,
+        tagsInfo.data?.data,
+        tagCategories,
+        genresInfo.data?.data
+      ),
+    });
   }
+
+  useEffect(() => {
+    setSearchOptions(setSearchOptionOnSubmit(methods.formState.defaultValues));
+  }, [methods.formState.defaultValues]);
 
   return (
     <Center>
@@ -166,7 +89,6 @@ export default function SearchPageComponent() {
         as="form"
         onSubmit={methods.handleSubmit(onSubmit)}
       >
-        <Snacks snacks={snacks} mb="2" />
         <FormProvider {...methods}>
           <Flex
             gap="2"
@@ -223,15 +145,15 @@ export default function SearchPageComponent() {
               variant={'outline'}
               w={{ base: 'max-content', md: 'full' }}
               onClick={() => {
-                methods.reset({
-                  ...methods.formState.defaultValues,
-                  ...searchParamsToFormControlValues(
-                    searchParams,
-                    tagsInfo.data?.data,
-                    tagCategories,
-                    genresInfo.data?.data
-                  ),
-                });
+                // methods.reset({
+                //   ...methods.formState.defaultValues,
+                //   ...searchParamsToFormControlValues(
+                //     searchParams,
+                //     tagsInfo.data?.data,
+                //     tagCategories,
+                //     genresInfo.data?.data
+                //   ),
+                // });
               }}
             >
               Search {methods.formState.isDirty ? '*' : ''}

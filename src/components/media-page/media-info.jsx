@@ -133,10 +133,18 @@ export default function MediaInfo({
         </VStack>
         <Flex gap={'1.5'} wrap={'wrap'}>
           {(media.genres ?? []).map((genre) => {
-            return <Tag key={genre}>{genre}</Tag>;
+            return (
+              <Tag
+                key={genre}
+                as={NextLink}
+                href={`/browse?mediaType=${media.type}&genresIn=${genre}`}
+              >
+                {genre}
+              </Tag>
+            );
           })}
 
-          <MediaTags tags={media.tags ?? []} onToggle={onToggle} open={open} />
+          <MediaTags onToggle={onToggle} open={open} />
         </Flex>
 
         <MediaInfoDataList />
@@ -177,7 +185,9 @@ function MediaRating({ stars = 5, score, maxScore = 10, label = '' } = {}) {
   );
 }
 
-function MediaTags({ tags, onToggle, open }) {
+function MediaTags({ onToggle, open }) {
+  const media = useMedia();
+  const tags = media.tags ?? [];
   const [showSpoilerTags, setShowSpoilerTags] = useState(false);
   return (
     <>
@@ -202,7 +212,7 @@ function MediaTags({ tags, onToggle, open }) {
                     variant={'surface'}
                     colorScheme={tag.isMediaSpoiler ? 'green' : 'purple'}
                     as={NextLink}
-                    href={`/browse?mediaTagIn=${tag.name}`}
+                    href={`/browse?mediaType=${media.type}&mediaTagIn=${tag.name}`}
                   >
                     {tag.name}
                   </Tag>
@@ -409,7 +419,6 @@ function PlanningComponent({ isPending, mutate }) {
 
 function MediaInfoDataList() {
   const media = useMedia();
-  console.log({ media });
   const timeLeft = useCountDownTimer(media.nextAiringEpisode?.airingAt);
   if (media.isLoading) {
     return (

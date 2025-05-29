@@ -1,4 +1,4 @@
-import { useSearch } from '@/lib/client/hooks/react_query/get/search-results';
+import { useSearchResults } from '@/lib/client/hooks/react_query/get/search-results';
 import { debounce, sentenceCase } from '@/utils/general';
 import {
   Box,
@@ -20,7 +20,7 @@ import Link from 'next/link';
 
 export function SearchResults({ searchOptions }) {
   const { data, hasNextPage, fetchNextPage, isFetchingNextPage, isFetched } =
-    useSearch({
+    useSearchResults({
       searchOptions,
     });
 

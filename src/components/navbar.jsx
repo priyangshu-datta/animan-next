@@ -99,11 +99,14 @@ export default function NavBar({}) {
               ml="auto"
               textDecoration={'underline'}
             >
-              Browse Entities
+              Browse
             </Link>
           )}
           <Link as={NextLink} href={'/browse'} textDecoration={'underline'}>
-            Browse Reviews
+            Timeline
+          </Link>
+          <Link as={NextLink} href={'/timeline'} textDecoration={'underline'}>
+            Schedule
           </Link>
         </Flex>
         <Menu>

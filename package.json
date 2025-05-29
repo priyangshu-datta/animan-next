@@ -17,6 +17,7 @@
     "@tanstack/react-query": "^5.74.4",
     "@tanstack/react-query-devtools": "^5.74.7",
     "@yamada-ui/calendar": "^1.8.16",
+    "@yamada-ui/carousel": "^2.1.12",
     "@yamada-ui/lucide": "^1.10.5",
     "@yamada-ui/react": "^1.7.6",
     "arctic": "^3.6.0",

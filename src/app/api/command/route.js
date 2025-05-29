@@ -40,6 +40,7 @@ import { getMediaGenreCollection } from './get/media/genre-collection';
 import { getMediaTagCollection } from './get/media/tag-collection';
 import { getSearchResults } from './get/search-results';
 import { deleteUserMedia } from './delete/user/media';
+import { getAnimeSchedule } from './get/media/schedule';
 
 const schema = Joi.object({
   action: Joi.string(),
@@ -104,6 +105,8 @@ const COMMANDS = {
   'anilist:get:media:tag-collection': getMediaTagCollection,
 
   'anilist:get:search:results:{searchOptions}': getSearchResults,
+
+  'anilist:get:anime:schedule': getAnimeSchedule,
 };
 
 export async function POST(request) {

@@ -40,7 +40,6 @@ export default function MediaCharacters(props) {
   useEffect(() => {
     if (isFetched) {
       const searchData = data?.pages.flatMap((page) => page.characters) ?? [];
-      console.log(data);
 
       const indices = fuzzySearchGrouped(
         debouncedSearchTerm,

@@ -166,8 +166,8 @@ export async function getSearchResults(
 	$season: MediaSeason
 	$seasonYear: Int
 	$mediaType: MediaType
-	$format: MediaFormat
-	$status: MediaStatus
+	$mediaFormat: MediaFormat
+	$mediaStatus: MediaStatus
 	$episodes: Int
 	$duration: Int
 	$chapters: Int
@@ -182,10 +182,10 @@ export async function getSearchResults(
 	$startDateLesser: FuzzyDateInt
 	$endDateGreater: FuzzyDateInt
 	$endDateLesser: FuzzyDateInt
-	$formatIn: [MediaFormat]
-	$formatNotIn: [MediaFormat]
-	$statusIn: [MediaStatus]
-	$statusNotIn: [MediaStatus]
+	$mediaFormatIn: [MediaFormat]
+	$mediaFormatNotIn: [MediaFormat]
+	$mediaStatusIn: [MediaStatus]
+	$mediaStatusNotIn: [MediaStatus]
 	$episodesGreater: Int
 	$episodesLesser: Int
 	$durationGreater: Int
@@ -196,10 +196,10 @@ export async function getSearchResults(
 	$volumesLesser: Int
 	$genreIn: [String]
 	$genreNotIn: [String]
-	$tagIn: [String]
-	$tagNotIn: [String]
-	$tagCategoryIn: [String]
-	$tagCategoryNotIn: [String]
+	$mediaTagIn: [String]
+	$mediaTagNotIn: [String]
+	$mediaTagCategoryIn: [String]
+	$mediaTagCategoryNotIn: [String]
 	$scoreGreater: Int
 	$scoreLesser: Int
 	$popularityGreater: Int
@@ -218,8 +218,8 @@ export async function getSearchResults(
 			season: $season
 			seasonYear: $seasonYear
 			type: $mediaType
-			format: $format
-			status: $status
+			format: $mediaFormat
+			status: $mediaStatus
 			episodes: $episodes
 			duration: $duration
 			chapters: $chapters
@@ -234,10 +234,10 @@ export async function getSearchResults(
 			startDate_lesser: $startDateLesser
 			endDate_greater: $endDateGreater
 			endDate_lesser: $endDateLesser
-			format_in: $formatIn
-			format_not_in: $formatNotIn
-			status_in: $statusIn
-			status_not_in: $statusNotIn
+			format_in: $mediaFormatIn
+			format_not_in: $mediaFormatNotIn
+			status_in: $mediaStatusIn
+			status_not_in: $mediaStatusNotIn
 			episodes_greater: $episodesGreater
 			episodes_lesser: $episodesLesser
 			duration_greater: $durationGreater
@@ -248,10 +248,10 @@ export async function getSearchResults(
 			volumes_lesser: $volumesLesser
 			genre_in: $genreIn
 			genre_not_in: $genreNotIn
-			tag_in: $tagIn
-			tag_not_in: $tagNotIn
-			tagCategory_in: $tagCategoryIn
-			tagCategory_not_in: $tagCategoryNotIn
+			tag_in: $mediaTagIn
+			tag_not_in: $mediaTagNotIn
+			tagCategory_in: $mediaTagCategoryIn
+			tagCategory_not_in: $mediaTagCategoryNotIn
 			averageScore_greater: $scoreGreater
 			averageScore_lesser: $scoreLesser
 			popularity_greater: $popularityGreater

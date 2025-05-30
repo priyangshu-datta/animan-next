@@ -1,15 +1,25 @@
 'use client';
 
 import { useSchedule } from '@/lib/client/hooks/react_query/get/media/schedule';
+import AppStorage from '@/utils/local-storage';
 import { Carousel, CarouselSlide } from '@yamada-ui/carousel';
-import { CircleIcon } from '@yamada-ui/lucide';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CircleIcon,
+  SunIcon,
+} from '@yamada-ui/lucide';
 import {
   Box,
-  Center,
+  Button,
   Flex,
   For,
   Grid,
   Image,
+  Input,
+  InputGroup,
+  InputLeftAddon,
+  InputRightAddon,
   Link,
   Slider,
   SliderMark,
@@ -17,90 +27,225 @@ import {
   Text,
   Tooltip,
   useBoolean,
+  useMediaQuery,
 } from '@yamada-ui/react';
-import { useEffect, useRef, useState } from 'react';
 import NextLink from 'next/link';
+import { useEffect, useRef, useState } from 'react';
+import {
+  getAdjustedMaxTimestamp,
+  getAdjustedMinTimestamp,
+  getBaseTimestamp,
+  getSkyGradient,
+  getTimeProgress,
+  groupEpisodesByProximity,
+} from './utils';
 
-function getBaseTimestamp() {
-  const date = new Date();
-  date.setHours(0);
-  date.setMinutes(0);
-  date.setSeconds(0);
-  date.setMilliseconds(0);
+export default function SchedulePage() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [isLoading, setIsLoading] = useState();
 
-  return Date.parse(date);
-}
-
-function getTimeProgress({ currentTimestamp, lowerTimestamp, upperTimestamp }) {
   return (
-    ((currentTimestamp ?? Date.now()) -
-      (lowerTimestamp ?? getBaseTimestamp())) /
-    (upperTimestamp - lowerTimestamp ?? 24 * 60 * 60 * 1000)
+    <Flex w="full" justifyContent={'center'} direction={'column'}>
+      <InputGroup w="fit-content" m="auto">
+        <InputLeftAddon
+          as={Button}
+          disabled={isLoading}
+          onClick={() => {
+            const d = new Date();
+            d.setDate(currentDate.getDate() - 1);
+            setCurrentDate(d);
+          }}
+        >
+          <ChevronLeftIcon />
+        </InputLeftAddon>
+        <Input
+          readOnly
+          value={Intl.DateTimeFormat(AppStorage.get('locale') ?? 'en', {
+            timeZone: AppStorage.get('timezone') ?? undefined,
+            dateStyle: 'medium',
+          }).format(currentDate)}
+          w="fit-content"
+          textAlign={'center'}
+        />
+        <InputRightAddon
+          as={Button}
+          disabled={isLoading}
+          onClick={() => {
+            const d = new Date();
+            d.setDate(currentDate.getDate() + 1);
+            setCurrentDate(d);
+          }}
+        >
+          <ChevronRightIcon />
+        </InputRightAddon>
+      </InputGroup>
+      <SchedulePageComponent
+        startTimestamp={getBaseTimestamp(currentDate) / 1000}
+        endTimestamp={getBaseTimestamp(currentDate) / 1000 + 24 * 60 * 60}
+        setIsLoading={setIsLoading}
+      />
+    </Flex>
   );
 }
 
-function groupEpisodesByProximity(episodes, threshold = 60) {
-  if (episodes.length < 1) {
-    return [];
-  }
-  // Sort episodes by airingAt value
-  episodes.sort((a, b) => a.airingAt - b.airingAt);
-  const groupedEpisodes = [];
-  let currentGroup = [episodes[0]];
-  for (let i = 1; i < episodes.length; i++) {
-    const currentEpisode = episodes[i];
-    const lastEpisodeInGroup = currentGroup[currentGroup.length - 1];
-    // Check if the current episode's airingAt value is within the threshold
-    if (currentEpisode.airingAt - lastEpisodeInGroup.airingAt <= threshold) {
-      currentGroup.push(currentEpisode);
-    } else {
-      groupedEpisodes.push({
-        timestamp: getAverageTimestamp(currentGroup),
-        episodes: currentGroup,
-      });
-      currentGroup = [currentEpisode];
-    }
-  }
-  // Add the last group
-  if (currentGroup.length > 0) {
-    groupedEpisodes.push({
-      timestamp: getAverageTimestamp(currentGroup),
-      episodes: currentGroup,
-    });
-  }
-  return groupedEpisodes;
-}
-
-function getAverageTimestamp(episodes) {
-  const sum = episodes.reduce((acc, episode) => acc + episode.airingAt, 0);
-  return Math.floor(sum / episodes.length);
-}
-
-export default function Schedule() {
-  const endTime = useRef(getBaseTimestamp());
-  const startTime = useRef(getBaseTimestamp() + 24 * 60 * 60 * 1000);
-  const [schedule, setSchedule] = useState();
+function SchedulePageComponent({ startTimestamp, endTimestamp, setIsLoading }) {
+  const [schedules, setSchedules] = useState([]);
 
   const { data, isLoading } = useSchedule({
-    startTimestamp: getBaseTimestamp() / 1000,
-    endTimestamp: getBaseTimestamp() / 1000 + 24 * 60 * 60,
+    startTimestamp,
+    endTimestamp,
   });
 
   useEffect(() => {
-    if (data) {
-      setSchedule(groupEpisodesByProximity(data?.data, 25 * 60));
-
-      startTime.current =
-        Math.min(
-          ...data?.data?.map((airingSchedule) => airingSchedule.airingAt)
-        ) * 1000;
-      endTime.current =
-        Math.max(
-          ...data?.data?.map((airingSchedule) => airingSchedule.airingAt)
-        ) * 1000;
+    if (isLoading === true) {
+      setIsLoading(true);
+    } else if (isLoading === false) {
+      setIsLoading(false);
     }
-  }, [data]);
+  }, [isLoading]);
 
+  const [mdTimeThreshold, smTimeThreshold] = useMediaQuery([
+    '(width < 786px)',
+    '(width < 516px)',
+  ]);
+
+  useEffect(() => {
+    if (data) {
+      console.log({ data: data.data });
+      setSchedules(() => {
+        const groupedData = groupEpisodesByProximity(
+          data?.data,
+          (smTimeThreshold ? 55 : mdTimeThreshold ? 35 : 25) * 60
+        );
+        const newScheduleArray = [
+          {
+            id: 'root',
+            entries: groupedData,
+          },
+        ];
+
+        return newScheduleArray;
+      });
+    }
+  }, [data, mdTimeThreshold, smTimeThreshold]);
+
+  const [currentHighlighted, setCurrentHighlighted] = useState([]);
+
+  return (
+    <Flex w="full" gap="20" px="4" flexDirection={'column'} mt="10">
+      {schedules.map((schedule, index) => (
+        <ScheduleTimeline
+          key={schedule.id}
+          level={index}
+          schedule={schedule.entries}
+          setSchedules={setSchedules}
+          currentHighlighted={currentHighlighted}
+          setCurrentHighlighted={setCurrentHighlighted}
+        />
+      ))}
+      <Carousel autoplay>
+        {(currentHighlighted?.at(-1)?.episodes ?? data?.data ?? []).map(
+          (ep) => (
+            <CarouselSlide
+              key={ep.id}
+              bgColor={'secondary'}
+              bgImg={`url(${ep.media.bannerImage})`}
+            >
+              <Flex h="full" position={'relative'}>
+                <Flex
+                  p="8"
+                  position={'absolute'}
+                  bottom="0"
+                  left="0"
+                  right="0"
+                  h="full"
+                  gap="4"
+                  bgGradient={
+                    'linear-gradient(0deg,rgba(0, 0, 0, 1) 0%, rgba(107, 105, 105, 0.56) 46%, rgba(255, 255, 255, 0) 100%)'
+                  }
+                >
+                  <Box
+                    w="32"
+                    aspectRatio={9 / 12}
+                    alignSelf={'end'}
+                    boxShadow={'dark-lg'}
+                    flexShrink={0}
+                    objectFit={'contain'}
+                  >
+                    <Image
+                      w="full"
+                      h="full"
+                      src={ep.media.coverImage.extraLarge}
+                      alt={ep.media.title.userPreferred}
+                    />
+                  </Box>
+                  <Flex alignSelf={'end'} direction={'column'}>
+                    <Link
+                      as={NextLink}
+                      fontSize={'2xl'}
+                      color="white"
+                      href={`/media?id=${ep.media.id}&type=${ep.media.type}`}
+                    >
+                      {ep.media.title.userPreferred}
+                    </Link>
+                    <Text color="white">
+                      {Intl.DateTimeFormat(AppStorage.get('locale'), {
+                        timeZone: AppStorage.get('timezone'),
+                        dateStyle: 'long',
+                        timeStyle: 'long',
+                      }).format(ep.airingAt * 1000)}
+                    </Text>
+                  </Flex>
+                </Flex>
+              </Flex>
+            </CarouselSlide>
+          )
+        )}
+      </Carousel>
+    </Flex>
+  );
+}
+
+function ScheduleTimeline({
+  schedule,
+  setSchedules,
+  currentHighlighted,
+  setCurrentHighlighted,
+  level,
+}) {
+  const startTime = useRef(
+    getAdjustedMinTimestamp(
+      Math.min(
+        ...schedule?.map((airingSchedule) => airingSchedule?.timestamp)
+      ) * 1000,
+      level > 0 ? 60 * 1000 : 30 * 60 * 1000
+    )
+  );
+  const endTime = useRef(
+    getAdjustedMaxTimestamp(
+      Math.max(
+        ...schedule?.map((airingSchedule) => airingSchedule?.timestamp)
+      ) * 1000,
+      level > 0 ? 60 * 1000 : 30 * 60 * 1000
+    )
+  );
+
+  useEffect(() => {
+    startTime.current = getAdjustedMinTimestamp(
+      Math.min(
+        ...schedule?.map((airingSchedule) => airingSchedule?.timestamp)
+      ) * 1000,
+      level > 0 ? 60 * 1000 : 30 * 60 * 1000
+    );
+    endTime.current = getAdjustedMaxTimestamp(
+      Math.max(
+        ...schedule?.map((airingSchedule) => airingSchedule?.timestamp)
+      ) * 1000,
+      level > 0 ? 60 * 1000 : 30 * 60 * 1000
+    );
+  }, [schedule]);
+
+  const [open, { on, off }] = useBoolean(false);
   const [currentTime, setCurrentTime] = useState();
 
   useEffect(() => {
@@ -116,124 +261,136 @@ export default function Schedule() {
     return () => {
       clearInterval(interval);
     };
-  }, []);
-
-  const [open, { on, off }] = useBoolean(false);
-
-  const [currentHighlighted, setCurrentHighlighted] = useState();
+  }, [schedule]);
 
   return (
-    <Flex w="full" gap="20" px="4" flexDirection={'column'}>
-      <Slider
-        defaultValue={
+    <Slider
+      defaultValue={
+        100 *
+        getTimeProgress({
+          lowerTimestamp: startTime.current,
+          upperTimestamp: endTime.current,
+        })
+      }
+      value={currentTime}
+      focusThumbOnChange={false}
+      onMouseEnter={on}
+      onMouseLeave={off}
+      trackColor={getSkyGradient(
+        new Date(startTime.current),
+        new Date(endTime.current)
+      )}
+      filledTrackColor={'transparent'}
+    >
+      <SliderMark
+        value={
           100 *
           getTimeProgress({
+            currentTimestamp:
+              (getBaseTimestamp() + getBaseTimestamp() + 1000 * 60 * 60 * 24) /
+              2,
             lowerTimestamp: startTime.current,
             upperTimestamp: endTime.current,
           })
         }
-        // reversed
-        // orientation="vertical"
-        // h="80dvh"
-        value={currentTime}
-        focusThumbOnChange={false}
-        onMouseEnter={on}
-        onMouseLeave={off}
+        mt="-7"
       >
-        <For each={schedule ?? []}>
-          {({ timestamp }) => (
-            <SliderMark
-              key={timestamp}
-              // mb="-3"
-              ml="-4"
-              value={
-                100 *
-                getTimeProgress({
-                  currentTimestamp: timestamp * 1000,
-                  lowerTimestamp: startTime.current,
-                  upperTimestamp: endTime.current,
-                })
-              }
-              pointerEvents={'all'}
-              w="fit-content"
-              h="fit-content"
-            >
-              <Box
-                pointerEvents={'all'}
-                onClick={() => setCurrentHighlighted(timestamp)}
-              >
-                <CircleIcon
-                  fill={
-                    timestamp === currentHighlighted ? 'fuchsia' : 'primary'
-                  }
-                  stroke={
-                    timestamp === currentHighlighted ? 'fuchsia' : 'primary'
-                  }
-                />
-              </Box>
-            </SliderMark>
-          )}
-        </For>
-        <Tooltip
-          placement="right"
-          label={new Date().toLocaleTimeString()}
-          open={open}
-        >
-          <SliderThumb />
-        </Tooltip>
-      </Slider>
-      <Carousel dragFree>
-        {(
-          schedule?.find((s) => s.timestamp === currentHighlighted)?.episodes ??
-          []
-        ).map((ep) => (
-          <CarouselSlide
-            key={ep.id}
-            bgColor={'secondary'}
-            bgImg={`url(${ep.media.bannerImage})`}
+        <SunIcon color="yellow.200" fontSize={'xl'} />
+      </SliderMark>
+      <For each={schedule}>
+        {({ id, timestamp, episodes }) => (
+          <SliderMark
+            key={timestamp}
+            ml="-2"
+            value={
+              100 *
+              getTimeProgress({
+                currentTimestamp: timestamp * 1000,
+                lowerTimestamp: startTime.current,
+                upperTimestamp: endTime.current,
+              })
+            }
+            pointerEvents={'all'}
+            w="fit-content"
+            h="fit-content"
           >
-            <Flex h="full" position={'relative'}>
-              <Flex
-                p="8"
-                position={'absolute'}
-                bottom="0"
-                left="0"
-                right="0"
-                h="full"
-                gap="4"
-                bgGradient={
-                  'linear-gradient(0deg,rgba(0, 0, 0, 1) 0%, rgba(107, 105, 105, 0.56) 46%, rgba(255, 255, 255, 0) 100%)'
+            <Grid
+              pointerEvents={'all'}
+              onClick={() => {
+                if (
+                  episodes.length > 1 &&
+                  Array.from(new Set(episodes.map((ep) => ep.airingAt)))
+                    .length > 1
+                ) {
+                  setSchedules((prev) => {
+                    const newScheduleArray = [...prev];
+                    newScheduleArray[level + 1] = {
+                      id,
+                      entries: groupEpisodesByProximity(episodes, 60),
+                    };
+
+                    return newScheduleArray;
+                  });
+                } else {
+                  setSchedules((prev) => {
+                    return prev.slice(0, level + 1);
+                  });
                 }
-              >
-                <Box
-                  w="32"
-                  aspectRatio={9 / 12}
-                  alignSelf={'end'}
-                  boxShadow={'dark-lg'}
-                  flexShrink={0}
-                  objectFit={'contain'}
-                >
-                  <Image
-                    w="full"
-                    h="full"
-                    src={ep.media.coverImage.extraLarge}
-                    alt={ep.media.title.userPreferred}
-                  />
-                </Box>
-                <Link
-                  as={NextLink}
-                  alignSelf={'end'}
-                  fontSize={'2xl'}
-                  color="white"
-                  href={`/media?id=${ep.media.id}&type=${ep.media.type}`}
-                >
-                  {ep.media.title.userPreferred}
-                </Link>
-              </Flex>
-            </Flex>
-          </CarouselSlide>
-        ))}
-      </Carousel>
-    </Flex>
+                setCurrentHighlighted((prev) => {
+                  const newVal = [...prev];
+                  const sameAsLast = newVal.at(-1)?.id === id;
+
+                  if (sameAsLast) {
+                    return newVal.slice(0, -1);
+                  }
+
+                  newVal[level] = { id, timestamp, episodes };
+
+                  return newVal.slice(0, level + 1);
+                });
+              }}
+              placeItems={'center'}
+            >
+              <CircleIcon
+                fill={
+                  currentHighlighted.map((ch) => ch.id).includes(id)
+                    ? 'fuchsia'
+                    : 'primary'
+                }
+                stroke={
+                  currentHighlighted.map((ch) => ch.id).includes(id)
+                    ? 'fuchsia'
+                    : 'primary'
+                }
+              />
+              {new Date(timestamp * 1000).getHours() % 12}{' '}
+              {new Date(timestamp * 1000).getHours() > 12 ? 'pm' : 'am'}
+            </Grid>
+          </SliderMark>
+        )}
+      </For>
+      <Tooltip
+        placement="right"
+        label={
+          getBaseTimestamp(new Date(startTime.current)) < Date.now() &&
+          Date.now() <
+            getBaseTimestamp(new Date(endTime.current)) + 24 * 60 * 60 * 1000
+            ? Intl.DateTimeFormat(AppStorage.get('locale'), {
+                timeZone: AppStorage.get('timezone'),
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+              }).format(new Date())
+            : Intl.DateTimeFormat(AppStorage.get('locale'), {
+                dateStyle: 'short',
+                timeStyle: 'medium',
+                timeZone: AppStorage.get('timezone'),
+              }).format(new Date())
+        }
+        open={open}
+      >
+        <SliderThumb />
+      </Tooltip>
+    </Slider>
   );
 }

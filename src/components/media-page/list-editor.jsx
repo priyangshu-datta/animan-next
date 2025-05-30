@@ -6,11 +6,9 @@ import { useUpdateUserMedia } from '@/lib/client/hooks/react_query/patch/user/me
 import { useToggleMediaFavourite } from '@/lib/client/hooks/react_query/patch/user/media/toggle-favourite';
 import { MEDIA_LIST_STATUS, SNACK_DURATION } from '@/lib/constants';
 import { RangeDatePicker } from '@yamada-ui/calendar';
-import { HeartIcon, VenetianMaskIcon } from '@yamada-ui/lucide';
+import { HeartIcon, InfoIcon, VenetianMaskIcon } from '@yamada-ui/lucide';
 import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
+  Box,
   Button,
   CheckboxCardGroup,
   Drawer,
@@ -237,13 +235,22 @@ export default function ListEditor({ openListEditor, onListEditorClose }) {
         </DrawerHeader>
 
         <DrawerBody>
-          <Alert>
-            <AlertIcon />
-            <AlertDescription>
+          <Flex
+            alignItems={'center'}
+            gap="2"
+            borderColor="primary"
+            borderWidth={'thin'}
+            borderStyle={'solid'}
+            p="2"
+            borderRadius={'lg'}
+            w="full"
+          >
+            <InfoIcon stroke="primary" fontSize={"xl"} />
+            <Box>
               This mutates your Anilist data. If preferred go and fill the same
               in anilist, and then reload this page.
-            </AlertDescription>
-          </Alert>
+            </Box>
+          </Flex>
           <Stack direction={{ md: 'column', base: 'row' }} w={'full'}>
             <MediaListStatusSelector mediaType={media.type} />
             <MediaListEntryRating />
@@ -563,6 +570,7 @@ function MediaListEntry_Private_HiddenFromStatusLists_CheckBoxes() {
             {...field}
             onChange={(options) => field.onChange(options.sort())}
             w="full"
+            flexWrap={'wrap'}
             withIcon={false}
             items={[
               {
@@ -576,9 +584,9 @@ function MediaListEntry_Private_HiddenFromStatusLists_CheckBoxes() {
               },
               {
                 label: (
-                  <HStack gap="sm">
+                  <HStack gap="sm" w="max-content">
                     <VenetianMaskIcon color="muted" fontSize="2xl" />
-                    <Text>Hidden from status lists</Text>
+                    <Text flexShrink={0}>Hidden from status lists</Text>
                   </HStack>
                 ),
                 value: 'hiddenFromStatusLists',
@@ -609,7 +617,7 @@ function MediaListEntryCustomListsSelector({ customLists }) {
           <CheckboxCardGroup
             {...field}
             onChange={(listNames) => field.onChange(listNames.sort())}
-            // withIcon={false}
+            flexWrap={'wrap'}
             items={customLists.map((listName) => ({
               label: listName,
               value: listName,

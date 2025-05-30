@@ -191,9 +191,11 @@ function MediaTags({ onToggle, open }) {
   const [showSpoilerTags, setShowSpoilerTags] = useState(false);
   return (
     <>
-      <Button variant={'link'} onClick={onToggle}>
-        See Tags
-      </Button>
+      {!media.isLoading && (
+        <Button variant={'link'} onClick={onToggle}>
+          See Tags
+        </Button>
+      )}
       <Collapse open={open}>
         <Box>
           {tags.some((tag) => tag.isMediaSpoiler) && (
@@ -317,19 +319,27 @@ function ActionButtons({
 
   return (
     <HStack wrap={'wrap'}>
-      {media.status === 'NOT_YET_RELEASED' ? (
-        components['DEFAULT']
-      ) : media.listEntry ? (
-        components[media.listEntry.status]
+      {media.isLoading ? (
+        <Skeleton w="64">
+          <Button></Button>
+        </Skeleton>
       ) : (
         <>
-          {components['PLANNING']} {components['DEFAULT']}
+          {media.status === 'NOT_YET_RELEASED' ? (
+            components['DEFAULT']
+          ) : media.listEntry ? (
+            components[media.listEntry.status]
+          ) : (
+            <>
+              {components['PLANNING']} {components['DEFAULT']}
+            </>
+          )}
+          <Separator orientation="vertical" h={'20px'} />
+          <Button onClick={onListEditorOpen} variant={'outline'}>
+            List Editor
+          </Button>
         </>
       )}
-      <Separator orientation="vertical" h={'20px'} />
-      <Button onClick={onListEditorOpen} variant={'outline'}>
-        List Editor
-      </Button>
     </HStack>
   );
 }

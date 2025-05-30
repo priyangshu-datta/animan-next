@@ -2,6 +2,7 @@
 
 import { useUserInfo } from '@/lib/client/hooks/react_query/get/user/info';
 import { authStore } from '@/stores/auth-store';
+import AppStorage from '@/utils/local-storage';
 import {
   Avatar,
   Box,
@@ -44,8 +45,8 @@ export default function NavBar({}) {
   const snackRef = useRef(null);
 
   useEffect(() => {
-    const locale = localStorage.getItem('animan-locale');
-    const timezone = localStorage.getItem('animan-timezone');
+    const locale = AppStorage.get('locale');
+    const timezone = AppStorage.get('timezone');
 
     if (
       userData &&
@@ -67,8 +68,8 @@ export default function NavBar({}) {
       });
     } else if (!(locale && timezone)) {
       if (userData?.locale?.length > 0 && userData?.timezone?.length > 0) {
-        localStorage.setItem('animan-locale', userData?.locale);
-        localStorage.setItem('animan-timezone', userData?.timezone);
+        AppStorage.set('locale', userData?.locale);
+        AppStorage.set('timezone', userData?.timezone);
       }
     } else {
       snack.closeAll();
@@ -102,12 +103,14 @@ export default function NavBar({}) {
               Browse
             </Link>
           )}
-          <Link as={NextLink} href={'/browse'} textDecoration={'underline'}>
+          <Link as={NextLink} href={'/timeline'} textDecoration={'underline'}>
             Timeline
           </Link>
-          <Link as={NextLink} href={'/timeline'} textDecoration={'underline'}>
-            Schedule
-          </Link>
+          {pathname !== '/schedule' && (
+            <Link as={NextLink} href={'/schedule'} textDecoration={'underline'}>
+              Schedule
+            </Link>
+          )}
         </Flex>
         <Menu>
           <MenuButton as={Button} variant={'link'} h="full" ml="auto">

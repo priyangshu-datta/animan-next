@@ -21,6 +21,9 @@ import {
   InputLeftAddon,
   InputRightAddon,
   Link,
+  Loading,
+  Radio,
+  RadioGroup,
   Slider,
   SliderMark,
   SliderThumb,
@@ -39,17 +42,46 @@ import {
   getTimeProgress,
   groupEpisodesByProximity,
 } from './utils';
+import { useUserMediaList } from '@/lib/client/hooks/react_query/get/user/media/list';
 
 export default function SchedulePage() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [isLoading, setIsLoading] = useState();
+  const [scheduleIsLoading, setIsLoading] = useState();
+
+  const {
+    data: userCurrentMedia,
+    fetchNextPage,
+    hasNextPage,
+    isLoading: userCurrentMediaIsLoading,
+  } = useUserMediaList({
+    mediaType: 'ANIME',
+    mediaListStatus: 'CURRENT',
+    perPage: 25,
+  });
+
+  useEffect(() => {
+    if (userCurrentMedia) {
+      if (hasNextPage) {
+        fetchNextPage();
+      } else {
+        console.log(
+          userCurrentMedia.pages
+            .flatMap((page) => page.mediaList)
+            .filter((entry) => entry.media.status === 'RELEASING')
+            .map((entry) => entry.media.id)
+        );
+      }
+    }
+  }, [userCurrentMedia]);
+
+  const [onList, setOnList] = useState('all');
 
   return (
-    <Flex w="full" justifyContent={'center'} direction={'column'}>
+    <Flex w="full" justifyContent={'center'} direction={'column'} gap="4">
       <InputGroup w="fit-content" m="auto">
         <InputLeftAddon
           as={Button}
-          disabled={isLoading}
+          disabled={scheduleIsLoading}
           onClick={() => {
             const d = new Date();
             d.setDate(currentDate.getDate() - 1);
@@ -69,7 +101,7 @@ export default function SchedulePage() {
         />
         <InputRightAddon
           as={Button}
-          disabled={isLoading}
+          disabled={scheduleIsLoading}
           onClick={() => {
             const d = new Date();
             d.setDate(currentDate.getDate() + 1);
@@ -79,22 +111,52 @@ export default function SchedulePage() {
           <ChevronRightIcon />
         </InputRightAddon>
       </InputGroup>
+      {userCurrentMediaIsLoading ? (
+        <Loading />
+      ) : (
+        <RadioGroup
+          direction={'row'}
+          m="auto"
+          onChange={(option) => {
+            setOnList(option);
+          }}
+          defaultValue="all"
+        >
+          <Radio value="inList">In List</Radio>
+          <Radio value="notInList">Not in List</Radio>
+          <Radio value="all">All</Radio>
+        </RadioGroup>
+      )}
       <SchedulePageComponent
-        startTimestamp={getBaseTimestamp(currentDate) / 1000}
-        endTimestamp={getBaseTimestamp(currentDate) / 1000 + 24 * 60 * 60}
+        searchOptions={{
+          startTimestamp: getBaseTimestamp(currentDate) / 1000,
+          endTimestamp: getBaseTimestamp(currentDate) / 1000 + 24 * 60 * 60,
+          ...(onList === 'inList'
+            ? {
+                mediaIdIn: userCurrentMedia.pages
+                  .flatMap((page) => page.mediaList)
+                  .filter((entry) => entry.media.status === 'RELEASING')
+                  .map((entry) => entry.media.id),
+              }
+            : onList === 'notInList'
+            ? {
+                mediaIdNotIn: userCurrentMedia.pages
+                  .flatMap((page) => page.mediaList)
+                  .filter((entry) => entry.media.status === 'RELEASING')
+                  .map((entry) => entry.media.id),
+              }
+            : {}),
+        }}
         setIsLoading={setIsLoading}
       />
     </Flex>
   );
 }
 
-function SchedulePageComponent({ startTimestamp, endTimestamp, setIsLoading }) {
-  const [schedules, setSchedules] = useState([]);
+function SchedulePageComponent({ searchOptions, setIsLoading }) {
+  const [timeSliders, setTimeSliders] = useState([]);
 
-  const { data, isLoading } = useSchedule({
-    startTimestamp,
-    endTimestamp,
-  });
+  const { data, isLoading } = useSchedule(searchOptions);
 
   useEffect(() => {
     if (isLoading === true) {
@@ -104,103 +166,178 @@ function SchedulePageComponent({ startTimestamp, endTimestamp, setIsLoading }) {
     }
   }, [isLoading]);
 
-  const [mdTimeThreshold, smTimeThreshold] = useMediaQuery([
-    '(width < 786px)',
-    '(width < 516px)',
+  const [
+    xsTimeThreshold,
+    smTimeThreshold,
+    mdTimeThreshold,
+    lgTimeThreshold,
+    xlTimeThreshold,
+    xxlTimeThreshold,
+    xxxlTimeThreshold,
+  ] = useMediaQuery([
+    '(width < 320px)',
+    '(width < 576px)',
+    '(width < 992px)',
+    '(width < 1200px)',
+    '(width < 1440px)',
+    '(width < 1600px)',
+    '(width < 2000px)',
   ]);
+
+  const carouselRef = useRef();
+
+  const [markerHistory, setMarkerHistory] = useState([]);
 
   useEffect(() => {
     if (data) {
-      console.log({ data: data.data });
-      setSchedules(() => {
-        const groupedData = groupEpisodesByProximity(
-          data?.data,
-          (smTimeThreshold ? 55 : mdTimeThreshold ? 35 : 25) * 60
-        );
-        const newScheduleArray = [
+      const prevLeafSliderSelectedMarker = markerHistory[0]?.episodes.at(
+        carouselRef.current
+      );
+
+      const groupedData = groupEpisodesByProximity(
+        data?.data,
+        (xsTimeThreshold // < 320
+          ? 2 * 60
+          : smTimeThreshold //  320 -  576
+          ? 60
+          : mdTimeThreshold //  576 -  992
+          ? 55
+          : lgTimeThreshold //  992 - 1200
+          ? 50
+          : xlTimeThreshold // 1200 - 1440
+          ? 45
+          : xxlTimeThreshold // 1440 - 1600
+          ? 40
+          : xxxlTimeThreshold // 1600 - 2000
+          ? 35
+          : 20) * 60
+      );
+      const rootSliderSelectedMarker = groupedData.find((data) =>
+        data.episodes.some((d) => d.id === prevLeafSliderSelectedMarker?.id)
+      );
+      const newLeafSliderMarkers = rootSliderSelectedMarker
+        ? groupEpisodesByProximity(rootSliderSelectedMarker.episodes, 60)
+        : [];
+      setTimeSliders(() => {
+        const newSlidersArray = [
           {
             id: 'root',
             entries: groupedData,
           },
+          ...(rootSliderSelectedMarker
+            ? [
+                {
+                  id: rootSliderSelectedMarker.id, // Leve 1 Slider id
+                  entries: newLeafSliderMarkers,
+                },
+              ]
+            : []),
         ];
 
-        return newScheduleArray;
+        return newSlidersArray;
       });
-    }
-  }, [data, mdTimeThreshold, smTimeThreshold]);
 
-  const [currentHighlighted, setCurrentHighlighted] = useState([]);
+      if (rootSliderSelectedMarker) {
+        const leafSliderSelectedMarker = (prevMarkerHistory) => [
+          newLeafSliderMarkers?.find(
+            (markers) =>
+              markers?.episodes[0]?.id ===
+              prevMarkerHistory.at(-1)?.episodes[0]?.id
+          ),
+        ];
+        setMarkerHistory((prev) => [
+          rootSliderSelectedMarker,
+          ...(markerHistory.length > 1 ? leafSliderSelectedMarker(prev) : []),
+        ]);
+      }
+    }
+  }, [
+    data,
+    mdTimeThreshold,
+    smTimeThreshold,
+    xsTimeThreshold,
+    smTimeThreshold,
+    mdTimeThreshold,
+    lgTimeThreshold,
+    xlTimeThreshold,
+    xxlTimeThreshold,
+    xxxlTimeThreshold,
+  ]);
 
   return (
     <Flex w="full" gap="20" px="4" flexDirection={'column'} mt="10">
-      {schedules.map((schedule, index) => (
+      {timeSliders.map((schedule, index) => (
         <ScheduleTimeline
           key={schedule.id}
           level={index}
           schedule={schedule.entries}
-          setSchedules={setSchedules}
-          currentHighlighted={currentHighlighted}
-          setCurrentHighlighted={setCurrentHighlighted}
+          setSchedules={setTimeSliders}
+          currentHighlighted={markerHistory}
+          setCurrentHighlighted={setMarkerHistory}
         />
       ))}
-      <Carousel autoplay>
-        {(currentHighlighted?.at(-1)?.episodes ?? data?.data ?? []).map(
-          (ep) => (
-            <CarouselSlide
-              key={ep.id}
-              bgColor={'secondary'}
-              bgImg={`url(${ep.media.bannerImage})`}
-            >
-              <Flex h="full" position={'relative'}>
-                <Flex
-                  p="8"
-                  position={'absolute'}
-                  bottom="0"
-                  left="0"
-                  right="0"
-                  h="full"
-                  gap="4"
-                  bgGradient={
-                    'linear-gradient(0deg,rgba(0, 0, 0, 1) 0%, rgba(107, 105, 105, 0.56) 46%, rgba(255, 255, 255, 0) 100%)'
-                  }
+      <Carousel
+        autoplay
+        onChange={(index) => {
+          carouselRef.current = index;
+        }}
+      >
+        {(markerHistory?.at(-1)?.episodes ?? data?.data ?? []).map((ep) => (
+          <CarouselSlide
+            key={ep.id}
+            bgColor={'secondary'}
+            bgImg={`url(${ep.media.bannerImage})`}
+            bgPosition={'center'}
+          >
+            <Flex h="full" position={'relative'}>
+              <Flex
+                p="8"
+                position={'absolute'}
+                bottom="0"
+                left="0"
+                right="0"
+                gap="4"
+                bgGradient={
+                  'linear-gradient(0deg,rgba(0, 0, 0, 1) 0%, rgba(107, 105, 105, 0.56) 46%, rgba(255, 255, 255, 0) 100%)'
+                }
+                flexWrap={'wrap'}
+              >
+                <Box
+                  w="32"
+                  aspectRatio={8.7 / 12}
+                  alignSelf={'end'}
+                  boxShadow={'dark-lg'}
+                  flexShrink={0}
+                  objectFit={'contain'}
                 >
-                  <Box
-                    w="32"
-                    aspectRatio={9 / 12}
-                    alignSelf={'end'}
-                    boxShadow={'dark-lg'}
-                    flexShrink={0}
-                    objectFit={'contain'}
+                  <Image
+                    w="full"
+                    h="full"
+                    src={ep.media.coverImage.extraLarge}
+                    alt={ep.media.title.userPreferred}
+                  />
+                </Box>
+                <Flex alignSelf={'end'} direction={'column'}>
+                  <Link
+                    as={NextLink}
+                    fontSize={'2xl'}
+                    color="white"
+                    href={`/media?id=${ep.media.id}&type=${ep.media.type}`}
                   >
-                    <Image
-                      w="full"
-                      h="full"
-                      src={ep.media.coverImage.extraLarge}
-                      alt={ep.media.title.userPreferred}
-                    />
-                  </Box>
-                  <Flex alignSelf={'end'} direction={'column'}>
-                    <Link
-                      as={NextLink}
-                      fontSize={'2xl'}
-                      color="white"
-                      href={`/media?id=${ep.media.id}&type=${ep.media.type}`}
-                    >
-                      {ep.media.title.userPreferred}
-                    </Link>
-                    <Text color="white">
-                      {Intl.DateTimeFormat(AppStorage.get('locale'), {
-                        timeZone: AppStorage.get('timezone'),
-                        dateStyle: 'long',
-                        timeStyle: 'long',
-                      }).format(ep.airingAt * 1000)}
-                    </Text>
-                  </Flex>
+                    <Text lineClamp={1}>{ep.media.title.userPreferred}</Text>
+                  </Link>
+                  <Text color="white">
+                    {Intl.DateTimeFormat(AppStorage.get('locale'), {
+                      timeZone: AppStorage.get('timezone'),
+                      dateStyle: 'long',
+                      timeStyle: 'long',
+                    }).format(ep.airingAt * 1000)}
+                  </Text>
                 </Flex>
               </Flex>
-            </CarouselSlide>
-          )
-        )}
+            </Flex>
+          </CarouselSlide>
+        ))}
       </Carousel>
     </Flex>
   );
@@ -218,7 +355,7 @@ function ScheduleTimeline({
       Math.min(
         ...schedule?.map((airingSchedule) => airingSchedule?.timestamp)
       ) * 1000,
-      level > 0 ? 60 * 1000 : 30 * 60 * 1000
+      level > 0 ? 10 * 60 * 1000 : 30 * 60 * 1000
     )
   );
   const endTime = useRef(
@@ -226,7 +363,7 @@ function ScheduleTimeline({
       Math.max(
         ...schedule?.map((airingSchedule) => airingSchedule?.timestamp)
       ) * 1000,
-      level > 0 ? 60 * 1000 : 30 * 60 * 1000
+      level > 0 ? 10 * 60 * 1000 : 30 * 60 * 1000
     )
   );
 
@@ -235,13 +372,13 @@ function ScheduleTimeline({
       Math.min(
         ...schedule?.map((airingSchedule) => airingSchedule?.timestamp)
       ) * 1000,
-      level > 0 ? 60 * 1000 : 30 * 60 * 1000
+      level > 0 ? 10 * 60 * 1000 : 30 * 60 * 1000
     );
     endTime.current = getAdjustedMaxTimestamp(
       Math.max(
         ...schedule?.map((airingSchedule) => airingSchedule?.timestamp)
       ) * 1000,
-      level > 0 ? 60 * 1000 : 30 * 60 * 1000
+      level > 0 ? 10 * 60 * 1000 : 30 * 60 * 1000
     );
   }, [schedule]);
 
@@ -301,7 +438,7 @@ function ScheduleTimeline({
         {({ id, timestamp, episodes }) => (
           <SliderMark
             key={timestamp}
-            ml="-2"
+            ml="-3.5"
             value={
               100 *
               getTimeProgress({
@@ -318,22 +455,23 @@ function ScheduleTimeline({
               pointerEvents={'all'}
               onClick={() => {
                 if (
-                  episodes.length > 1 &&
                   Array.from(new Set(episodes.map((ep) => ep.airingAt)))
                     .length > 1
                 ) {
                   setSchedules((prev) => {
                     const newScheduleArray = [...prev];
+
+                    if (newScheduleArray.at(-1)?.id === id) {
+                      setCurrentHighlighted([]);
+                      return newScheduleArray.slice(0, -1);
+                    }
+
                     newScheduleArray[level + 1] = {
                       id,
                       entries: groupEpisodesByProximity(episodes, 60),
                     };
 
                     return newScheduleArray;
-                  });
-                } else {
-                  setSchedules((prev) => {
-                    return prev.slice(0, level + 1);
                   });
                 }
                 setCurrentHighlighted((prev) => {
@@ -363,8 +501,11 @@ function ScheduleTimeline({
                     : 'primary'
                 }
               />
-              {new Date(timestamp * 1000).getHours() % 12}{' '}
-              {new Date(timestamp * 1000).getHours() > 12 ? 'pm' : 'am'}
+              {/* {Intl.DateTimeFormat(AppStorage.get('locale'), {
+                hour12: true,
+                hour: '2-digit',
+              }).format(new Date(timestamp * 1000))}{' '} */}
+              {episodes.length > 1 ? `(${episodes.length})` : ''}
             </Grid>
           </SliderMark>
         )}

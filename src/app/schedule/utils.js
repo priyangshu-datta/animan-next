@@ -134,21 +134,40 @@ export function getTimeProgress({
   );
 }
 
-export function groupEpisodesByProximity(episodes, threshold = 60) {
+export function groupEpisodesByProximity(
+  episodes,
+  threshold = 60,
+  maxGroupDuration = 2 * 60 * 60
+) {
   if (episodes.length < 1) {
     return [];
   }
+
   // Sort episodes by airingAt value
   episodes.sort((a, b) => a.airingAt - b.airingAt);
+
   const groupedEpisodes = [];
   let currentGroup = [episodes[0]];
+
   for (let i = 1; i < episodes.length; i++) {
     const currentEpisode = episodes[i];
     const lastEpisodeInGroup = currentGroup[currentGroup.length - 1];
-    // Check if the current episode's airingAt value is within the threshold
-    if (currentEpisode.airingAt - lastEpisodeInGroup.airingAt <= threshold) {
+    const firstEpisodeInGroup = currentGroup[0];
+
+    // Check if the current episode's airingAt value is within the proximity threshold
+    const isWithinProximityThreshold =
+      currentEpisode.airingAt - lastEpisodeInGroup.airingAt <= threshold;
+
+    // Check if adding the current episode would exceed the maximum group duration
+    const wouldExceedMaxDuration =
+      currentEpisode.airingAt - firstEpisodeInGroup.airingAt > maxGroupDuration;
+
+    if (isWithinProximityThreshold && !wouldExceedMaxDuration) {
+      // If within proximity and won't exceed max duration, add to current group
       currentGroup.push(currentEpisode);
     } else {
+      // Either current episode is NOT within proximity OR adding it would exceed max duration
+      // In either case, finalize the current group and start a new one
       groupedEpisodes.push({
         id: crypto.randomUUID(),
         timestamp: getAverageTimestamp(currentGroup),
@@ -157,6 +176,7 @@ export function groupEpisodesByProximity(episodes, threshold = 60) {
       currentGroup = [currentEpisode];
     }
   }
+
   // Add the last group
   if (currentGroup.length > 0) {
     groupedEpisodes.push({
@@ -165,6 +185,7 @@ export function groupEpisodesByProximity(episodes, threshold = 60) {
       episodes: currentGroup,
     });
   }
+
   return groupedEpisodes;
 }
 

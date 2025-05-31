@@ -9,7 +9,10 @@ import {
   RadioGroup,
 } from '@yamada-ui/react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { InclusionToggleMultiSelector, ReactSelectCustom } from './reusable-components'
+import {
+  InclusionToggleMultiSelector,
+  ReactSelectCustom,
+} from './reusable-components';
 
 export function GenreSelector({ genres }) {
   return (
@@ -28,7 +31,7 @@ export function MediaStatusSelector() {
   return (
     <InclusionToggleMultiSelector
       label={'Media Status'}
-      items={MEDIA_STATUS[watch('mediaType')]}
+      items={MEDIA_STATUS[watch('mediaType').toLowerCase()]}
     />
   );
 }
@@ -38,7 +41,7 @@ export function MediaFormatSelector() {
   return (
     <InclusionToggleMultiSelector
       label={'Media Format'}
-      items={MEDIA_FORMAT[watch('mediaType')]}
+      items={MEDIA_FORMAT[watch('mediaType').toLowerCase()]}
     />
   );
 }

@@ -15,6 +15,7 @@ import {
   VStack,
 } from '@yamada-ui/react';
 import Spoiler from '../spoiler';
+import AppStorage from '@/utils/local-storage';
 
 export default function ReviewCard({ review }) {
   const emotionList = review.emotions ? review.emotions.split(';') : [];
@@ -99,10 +100,10 @@ export default function ReviewCard({ review }) {
 
         <Text fontSize="sm" color="gray.200" mt="2">
           Last edited:{' '}
-          {Intl.DateTimeFormat(localStorage.getItem('animan-locale'), {
+          {Intl.DateTimeFormat(AppStorage.get('locale'), {
             dateStyle: 'long',
             timeStyle: 'long',
-            timeZone: localStorage.getItem('animan-timezone') ?? undefined,
+            timeZone: AppStorage.get('timezone') ?? undefined,
           }).format(new Date(review.updatedAt))}
         </Text>
       </VStack>

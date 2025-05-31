@@ -1,3 +1,4 @@
+import AppStorage from '@/utils/local-storage';
 import { useState, useEffect } from 'react';
 
 export function useCountDownTimer(nextEpisodeAiringAt) {
@@ -45,12 +46,9 @@ export function useCountDownTimer(nextEpisodeAiringAt) {
         };
       }
       setTimeLeft(
-        new Intl.DurationFormat(
-          localStorage.getItem('animan-locale') ?? undefined,
-          {
-            style: 'long',
-          }
-        ).format(duration)
+        new Intl.DurationFormat(AppStorage.get('locale') ?? undefined, {
+          style: 'long',
+        }).format(duration)
       );
     }
 

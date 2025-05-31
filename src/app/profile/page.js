@@ -5,7 +5,7 @@ import { useUpdateUserInfo } from '@/lib/client/hooks/react_query/patch/user/inf
 
 import AnilistIcon from '@/components/icons/anilist';
 import { useCheckUsername } from '@/lib/client/hooks/react_query/get/user/check-username';
-import { SNACK_DURATION } from '@/lib/constants';
+import { SNACK_DURATION, TIMEZONES } from '@/lib/constants';
 import { debounce, fuzzyRegexMatch, sentenceCase } from '@/utils/general';
 import {
   CheckIcon,
@@ -155,7 +155,7 @@ export default function ProfilePage() {
     if ('username' in methods.formState.dirtyFields) {
       checkUsername({ username: methods.watch('username') });
     } else {
-      resetCheckUsername()
+      resetCheckUsername();
     }
   }, [methods.watch('username'), checkUsername]);
 
@@ -564,7 +564,7 @@ function TimezoneSelector({ isLoading }) {
   } = useFormContext();
   const { colorMode } = useColorMode();
 
-  const timezones = useMemo(() => Intl.supportedValuesOf('timeZone'), []);
+  // const timezones = useMemo(() => Intl.supportedValuesOf('timeZone'), []);
 
   return (
     <FormControl
@@ -619,7 +619,7 @@ function TimezoneSelector({ isLoading }) {
                   }
                 : { ...theme }
             }
-            options={timezones.map((tz) => ({
+            options={TIMEZONES.map((tz) => ({
               label: tz,
               value: tz,
             }))}

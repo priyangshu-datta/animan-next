@@ -9,7 +9,7 @@ export function useDeleteMediaReview({
   return useMutation({
     mutationFn: ({ reviewId, mediaType }) =>
       rpcRequest({
-        action: 'delete:media:review:{reviewIds}',
+        action: 'delete:media:review:{reviewIds,mediaType}',
         context: { reviewIds: [reviewId], mediaType },
       }),
     onSuccess: (_, { mediaId, mediaType, subjectType }) => {

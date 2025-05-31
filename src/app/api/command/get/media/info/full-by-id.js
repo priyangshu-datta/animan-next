@@ -67,6 +67,11 @@ export async function getFullMediaInfoById(
 			isMediaSpoiler
 		}
     description(asHtml: true)
+    startDate {
+      day
+      month
+      year
+    }
   }
 }`;
 

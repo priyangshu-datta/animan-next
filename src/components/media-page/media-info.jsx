@@ -2,7 +2,11 @@ import { useMedia } from '@/context/use-media';
 import { useUpdateUserMedia } from '@/lib/client/hooks/react_query/patch/user/media';
 import { useOptimisticToggleMediaFavourite } from '@/lib/client/hooks/react_query/patch/user/media/toggle-favourite';
 import { useCountDownTimer } from '@/lib/client/hooks/use-count-down-timer';
-import { MEDIA_LIST_STATUS, REVIEW_CATEGORIES } from '@/lib/constants';
+import {
+  MEDIA_LIST_STATUS,
+  MEDIA_STATUS,
+  REVIEW_CATEGORIES,
+} from '@/lib/constants';
 import {
   CalendarIcon,
   ChevronDownIcon,
@@ -53,6 +57,8 @@ import {
 import NextLink from 'next/link';
 import { useEffect, useState } from 'react';
 import ListEditor from './list-editor';
+import { formatPartialDate } from '@/utils/general';
+import AppStorage from '@/utils/local-storage';
 
 function computeProgressString(progress, total, latest) {
   if (latest) {
@@ -167,7 +173,7 @@ function MediaRating({ stars = 5, score, maxScore = 10, label = '' } = {}) {
   const normalizedScore = (stars * score) / maxScore;
   let locale;
   useEffect(() => {
-    locale = localStorage.getItem('animan-locale');
+    locale = AppStorage.get('locale');
   }, []);
   return (
     <Tooltip
@@ -326,17 +332,26 @@ function ActionButtons({
       ) : (
         <>
           {media.status === 'NOT_YET_RELEASED' ? (
-            components['DEFAULT']
+            media.listEntry?.status !== 'PLANNING' && (
+              <>
+                {components['DEFAULT']}
+                <Separator orientation="vertical" h={'20px'} />
+              </>
+            )
           ) : media.listEntry ? (
-            components[media.listEntry.status]
+            <>
+              {components[media.listEntry.status]}
+              <Separator orientation="vertical" h={'20px'} />
+            </>
           ) : (
             <>
               {components['PLANNING']} {components['DEFAULT']}
+              <Separator orientation="vertical" h={'20px'} />
             </>
           )}
-          <Separator orientation="vertical" h={'20px'} />
+
           <Button onClick={onListEditorOpen} variant={'outline'}>
-            List Editor
+            {media.listEntry ? 'Update entry' : 'Track'}
           </Button>
         </>
       )}
@@ -491,7 +506,7 @@ function MediaInfoDataList() {
       <DataListItem>
         <DataListTerm>Score</DataListTerm>
         <DataListDescription display={'flex'} gap="2">
-          {media.listEntry && (
+          {media.listEntry && media.listEntry.status !== 'PLANNING' && (
             <>
               <MediaRating
                 score={media.listEntry.score}
@@ -508,12 +523,22 @@ function MediaInfoDataList() {
         </DataListDescription>
       </DataListItem>
       <DataListItem>
-        <DataListTerm>Airing Status</DataListTerm>
+        <DataListTerm>
+          {media.status === 'NOT_YET_RELEASED' && media.startDate?.year
+            ? 'Release in'
+            : 'Airing Status'}
+        </DataListTerm>
         <DataListDescription>
           {media.type === 'ANIME'
             ? media.nextAiringEpisode
               ? `Next episode ${media.nextAiringEpisode.episode} is airing in ${timeLeft}`
-              : `Not airing (${media.status.replace('_', ' ')})`
+              : media.status === 'NOT_YET_RELEASED' && media.startDate?.year
+              ? formatPartialDate(media.startDate)
+              : `Not airing (${
+                  MEDIA_STATUS[media.type.toLowerCase()].find(
+                    ({ value }) => value === media.status
+                  ).label
+                })`
             : media.status === 'RELEASING'
             ? 'Ongoing'
             : media.status}
@@ -541,14 +566,16 @@ function MediaInfoDataList() {
         <DataListDescription display={'flex'} gap="2">
           <Link
             as={NextLink}
-            href={`https://anilist.co/${media.type}/${media.id}`}
+            href={`https://anilist.co/${media.type?.toLowerCase()}/${media.id}`}
           >
             Anilist
           </Link>
           <Separator orientation="vertical" />
           <Link
             as={NextLink}
-            href={`https://myanimelist.net/${media.type}/${media.idMal}`}
+            href={`https://myanimelist.net/${media.type?.toLowerCase()}/${
+              media.idMal
+            }`}
           >
             MyAnimeList
           </Link>

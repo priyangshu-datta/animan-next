@@ -14,24 +14,58 @@ import {
   Select,
   Skeleton,
 } from '@yamada-ui/react';
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 
-export default function Home() {
-  const [mediaType, setMediaType] = useState('ANIME');
-  const [mediaListStatus, setMediaListStatus] = useState('CURRENT');
+export default function HomePage() {
+  const searchParams = useSearchParams();
+
+  return (
+    <Suspense>
+      <HomePageComponent
+        initMediaListStatus={searchParams.get('status') ?? 'CURRENT'}
+        initMediaType={searchParams.get('type') ?? 'ANIME'}
+      />
+    </Suspense>
+  );
+}
+
+function HomePageComponent({ initMediaType, initMediaListStatus }) {
+  const [mediaType, setMediaType] = useState(initMediaType);
+  const [mediaListStatus, setMediaListStatus] = useState(initMediaListStatus);
   return (
     <Box as={'section'} className="max-w-6xl mx-auto px-4">
       <Flex gap="2">
         <Select
           defaultValue={mediaType}
-          onChange={(option) => setMediaType(option)}
+          onChange={(option) => {
+            const newSearchParams = new URLSearchParams();
+            newSearchParams.set('type', option);
+            newSearchParams.set('status', mediaListStatus);
+            window.history.replaceState(
+              null,
+              '',
+              `?${newSearchParams.toString()}`
+            );
+            setMediaType(option);
+          }}
         >
           <Option value={'ANIME'}>Anime</Option>
           <Option value={'MANGA'}>Manga</Option>
         </Select>
         <Select
           defaultValue={mediaListStatus}
-          onChange={(option) => setMediaListStatus(option)}
+          onChange={(option) => {
+            const newSearchParams = new URLSearchParams();
+            newSearchParams.set('type', mediaType);
+            newSearchParams.set('status', option);
+            window.history.replaceState(
+              null,
+              '',
+              `?${newSearchParams.toString()}`
+            );
+            setMediaListStatus(option);
+          }}
           items={MEDIA_LIST_STATUS[mediaType.toLocaleLowerCase()]}
         />
       </Flex>

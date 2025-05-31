@@ -9,9 +9,15 @@ export async function getAnimeSchedule(
   context,
   { providerAccessToken: anilistAccessToken }
 ) {
-  const ANIME_SCHEDULE = `query ($startTimestamp:Int, $endTimestamp: Int) {
+  const ANIME_SCHEDULE = `query ($startTimestamp: Int, $endTimestamp: Int, $mediaIdIn: [Int], $mediaIdNotIn: [Int]) {
   Page {
-    airingSchedules(airingAt_greater: $startTimestamp, airingAt_lesser: $endTimestamp, sort: TIME) {
+    airingSchedules(
+      airingAt_greater: $startTimestamp
+      airingAt_lesser: $endTimestamp
+      sort: TIME
+      mediaId_in: $mediaIdIn
+      mediaId_not_in: $mediaIdNotIn
+    ) {
       id
       episode
       airingAt
@@ -21,12 +27,11 @@ export async function getAnimeSchedule(
         title {
           userPreferred
         }
-        type
         format
         duration
         episodes
         averageScore
-				meanScore
+        meanScore
         isAdult
         coverImage {
           extraLarge
@@ -40,7 +45,10 @@ export async function getAnimeSchedule(
   const contextSchema = Joi.object({
     startTimestamp: Joi.number(),
     endTimestamp: Joi.number(),
-  });
+    mediaIdIn: Joi.array().items(Joi.number()),
+    mediaIdNotIn: Joi.array().items(Joi.number()),
+  }).oxor('mediaIdIn', 'mediaIdNotIn');
+
   const { value, error } = contextSchema.validate(context);
   if (error) {
     throw new AppError({
@@ -52,13 +60,18 @@ export async function getAnimeSchedule(
     });
   }
 
-  const { startTimestamp, endTimestamp } = value;
+  const { startTimestamp, endTimestamp, mediaIdIn, mediaIdNotIn } = value;
 
   const response = await axios.post(
     ANILIST_GRAPHQL_ENDPOINT,
     {
       query: ANIME_SCHEDULE,
-      variables: { startTimestamp, endTimestamp },
+      variables: {
+        startTimestamp,
+        endTimestamp,
+        mediaIdIn,
+        mediaIdNotIn,
+      },
     },
     { headers: { Authorization: `Bearer ${anilistAccessToken}` } }
   );

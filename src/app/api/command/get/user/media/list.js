@@ -36,50 +36,45 @@ export async function getUserMediaList(
 
   const { mediaListStatus, mediaType, page, perPage } = value;
 
-  const QUERY = `query (
-    $userId: Int!
-    $type: MediaType = ANIME
-    $listStatus: MediaListStatus = CURRENT
-    $page: Int = 1
-    $perPage: Int = 10
-  ) {
-    Page(page: $page, perPage: $perPage) {
-      pageInfo {
-        currentPage
-        hasNextPage
-      }
-      mediaList(
-        status: $listStatus
-        userId: $userId
-        type: $type
-        sort: [UPDATED_TIME_DESC]
-      ) {
+  const QUERY = `query ($userId: Int!, $type: MediaType = ANIME, $listStatus: MediaListStatus = CURRENT, $page: Int = 1, $perPage: Int = 10) {
+  Page(page: $page, perPage: $perPage) {
+    pageInfo {
+      currentPage
+      hasNextPage
+    }
+    mediaList(
+      status: $listStatus
+      userId: $userId
+      type: $type
+      sort: [UPDATED_TIME_DESC]
+    ) {
+      id
+      status
+      progress
+      media {
         id
-        progress
-        media {
-          id
-          type
-          startDate {
-            year
-            month
-            day
-          }
-          title {
-            userPreferred
-          }
-          status
-          coverImage {
-            large
-          }
-          episodes
-          nextAiringEpisode {
-            airingAt
-            episode
-          }
+        type
+        startDate {
+          year
+          month
+          day
+        }
+        title {
+          userPreferred
+        }
+        status
+        coverImage {
+          large
+        }
+        episodes
+        nextAiringEpisode {
+          airingAt
+          episode
         }
       }
     }
-  }`;
+  }
+}`;
 
   const response = await axios.post(
     ANILIST_GRAPHQL_ENDPOINT,

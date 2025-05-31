@@ -24,6 +24,7 @@ export async function getAnimeSchedule(
       media {
         id
         idMal
+        type
         title {
           userPreferred
         }

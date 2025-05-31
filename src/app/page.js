@@ -18,21 +18,22 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 
 export default function HomePage() {
-  const searchParams = useSearchParams();
-
   return (
     <Suspense>
-      <HomePageComponent
-        initMediaListStatus={searchParams.get('status') ?? 'CURRENT'}
-        initMediaType={searchParams.get('type') ?? 'ANIME'}
-      />
+      <HomePageComponent />
     </Suspense>
   );
 }
 
-function HomePageComponent({ initMediaType, initMediaListStatus }) {
-  const [mediaType, setMediaType] = useState(initMediaType);
-  const [mediaListStatus, setMediaListStatus] = useState(initMediaListStatus);
+function HomePageComponent() {
+  const searchParams = useSearchParams();
+
+  const [mediaType, setMediaType] = useState(
+    searchParams.get('type') ?? 'ANIME'
+  );
+  const [mediaListStatus, setMediaListStatus] = useState(
+    searchParams.get('status') ?? 'CURRENT'
+  );
   return (
     <Box as={'section'} className="max-w-6xl mx-auto px-4">
       <Flex gap="2">

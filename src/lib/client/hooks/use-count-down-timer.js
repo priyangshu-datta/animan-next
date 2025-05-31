@@ -29,36 +29,20 @@ export function useCountDownTimer(nextEpisodeAiringAt) {
           days,
           hours,
         };
-        // setTimeLeft(
-        //   `${days} day${days > 1 ? 's' : ''} ${
-        //     hours > 0 ? `${hours} hour${hours > 1 ? 's' : ''}` : ''
-        //   }`
-        // );
       } else if (hours > 0) {
         duration = {
           hours,
           minutes,
         };
-        // setTimeLeft(
-        //   `${hours} hour${hours > 1 ? 's' : ''} ${minutes} minute${
-        //     minutes > 1 ? 's' : ''
-        //   }`
-        // );
       } else if (minutes > 0) {
         duration = {
           minutes,
           seconds,
         };
-        // setTimeLeft(
-        //   `${minutes} minute${minutes > 1 ? 's' : ''} ${seconds} second${
-        //     seconds !== 1 ? 's' : ''
-        //   }`
-        // );
       } else {
         duration = {
           seconds,
         };
-        // setTimeLeft(`${seconds} second${seconds !== 1 ? 's' : ''}`);
       }
       setTimeLeft(
         new Intl.DurationFormat(

@@ -4,7 +4,7 @@ import { useUserMedia } from '@/lib/client/hooks/react_query/get/user/media';
 import { useUserCustomLists } from '@/lib/client/hooks/react_query/get/user/media/custom-lists';
 import { useUpdateUserMedia } from '@/lib/client/hooks/react_query/patch/user/media/index';
 import { useToggleMediaFavourite } from '@/lib/client/hooks/react_query/patch/user/media/toggle-favourite';
-import { MEDIA_LIST_STATUS, SNACK_DURATION } from '@/lib/constants';
+import { MEDIA_ENTRY_STATUS, SNACK_DURATION } from '@/lib/constants';
 import { RangeDatePicker } from '@yamada-ui/calendar';
 import { HeartIcon, InfoIcon, VenetianMaskIcon } from '@yamada-ui/lucide';
 import {
@@ -245,7 +245,7 @@ export default function ListEditor({ openListEditor, onListEditorClose }) {
             borderRadius={'lg'}
             w="full"
           >
-            <InfoIcon stroke="primary" fontSize={"xl"} />
+            <InfoIcon stroke="primary" fontSize={'xl'} />
             <Box>
               This mutates your Anilist data. If preferred go and fill the same
               in anilist, and then reload this page.
@@ -345,7 +345,7 @@ function MediaListStatusSelector({ mediaType }) {
             placeholderInOptions={false}
             placeholder="Status"
             {...field}
-            items={MEDIA_LIST_STATUS[mediaType.toLowerCase()]}
+            items={MEDIA_ENTRY_STATUS[mediaType.toLowerCase()]}
           />
         )}
       />

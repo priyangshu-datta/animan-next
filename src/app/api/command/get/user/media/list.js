@@ -1,6 +1,6 @@
 import {
   ANILIST_GRAPHQL_ENDPOINT,
-  MEDIA_LIST_STATUS,
+  MEDIA_ENTRY_STATUS,
   MEDIA_TYPES,
 } from '@/lib/constants';
 import { AppError } from '@/lib/server/errors/AppError';
@@ -15,7 +15,7 @@ export async function getUserMediaList(
 ) {
   const contextSchema = Joi.object({
     mediaListStatus: Joi.string()
-      .valid(...MEDIA_LIST_STATUS.anime.map((a) => a.value))
+      .valid(...MEDIA_ENTRY_STATUS.anime.map((a) => a.value))
       .required(),
     mediaType: Joi.string()
       .valid(...MEDIA_TYPES)

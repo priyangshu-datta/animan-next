@@ -2,7 +2,7 @@
 
 import MediaCard from '@/components/media-card';
 import { useUserMediaList } from '@/lib/client/hooks/react_query/get/user/media/list';
-import { MEDIA_LIST_STATUS } from '@/lib/constants';
+import { MEDIA_ENTRY_STATUS } from '@/lib/constants';
 import { debounce } from '@/utils/general';
 import {
   Box,
@@ -67,7 +67,7 @@ function HomePageComponent() {
             );
             setMediaListStatus(option);
           }}
-          items={MEDIA_LIST_STATUS[mediaType.toLocaleLowerCase()]}
+          items={MEDIA_ENTRY_STATUS[mediaType.toLocaleLowerCase()]}
         />
       </Flex>
       <MediaCardList mediaListStatus={mediaListStatus} mediaType={mediaType} />

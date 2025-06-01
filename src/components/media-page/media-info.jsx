@@ -3,7 +3,7 @@ import { useUpdateUserMedia } from '@/lib/client/hooks/react_query/patch/user/me
 import { useOptimisticToggleMediaFavourite } from '@/lib/client/hooks/react_query/patch/user/media/toggle-favourite';
 import { useCountDownTimer } from '@/lib/client/hooks/use-count-down-timer';
 import {
-  MEDIA_LIST_STATUS,
+  MEDIA_ENTRY_STATUS,
   MEDIA_STATUS,
   REVIEW_CATEGORIES,
 } from '@/lib/constants';
@@ -109,14 +109,12 @@ export default function MediaInfo({
         {media.isLoading ? (
           <Skeleton minW={'40'} maxW={'68'} h={'max-content'} />
         ) : (
-          <>
-            <Image
-              src={media.coverImage?.extraLarge}
-              objectFit="cover"
-              minW={'40'}
-              maxW={'68'}
-            />
-          </>
+          <Image
+            src={media.coverImage?.extraLarge}
+            objectFit="cover"
+            minW={'40'}
+            maxW={'68'}
+          />
         )}
       </CardHeader>
 
@@ -611,7 +609,7 @@ function MediaListEntryStatus() {
         ? 'have'
         : 'are'}{' '}
       <em>
-        {MEDIA_LIST_STATUS[media.type.toLowerCase()]
+        {MEDIA_ENTRY_STATUS[media.type.toLowerCase()]
           .find((mls) => mls.value === media.listEntry.status)
           .label.toLowerCase()}
       </em>

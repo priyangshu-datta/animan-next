@@ -110,3 +110,49 @@ export function formatPartialDate(dateParts) {
     return 'Error';
   }
 }
+
+/**
+ * Formats the time left until `nextAiringAt` using Intl.RelativeTimeFormat
+ * for localized and grammatically correct output.
+ *
+ * @param {number} nextAiringAt - Unix timestamp (seconds) of the next airing time.
+ * @returns {string} The formatted time left, e.g., "in 3 days", "in 5 hours", "10 minutes".
+ */
+export function formatTimeLeft(nextAiringAt, duration = 0) {
+  const now = Date.now() / 1000; // current time in seconds
+  const diff = nextAiringAt - now; // difference in seconds (can be negative for past times)
+
+  const rtf = new Intl.RelativeTimeFormat(AppStorage.get('locale'), {
+    numeric: 'auto',
+    style: 'narrow', // or 'short', 'long'
+  });
+
+  if (diff < 5 && now < nextAiringAt + duration) {
+    // For very small differences around "now", both positive and negative.
+    // Adjust the threshold as needed.
+    return 'now!';
+  }
+
+  const absDiff = Math.abs(diff); // Use absolute difference for calculations
+
+  const seconds = Math.floor(absDiff);
+  const minutes = Math.floor(absDiff / 60);
+  const hours = Math.floor(absDiff / 3600);
+  const days = Math.floor(absDiff / 86400);
+
+  // Determine the sign for the value passed to format()
+  const sign = diff < 0 ? -1 : 1;
+
+  if (days >= 1) {
+    // For days, if you want "1 day ago" or "in 1 day"
+    // Use the floor of the absolute difference for the days calculation
+    return rtf.format(sign * days, 'day');
+  } else if (hours >= 1) {
+    return rtf.format(sign * hours, 'hour');
+  } else if (minutes >= 1) {
+    return rtf.format(sign * minutes, 'minute');
+  } else {
+    // For seconds, ensure you're using the calculated seconds, not just a static '0'
+    return rtf.format(sign * seconds, 'second');
+  }
+}

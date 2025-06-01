@@ -28,6 +28,8 @@ async function AuthRefreshFlow() {
     let dbSession = await refreshTokenQuery.first();
 
     if (!dbSession) {
+      // for now, till fingerprint is implemented
+      cookieStore.delete('refresh_token');
       throw new AppError({
         code: ERROR_CODES.NO_REFRESH_TOKEN,
         status: 401,

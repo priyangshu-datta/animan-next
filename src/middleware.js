@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function middleware(request) {
   const pathname = request.nextUrl.pathname;
-
+  console.log(`[${request.method}] ${request.nextUrl.pathname}`);
   const cookieStore = await cookies();
   if (!cookieStore.get('refresh_token')) {
     // Optional redirect to login/auth

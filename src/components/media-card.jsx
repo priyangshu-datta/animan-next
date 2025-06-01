@@ -2,8 +2,10 @@
 
 import { useUpdateUserMedia } from '@/lib/client/hooks/react_query/patch/user/media'
 import { MEDIA_STATUS } from '@/lib/constants'
-import { formatPartialDate, sentenceCase } from '@/utils/general'
-import AppStorage from '@/utils/local-storage'
+import {
+  formatPartialDate,
+  formatTimeLeft
+} from '@/utils/general'
 import {
   Button,
   Card,
@@ -22,78 +24,6 @@ import {
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Rating } from './rating'
-
-/**
- *
- * @param {number} nextAiringAt
- * @returns {string}
- */
-/**
- * Formats the time left until `nextAiringAt` using Intl.RelativeTimeFormat
- * for localized and grammatically correct output.
- *
- * @param {number} nextAiringAt - Unix timestamp (seconds) of the next airing time.
- * @param {string} [locale='en-US'] - The locale string (e.g., 'en-US', 'fr-FR', 'ja-JP').
- * @returns {string} The formatted time left, e.g., "in 3 days", "in 5 hours", "10 minutes".
- */
-function formatTimeLeft(nextAiringAt, locale = 'en-US') {
-  const now = Date.now() / 1000; // current time in seconds
-  const diff = Math.max(0, nextAiringAt - now); // difference in seconds
-
-  if (diff < 5) {
-    // For very small differences, you might still want a custom string
-    // or use Intl.RelativeTimeFormat for "now".
-    // For "now", it's best to stick to your original "Airing now!" as Intl might give "in 0 seconds".
-    return 'Airing now!';
-  }
-
-  const seconds = Math.floor(diff);
-  const minutes = Math.floor(diff / 60);
-  const hours = Math.floor(diff / 3600);
-  const days = Math.floor(diff / 86400);
-
-  const rtf = new Intl.RelativeTimeFormat(AppStorage.get('locale'), {
-    numeric: 'auto',
-    style: 'narrow',
-  });
-  // 'numeric: auto' means "in 1 day" instead of "in 1 days", "yesterday" instead of "1 day ago" etc.
-  // 'style: long' means "days", "hours", "minutes", "seconds". You can use 'short' or 'narrow' for "d", "h", "m", "s".
-
-  if (days > 0) {
-    // To get combined units like "3d 5h", Intl.RelativeTimeFormat needs to be called twice.
-    // However, Intl.RelativeTimeFormat is primarily designed for a single dominant unit.
-    // Combining them perfectly localized is complex with Intl.
-    // A common approach is to pick the largest relevant unit.
-    if (days >= 2) {
-      return rtf.format(days, 'day'); // e.g., "in 3 days"
-    } else {
-      // days === 1
-      // If it's exactly 1 day, "tomorrow" is often preferred.
-      // If it's less than 2 days but more than 1, still use rtf.format
-      const remainingHours = hours % 24;
-      if (remainingHours > 0) {
-        // For "1 day and X hours", Intl.RelativeTimeFormat doesn't directly combine units.
-        // We'll fall back to showing the dominant unit.
-        // If you absolutely need "1 day 5 hours", you might create a custom string
-        // but it loses Intl's localization benefits for the combined phrase itself.
-        // For practical purposes, "in 1 day" is usually sufficient, or "in 25 hours".
-        if (hours >= 24 && hours < 48) {
-          // If it's more than 24 hours but less than 48, still report as 1 day
-          return sentenceCase(rtf.format(days, 'day')); // "in 1 day"
-        }
-      }
-      return rtf.format(days, 'day');
-    }
-  } else if (hours > 0) {
-    return rtf.format(hours, 'hour'); // e.g., "in 5 hours"
-  } else if (minutes > 0) {
-    return rtf.format(minutes, 'minute'); // e.g., "in 10 minutes"
-  } else {
-    // For seconds, 'auto' numeric might still return 'in 0 seconds' for small values.
-    // Consider if you really want "in 3 seconds" or just "Airing now!" for very small diffs.
-    return rtf.format(seconds, 'second'); // e.g., "in 20 seconds"
-  }
-}
 
 export default function MediaCard({ listEntry }) {
   const [timeLeft, setTimeLeft] = useState();

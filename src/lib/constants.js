@@ -100,7 +100,7 @@ export const MEDIA_STATUS = {
     },
   ],
 };
-export const MEDIA_LIST_STATUS = {
+export const MEDIA_ENTRY_STATUS = {
   anime: [
     {
       label: 'Watching',
@@ -283,7 +283,6 @@ export const MEDIA_SORT = [
 
   { label: 'Search Match', value: 'SEARCH_MATCH' },
 ];
-
 
 export const TIMEZONES = [
   'Africa/Abidjan',

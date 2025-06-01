@@ -1,20 +1,20 @@
 'use client';
 
-import { useSchedule } from '@/lib/client/hooks/react_query/get/media/schedule';
-import AppStorage from '@/utils/local-storage';
-import { Carousel, CarouselSlide } from '@yamada-ui/carousel';
+import { useSchedule } from '@/lib/client/hooks/react_query/get/media/schedule'
+import { useUserMediaList } from '@/lib/client/hooks/react_query/get/user/media/list'
+import { formatTimeLeft } from '@/utils/general'
+import AppStorage from '@/utils/local-storage'
+import { Carousel, CarouselSlide } from '@yamada-ui/carousel'
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  CircleIcon,
-  SunIcon,
-} from '@yamada-ui/lucide';
+  SunIcon
+} from '@yamada-ui/lucide'
 import {
   Box,
   Button,
   Flex,
   For,
-  Grid,
   Image,
   Input,
   InputGroup,
@@ -30,22 +30,21 @@ import {
   Text,
   Tooltip,
   useBoolean,
-  useMediaQuery,
-} from '@yamada-ui/react';
-import NextLink from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+  useMediaQuery
+} from '@yamada-ui/react'
+import NextLink from 'next/link'
+import { useEffect, useRef, useState } from 'react'
 import {
   getAdjustedMaxTimestamp,
   getAdjustedMinTimestamp,
   getBaseTimestamp,
   getSkyGradient,
   getTimeProgress,
-  groupEpisodesByProximity,
-} from './utils';
-import { useUserMediaList } from '@/lib/client/hooks/react_query/get/user/media/list';
+  groupShowsByProximity,
+} from './utils'
 
 export default function SchedulePage() {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [offset, setOffset] = useState(0);
   const [scheduleIsLoading, setIsLoading] = useState();
 
   const {
@@ -63,13 +62,6 @@ export default function SchedulePage() {
     if (userCurrentMedia) {
       if (hasNextPage) {
         fetchNextPage();
-      } else {
-        console.log(
-          userCurrentMedia.pages
-            .flatMap((page) => page.mediaList)
-            .filter((entry) => entry.media.status === 'RELEASING')
-            .map((entry) => entry.media.id)
-        );
       }
     }
   }, [userCurrentMedia]);
@@ -83,9 +75,7 @@ export default function SchedulePage() {
           as={Button}
           disabled={scheduleIsLoading}
           onClick={() => {
-            const d = new Date();
-            d.setDate(currentDate.getDate() - 1);
-            setCurrentDate(d);
+            setOffset((prev) => prev - 1);
           }}
         >
           <ChevronLeftIcon />
@@ -95,7 +85,7 @@ export default function SchedulePage() {
           value={Intl.DateTimeFormat(AppStorage.get('locale') ?? 'en', {
             timeZone: AppStorage.get('timezone') ?? undefined,
             dateStyle: 'medium',
-          }).format(currentDate)}
+          }).format(new Date(Date.now() + offset * 24 * 60 * 60 * 1000))}
           w="fit-content"
           textAlign={'center'}
         />
@@ -103,16 +93,14 @@ export default function SchedulePage() {
           as={Button}
           disabled={scheduleIsLoading}
           onClick={() => {
-            const d = new Date();
-            d.setDate(currentDate.getDate() + 1);
-            setCurrentDate(d);
+            setOffset((prev) => prev + 1);
           }}
         >
           <ChevronRightIcon />
         </InputRightAddon>
       </InputGroup>
       {userCurrentMediaIsLoading ? (
-        <Loading />
+        <Loading m="auto" />
       ) : (
         <RadioGroup
           direction={'row'}
@@ -129,8 +117,16 @@ export default function SchedulePage() {
       )}
       <SchedulePageComponent
         searchOptions={{
-          startTimestamp: getBaseTimestamp(currentDate) / 1000,
-          endTimestamp: getBaseTimestamp(currentDate) / 1000 + 24 * 60 * 60,
+          startTimestamp:
+            getBaseTimestamp(
+              new Date(Date.now() + offset * 24 * 60 * 60 * 1000)
+            ) / 1000,
+          endTimestamp:
+            getBaseTimestamp(
+              new Date(Date.now() + offset * 24 * 60 * 60 * 1000)
+            ) /
+              1000 +
+            24 * 60 * 60,
           ...(onList === 'inList'
             ? {
                 mediaIdIn: userCurrentMedia.pages
@@ -190,11 +186,12 @@ function SchedulePageComponent({ searchOptions, setIsLoading }) {
 
   useEffect(() => {
     if (data) {
-      const prevLeafSliderSelectedMarker = markerHistory[0]?.episodes.at(
+      const prevFirstMarker = markerHistory[0];
+      const prevSelectedMarkerShow = prevFirstMarker?.shows.at(
         carouselRef.current
       );
 
-      const groupedData = groupEpisodesByProximity(
+      const groupedData = groupShowsByProximity(
         data?.data,
         (xsTimeThreshold // < 320
           ? 2 * 60
@@ -213,22 +210,22 @@ function SchedulePageComponent({ searchOptions, setIsLoading }) {
           : 20) * 60
       );
       const rootSliderSelectedMarker = groupedData.find((data) =>
-        data.episodes.some((d) => d.id === prevLeafSliderSelectedMarker?.id)
+        data.shows.some((show) => show.id === prevSelectedMarkerShow?.id)
       );
       const newLeafSliderMarkers = rootSliderSelectedMarker
-        ? groupEpisodesByProximity(rootSliderSelectedMarker.episodes, 60)
+        ? groupShowsByProximity(rootSliderSelectedMarker.shows, 60)
         : [];
       setTimeSliders(() => {
         const newSlidersArray = [
           {
             id: 'root',
-            entries: groupedData,
+            markers: groupedData,
           },
           ...(rootSliderSelectedMarker
             ? [
                 {
                   id: rootSliderSelectedMarker.id, // Leve 1 Slider id
-                  entries: newLeafSliderMarkers,
+                  markers: newLeafSliderMarkers,
                 },
               ]
             : []),
@@ -241,8 +238,7 @@ function SchedulePageComponent({ searchOptions, setIsLoading }) {
         const leafSliderSelectedMarker = (prevMarkerHistory) => [
           newLeafSliderMarkers?.find(
             (markers) =>
-              markers?.episodes[0]?.id ===
-              prevMarkerHistory.at(-1)?.episodes[0]?.id
+              markers?.shows[0]?.id === prevMarkerHistory.at(-1)?.shows[0]?.id
           ),
         ];
         setMarkerHistory((prev) => [
@@ -266,121 +262,56 @@ function SchedulePageComponent({ searchOptions, setIsLoading }) {
 
   return (
     <Flex w="full" gap="20" px="4" flexDirection={'column'} mt="10">
-      {timeSliders.map((schedule, index) => (
+      {timeSliders.map((slider, index) => (
         <ScheduleTimeline
-          key={schedule.id}
+          key={slider.id}
           level={index}
-          schedule={schedule.entries}
-          setSchedules={setTimeSliders}
-          currentHighlighted={markerHistory}
-          setCurrentHighlighted={setMarkerHistory}
+          markers={slider.markers}
+          setSliders={setTimeSliders}
+          markerHistory={markerHistory}
+          setMarkerHistory={setMarkerHistory}
         />
       ))}
-      <Carousel
-        autoplay
-        onChange={(index) => {
-          carouselRef.current = index;
-        }}
-      >
-        {(markerHistory?.at(-1)?.episodes ?? data?.data ?? []).map((ep) => (
-          <CarouselSlide
-            key={ep.id}
-            bgColor={'secondary'}
-            bgImg={`url(${ep.media.bannerImage})`}
-            bgPosition={'center'}
-          >
-            <Flex h="full" position={'relative'}>
-              <Flex
-                p="8"
-                position={'absolute'}
-                bottom="0"
-                left="0"
-                right="0"
-                gap="4"
-                bgGradient={
-                  'linear-gradient(0deg,rgba(0, 0, 0, 1) 0%, rgba(107, 105, 105, 0.56) 46%, rgba(255, 255, 255, 0) 100%)'
-                }
-                flexWrap={'wrap'}
-              >
-                <Box
-                  w="32"
-                  aspectRatio={8.7 / 12}
-                  alignSelf={'end'}
-                  boxShadow={'dark-lg'}
-                  flexShrink={0}
-                  objectFit={'contain'}
-                >
-                  <Image
-                    w="full"
-                    h="full"
-                    src={ep.media.coverImage.extraLarge}
-                    alt={ep.media.title.userPreferred}
-                  />
-                </Box>
-                <Flex alignSelf={'end'} direction={'column'}>
-                  <Link
-                    as={NextLink}
-                    fontSize={'2xl'}
-                    color="white"
-                    href={`/media?id=${ep.media.id}&type=${ep.media.type}`}
-                  >
-                    <Text lineClamp={1}>{ep.media.title.userPreferred}</Text>
-                  </Link>
-                  <Text color="white">
-                    {Intl.DateTimeFormat(AppStorage.get('locale'), {
-                      timeZone: AppStorage.get('timezone'),
-                      dateStyle: 'long',
-                      timeStyle: 'long',
-                    }).format(ep.airingAt * 1000)}
-                  </Text>
-                </Flex>
-              </Flex>
-            </Flex>
-          </CarouselSlide>
-        ))}
-      </Carousel>
+
+      <Gallery
+        carouselRef={carouselRef}
+        data={data}
+        markerHistory={markerHistory}
+      />
     </Flex>
   );
 }
 
 function ScheduleTimeline({
-  schedule,
-  setSchedules,
-  currentHighlighted,
-  setCurrentHighlighted,
+  markers,
+  setSliders,
+  markerHistory,
+  setMarkerHistory,
   level,
 }) {
   const startTime = useRef(
     getAdjustedMinTimestamp(
-      Math.min(
-        ...schedule?.map((airingSchedule) => airingSchedule?.timestamp)
-      ) * 1000,
+      Math.min(...markers?.map((marker) => marker?.timestampMark)) * 1000,
       level > 0 ? 10 * 60 * 1000 : 30 * 60 * 1000
     )
   );
   const endTime = useRef(
     getAdjustedMaxTimestamp(
-      Math.max(
-        ...schedule?.map((airingSchedule) => airingSchedule?.timestamp)
-      ) * 1000,
+      Math.max(...markers?.map((marker) => marker?.timestampMark)) * 1000,
       level > 0 ? 10 * 60 * 1000 : 30 * 60 * 1000
     )
   );
 
   useEffect(() => {
     startTime.current = getAdjustedMinTimestamp(
-      Math.min(
-        ...schedule?.map((airingSchedule) => airingSchedule?.timestamp)
-      ) * 1000,
+      Math.min(...markers?.map((marker) => marker?.timestampMark)) * 1000,
       level > 0 ? 10 * 60 * 1000 : 30 * 60 * 1000
     );
     endTime.current = getAdjustedMaxTimestamp(
-      Math.max(
-        ...schedule?.map((airingSchedule) => airingSchedule?.timestamp)
-      ) * 1000,
+      Math.max(...markers?.map((marker) => marker?.timestampMark)) * 1000,
       level > 0 ? 10 * 60 * 1000 : 30 * 60 * 1000
     );
-  }, [schedule]);
+  }, [markers]);
 
   const [open, { on, off }] = useBoolean(false);
   const [currentTime, setCurrentTime] = useState();
@@ -398,7 +329,7 @@ function ScheduleTimeline({
     return () => {
       clearInterval(interval);
     };
-  }, [schedule]);
+  }, [markers]);
 
   return (
     <Slider
@@ -434,15 +365,27 @@ function ScheduleTimeline({
       >
         <SunIcon color="yellow.200" fontSize={'xl'} />
       </SliderMark>
-      <For each={schedule}>
-        {({ id, timestamp, episodes }) => (
+      <SliderMark
+        value={
+          100 *
+          getTimeProgress({
+            currentTimestamp: 1748750400000,
+            lowerTimestamp: startTime.current,
+            upperTimestamp: endTime.current,
+          })
+        }
+        mt="-7"
+      >
+        <SunIcon color="yellow.200" fontSize={'xl'} />
+      </SliderMark>
+      <For each={markers}>
+        {(marker) => (
           <SliderMark
-            key={timestamp}
-            ml="-3.5"
+            key={marker.timestampMark}
             value={
               100 *
               getTimeProgress({
-                currentTimestamp: timestamp * 1000,
+                currentTimestamp: marker.timestampMark * 1000,
                 lowerTimestamp: startTime.current,
                 upperTimestamp: endTime.current,
               })
@@ -451,62 +394,83 @@ function ScheduleTimeline({
             w="fit-content"
             h="fit-content"
           >
-            <Grid
+            <Flex
               pointerEvents={'all'}
               onClick={() => {
                 if (
-                  Array.from(new Set(episodes.map((ep) => ep.airingAt)))
+                  Array.from(new Set(marker.shows.map((ep) => ep.airingAt)))
                     .length > 1
                 ) {
-                  setSchedules((prev) => {
-                    const newScheduleArray = [...prev];
-
-                    if (newScheduleArray.at(-1)?.id === id) {
-                      setCurrentHighlighted([]);
-                      return newScheduleArray.slice(0, -1);
+                  setSliders((prev) => {
+                    const newSlidersArray = [...prev];
+                    const lastSlider = newSlidersArray.at(-1);
+                    if (lastSlider?.id === marker.id) {
+                      setMarkerHistory([]);
+                      return newSlidersArray.slice(0, -1);
                     }
 
-                    newScheduleArray[level + 1] = {
-                      id,
-                      entries: groupEpisodesByProximity(episodes, 60),
+                    newSlidersArray[level + 1] = {
+                      id: marker.id,
+                      markers: groupShowsByProximity(marker.shows, 60),
                     };
 
-                    return newScheduleArray;
+                    return newSlidersArray;
+                  });
+                } else {
+                  // once deleted had to revive, this code ensures that a marker with only one episode when clicked clears the slider of next level if exists,
+                  // if this code is not present, then clicking a marker with many shows first and then a marker with 1 episode will retain the 2nd slider.
+                  setSliders((prev) => {
+                    return prev.slice(0, level + 1);
                   });
                 }
-                setCurrentHighlighted((prev) => {
+                setMarkerHistory((prev) => {
                   const newVal = [...prev];
-                  const sameAsLast = newVal.at(-1)?.id === id;
+                  const lastMarker = newVal.at(-1);
+                  const sameAsLast = lastMarker?.id === marker.id;
 
                   if (sameAsLast) {
                     return newVal.slice(0, -1);
                   }
 
-                  newVal[level] = { id, timestamp, episodes };
+                  newVal[level] = marker;
 
                   return newVal.slice(0, level + 1);
                 });
               }}
-              placeItems={'center'}
+              direction={'column'}
             >
-              <CircleIcon
-                fill={
-                  currentHighlighted.map((ch) => ch.id).includes(id)
+              <Box
+                rounded={'full'}
+                aspectRatio={1 / 1}
+                textAlign={'center'}
+                color={'white'}
+                bg={
+                  markerHistory.map((m) => m.id).includes(marker.id)
                     ? 'fuchsia'
                     : 'primary'
                 }
-                stroke={
-                  currentHighlighted.map((ch) => ch.id).includes(id)
-                    ? 'fuchsia'
-                    : 'primary'
-                }
-              />
-              {/* {Intl.DateTimeFormat(AppStorage.get('locale'), {
-                hour12: true,
-                hour: '2-digit',
-              }).format(new Date(timestamp * 1000))}{' '} */}
-              {episodes.length > 1 ? `(${episodes.length})` : ''}
-            </Grid>
+                w="fit-content"
+              >
+                {marker.shows.length}
+              </Box>
+              <Text transform={'translateX(-30%)'}>
+                {markerHistory.map((m) => m.id).includes(marker.id) &&
+                  (marker.timeRange.length < 2
+                    ? Intl.DateTimeFormat(AppStorage.get('locale'), {
+                        hour12: true,
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      }).format(new Date(marker.timeRange[0] * 1000))
+                    : Intl.DateTimeFormat(AppStorage.get('locale'), {
+                        hour12: true,
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      }).formatRange(
+                        new Date(marker.timeRange[0] * 1000),
+                        new Date(marker.timeRange[1] * 1000)
+                      ))}
+              </Text>
+            </Flex>
           </SliderMark>
         )}
       </For>
@@ -533,5 +497,132 @@ function ScheduleTimeline({
         <SliderThumb />
       </Tooltip>
     </Slider>
+  );
+}
+
+function Gallery({ carouselRef, data, markerHistory }) {
+  return (
+    <Carousel
+      autoplay
+      onChange={(index) => {
+        carouselRef.current = index;
+      }}
+    >
+      {(markerHistory?.at(-1)?.shows ?? data?.data ?? []).map(
+        ({ episode: nextEp, id, media, airingAt }) => (
+          <CarouselSlide
+            key={id}
+            bgColor={'secondary'}
+            {...(media.bannerImage
+              ? { bgImg: `url(${media.bannerImage})` }
+              : {})}
+            bgPosition={'center'}
+          >
+            <Flex h="full" position={'relative'}>
+              <Flex
+                p="8"
+                position={'absolute'}
+                bottom="0"
+                left="0"
+                right="0"
+                gap="4"
+                bgGradient={
+                  'linear-gradient(0deg,rgba(0, 0, 0, 1) 0%, rgba(107, 105, 105, 0.56) 46%, rgba(255, 255, 255, 0) 100%)'
+                }
+                flexWrap={'wrap'}
+              >
+                <Box
+                  w="32"
+                  aspectRatio={8.7 / 12}
+                  alignSelf={'end'}
+                  boxShadow={'dark-lg'}
+                  flexShrink={0}
+                  objectFit={'contain'}
+                >
+                  <Image
+                    w="full"
+                    h="full"
+                    src={media.coverImage.extraLarge}
+                    alt={media.title.userPreferred}
+                  />
+                </Box>
+                <Flex alignSelf={'end'} direction={'column'} color="white">
+                  <Link
+                    as={NextLink}
+                    fontSize={'2xl'}
+                    color="white"
+                    href={`/media?id=${media.id}&type=${media.type}`}
+                  >
+                    <Text lineClamp={1}>{media.title.userPreferred}</Text>
+                  </Link>
+
+                  <GalleryMediaTImeComponent
+                    airingAt={airingAt}
+                    duration={media.duration}
+                    nextEp={nextEp}
+                  />
+
+                  {media.listEntry && (
+                    <Box>
+                      {media.listEntry.status === 'CURRENT' ? (
+                        <Flex gap="1">
+                          You&apos;re <Text as="em">watching</Text> this.
+                        </Flex>
+                      ) : media.listEntry.status === 'PLANNING' ? (
+                        <Flex gap="1">
+                          This is on your <Text as="em">planning</Text> list.
+                        </Flex>
+                      ) : media.listEntry.status === 'PAUSED' ? (
+                        <Flex gap="1">
+                          You have <Text as="em">paused</Text> this.
+                        </Flex>
+                      ) : media.listEntry.status === 'DROPPED' ? (
+                        <Flex gap="1">
+                          You have <Text as="em">dropped</Text> this.
+                        </Flex>
+                      ) : media.listEntry.status === 'REPEATING' ? (
+                        <Flex gap="1">
+                          You are <Text as="em">re-watching</Text> this.
+                        </Flex>
+                      ) : media.listEntry.status === 'COMPLETED' ? (
+                        <Flex gap="1">
+                          You <Text as="em">finished</Text> this.
+                        </Flex>
+                      ) : (
+                        ''
+                      )}
+                    </Box>
+                  )}
+                </Flex>
+              </Flex>
+            </Flex>
+          </CarouselSlide>
+        )
+      )}
+    </Carousel>
+  );
+}
+
+function GalleryMediaTImeComponent({ airingAt, duration, nextEp }) {
+  const [currentTime, setCurrentTime] = useState();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+  return (
+    <Text>
+      Ep {nextEp} air
+      {airingAt > currentTime / 1000
+        ? 's'
+        : airingAt + duration * 60 > currentTime / 1000
+        ? 'ing'
+        : 'ed'}{' '}
+      {formatTimeLeft(airingAt, duration * 60 ?? 0)}
+    </Text>
   );
 }

@@ -134,62 +134,145 @@ export function getTimeProgress({
   );
 }
 
-export function groupEpisodesByProximity(
-  episodes,
-  threshold = 60,
-  maxGroupDuration = 2 * 60 * 60
+// Helper function to calculate the average of an array of numbers
+function calculateAverage(arr) {
+  if (arr.length === 0) return 0;
+  const sum = arr.reduce((a, b) => a + b, 0);
+  return sum / arr.length;
+}
+
+// Helper function to get the average timestamp for a group of shows
+// (Assuming shows have an 'airingAt' property)
+function getAverageTimestamp(shows) {
+  if (shows.length === 0) return 0;
+  const sum = shows.reduce((acc, show) => acc + show.airingAt, 0);
+  return sum / shows.length;
+}
+
+// Polyfill for crypto.randomUUID if not available in the environment
+// (e.g., older Node.js versions or non-browser environments without polyfills)
+if (typeof crypto === 'undefined' || !crypto.randomUUID) {
+  globalThis.crypto = {
+    randomUUID: () =>
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15),
+  };
+}
+
+/**
+ * Groups shows based on proximity of airing times, maximum group duration,
+ * and near-equidistant timestamps.
+ *
+ * @param {Array<Object>} shows - An array of show objects, each with an 'airingAt' property (timestamp).
+ * @param {number} [threshold=60] - Max time difference between consecutive shows within a group.
+ * @param {number} [maxGroupDuration=2 * 60 * 60] - Max total time span (first to last show) for a group.
+ * @param {number} [equidistanceTolerance=0] - Max allowed deviation for a new consecutive show's time difference
+ * from the average of previous consecutive differences within the same group.
+ * A value of 0 means strict equidistance.
+ * @returns {Array<Object>} An array of grouped shows, each group containing an id, timestampMark, shows array, and timeRange.
+ */
+export function groupShowsByProximity(
+  shows,
+  threshold = 60, // Renamed from proximityThreshold to 'threshold' as per your provided code
+  maxGroupDuration = 2 * 60 * 60, // Default as per your provided code (2 hours)
+  equidistanceTolerance = 20 * 60 // New parameter for equidistant check
 ) {
-  if (episodes.length < 1) {
+  if (shows.length < 1) {
     return [];
   }
 
-  // Sort episodes by airingAt value
-  episodes.sort((a, b) => a.airingAt - b.airingAt);
+  // 1. Sort shows by airingAt value to ensure chronological processing
+  shows.sort((a, b) => a.airingAt - b.airingAt);
 
-  const groupedEpisodes = [];
-  let currentGroup = [episodes[0]];
+  const groupedShows = [];
+  let currentGroup = [shows[0]];
+  // To track differences between consecutive shows *within* the current group
+  let currentGroupIntervals = [];
 
-  for (let i = 1; i < episodes.length; i++) {
-    const currentEpisode = episodes[i];
-    const lastEpisodeInGroup = currentGroup[currentGroup.length - 1];
-    const firstEpisodeInGroup = currentGroup[0];
+  // 2. Iterate through shows starting from the second one
+  for (let i = 1; i < shows.length; i++) {
+    const currentShow = shows[i];
+    const lastShowInGroup = currentGroup[currentGroup.length - 1];
+    const firstShowInGroup = currentGroup[0];
 
-    // Check if the current episode's airingAt value is within the proximity threshold
-    const isWithinProximityThreshold =
-      currentEpisode.airingAt - lastEpisodeInGroup.airingAt <= threshold;
+    // Calculate time differences relative to the current potential group
+    const diffFromLastInCurrentGroup =
+      currentShow.airingAt - lastShowInGroup.airingAt;
+    const potentialTotalGroupDuration =
+      currentShow.airingAt - firstShowInGroup.airingAt;
 
-    // Check if adding the current episode would exceed the maximum group duration
-    const wouldExceedMaxDuration =
-      currentEpisode.airingAt - firstEpisodeInGroup.airingAt > maxGroupDuration;
+    let shouldSplit = false; // Flag to determine if a new group should be started
 
-    if (isWithinProximityThreshold && !wouldExceedMaxDuration) {
-      // If within proximity and won't exceed max duration, add to current group
-      currentGroup.push(currentEpisode);
-    } else {
-      // Either current episode is NOT within proximity OR adding it would exceed max duration
-      // In either case, finalize the current group and start a new one
-      groupedEpisodes.push({
+    // --- Check for split conditions in order of priority ---
+
+    // Condition 1: Proximity Threshold Violation
+    // If the gap between the current show and the last in the group is too large
+    if (diffFromLastInCurrentGroup > threshold) {
+      shouldSplit = true;
+    }
+
+    // Condition 2: Maximum Group Duration Violation
+    // If adding the current show would make the group's total duration too long
+    if (!shouldSplit && potentialTotalGroupDuration > maxGroupDuration) {
+      shouldSplit = true;
+    }
+
+    // Condition 3: Equidistance Violation
+    // Only check if there's more than one show already in the current group
+    // to establish an average interval.
+    if (!shouldSplit && currentGroup.length > 1) {
+      // Calculate the average interval of existing shows in the current group
+      const averageExistingInterval = calculateAverage(currentGroupIntervals);
+
+      // Check if the new difference significantly deviates from the established average
+      if (
+        Math.abs(diffFromLastInCurrentGroup - averageExistingInterval) >
+        equidistanceTolerance
+      ) {
+        shouldSplit = true;
+      }
+    }
+
+    // --- Act based on whether a split is needed ---
+    if (shouldSplit) {
+      // Finalize the current group with the new structure
+      groupedShows.push({
         id: crypto.randomUUID(),
-        timestamp: getAverageTimestamp(currentGroup),
-        episodes: currentGroup,
+        timestampMark: getAverageTimestamp(currentGroup),
+        shows: currentGroup, // Renamed from 'episodes' to 'shows'
+        timeRange: Array.from(
+          new Set([
+            Math.min(...currentGroup.map((show) => show.airingAt)),
+            Math.max(...currentGroup.map((show) => show.airingAt)),
+          ])
+        ),
       });
-      currentGroup = [currentEpisode];
+
+      // Start a new group with the current show
+      currentGroup = [currentShow];
+      currentGroupIntervals = []; // Reset intervals for the new group
+    } else {
+      // Add the current show to the current group
+      currentGroup.push(currentShow);
+      // Record the interval for future equidistance checks
+      currentGroupIntervals.push(diffFromLastInCurrentGroup);
     }
   }
 
-  // Add the last group
+  // 3. Add the last remaining group if it's not empty
   if (currentGroup.length > 0) {
-    groupedEpisodes.push({
+    groupedShows.push({
       id: crypto.randomUUID(),
-      timestamp: getAverageTimestamp(currentGroup),
-      episodes: currentGroup,
+      timestampMark: getAverageTimestamp(currentGroup),
+      shows: currentGroup, // Renamed from 'episodes' to 'shows'
+      timeRange: Array.from(
+        new Set([
+          Math.min(...currentGroup.map((show) => show.airingAt)),
+          Math.max(...currentGroup.map((show) => show.airingAt)),
+        ])
+      ),
     });
   }
 
-  return groupedEpisodes;
-}
-
-function getAverageTimestamp(episodes) {
-  const sum = episodes.reduce((acc, episode) => acc + episode.airingAt, 0);
-  return Math.floor(sum / episodes.length);
+  return groupedShows;
 }

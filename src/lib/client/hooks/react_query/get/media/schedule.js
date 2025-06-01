@@ -9,7 +9,7 @@ export function useSchedule({
 }) {
   return useQuery({
     queryKey: [
-      'schedule',
+      'get:anime:schedule',
       startTimestamp,
       endTimestamp,
       mediaIdIn,

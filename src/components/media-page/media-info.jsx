@@ -53,6 +53,10 @@ import {
   useNotice,
   VStack,
   Link,
+  Modal,
+  ModalBody,
+  ModalHeader,
+  ModalFooter,
 } from '@yamada-ui/react';
 import NextLink from 'next/link';
 import { useEffect, useState } from 'react';
@@ -244,6 +248,7 @@ function ActionButtons({
       notice({
         status: 'success',
         description: 'Media List Entry Updated',
+        isClosable: true,
       });
     },
     handleError: (error) => {
@@ -251,6 +256,7 @@ function ActionButtons({
         status: 'error',
         description: error.message,
         title: error.name,
+        isClosable: true,
       });
     },
   });
@@ -585,18 +591,22 @@ function MediaInfoDataList() {
 
 function UserAnilistNote() {
   const media = useMedia();
+  const { onClose, onOpen, open } = useDisclosure();
   return (
-    <Popover trigger="hover">
-      <PopoverTrigger>
-        <span>
+    <>
+      <Tooltip label="Your Anilist note">
+        <Box onClick={() => onOpen()}>
           <NotepadTextIcon />
-        </span>
-      </PopoverTrigger>
-      <PopoverContent>
-        <PopoverHeader>Your Anilist note</PopoverHeader>
-        <PopoverBody>{media.listEntry.notes}</PopoverBody>
-      </PopoverContent>
-    </Popover>
+        </Box>
+      </Tooltip>
+      <Modal open={open} size="4xl">
+        <ModalHeader>Your Anilist note</ModalHeader>
+        <ModalBody>{media.listEntry.notes}</ModalBody>
+        <ModalFooter>
+          <Button onClick={() => onClose()}>Close</Button>
+        </ModalFooter>
+      </Modal>
+    </>
   );
 }
 

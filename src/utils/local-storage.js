@@ -39,6 +39,19 @@ const APP_PREFIX = 'animan_'; // <--- IMPORTANT: Change this to your actual app 
  */
 const AppStorage = {
   /**
+   * Defines default values for specific localStorage keys.
+   * If a key is not found in localStorage or parsing fails,
+   * the corresponding value from this map will be returned.
+   * @type {AppLocalStorageKeys}
+   */
+  DEFAULT_VALUES_MAP: {
+    lastVisitedPage: '/home',
+    isWelcomeShown: false,
+    locale: undefined,
+    timezone: undefined, // Example default timezone
+  },
+
+  /**
    * Sets a value in localStorage with the application prefix.
    * Automatically stringifies objects/arrays using JSON.
    *
@@ -68,22 +81,41 @@ const AppStorage = {
 
   /**
    * Gets a value from localStorage, automatically applying the application prefix.
-   * Automatically parses the value using JSON.
+   * Automatically parses the value using JSON. If the key is not found,
+   * parsing fails, or the stored value is `null`/`undefined`, it returns
+   * the default value defined in `DEFAULT_VALUES_MAP` for that key.
    *
    * @template {AppStorageKey} K
    * @param {K} key - The key to get (without the prefix, e.g., 'timezone').
-   * @returns {AppLocalStorageKeys[K] | null} The parsed value, or `null` if the key is not found or parsing fails.
+   * @returns {AppLocalStorageKeys[K] | null} The parsed value, or the default value
+   * from `DEFAULT_VALUES_MAP` if available, otherwise `null`.
    */
   get(key) {
     if (typeof window === 'undefined') {
-      return null;
+      // In SSR environment, localStorage is not available, return default value from map
+      return this.DEFAULT_VALUES_MAP[key] !== undefined
+        ? this.DEFAULT_VALUES_MAP[key]
+        : null;
     }
     try {
       const serializedValue = localStorage.getItem(APP_PREFIX + String(key));
       if (serializedValue === null) {
-        return null;
+        // Key not found in localStorage, return default value from map
+        return this.DEFAULT_VALUES_MAP[key] !== undefined
+          ? this.DEFAULT_VALUES_MAP[key]
+          : null;
       }
-      return JSON.parse(serializedValue);
+      const parsedValue = JSON.parse(serializedValue);
+
+      // If the parsed value is explicitly null or undefined, return the default value from map
+      // This handles cases where 'null' or 'undefined' might have been stored as strings
+      if (parsedValue === null || typeof parsedValue === 'undefined') {
+        return this.DEFAULT_VALUES_MAP[key] !== undefined
+          ? this.DEFAULT_VALUES_MAP[key]
+          : null;
+      }
+
+      return parsedValue;
     } catch (error) {
       console.error(
         `Error getting or parsing localStorage key "${APP_PREFIX}${String(
@@ -91,7 +123,10 @@ const AppStorage = {
         )}":`,
         error
       );
-      return null;
+      // Return default value from map on any error during retrieval or parsing
+      return this.DEFAULT_VALUES_MAP[key] !== undefined
+        ? this.DEFAULT_VALUES_MAP[key]
+        : null;
     }
   },
 

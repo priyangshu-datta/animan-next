@@ -47,12 +47,6 @@ import {
 import ReactSelect from 'react-select';
 import AppStorage from '@/utils/local-storage';
 
-/*
-
-  saving things temporarily, indicator for unsaved changes
-
-*/
-
 export default function ProfilePage() {
   const userInfo = useUserInfo();
   const [isLoading, setIsLoading] = useState(true);

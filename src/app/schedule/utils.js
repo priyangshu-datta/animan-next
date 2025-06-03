@@ -122,15 +122,10 @@ export function getAdjustedMaxTimestamp(maxTimestamp, delay = 30 * 60 * 1000) {
   }
 }
 
-export function getTimeProgress({
-  currentTimestamp,
-  lowerTimestamp,
-  upperTimestamp,
-}) {
+export function getTimeProgress({ timestamp, lowerTimestamp, upperTimestamp }) {
   return (
-    ((currentTimestamp ?? Date.now()) -
-      (lowerTimestamp ?? getBaseTimestamp())) /
-    (upperTimestamp - lowerTimestamp ?? 24 * 60 * 60 * 1000)
+    ((timestamp ?? Date.now()) - (lowerTimestamp ?? getBaseTimestamp())) /
+    (upperTimestamp - lowerTimestamp ?? getBaseTimestamp())
   );
 }
 
@@ -175,9 +170,9 @@ export function groupShowsByProximity(
   shows,
   threshold = 60, // Renamed from proximityThreshold to 'threshold' as per your provided code
   maxGroupDuration = 2 * 60 * 60, // Default as per your provided code (2 hours)
-  equidistanceTolerance = 20 * 60 // New parameter for equidistant check
+  equidistanceTolerance = Infinity // New parameter for equidistant check
 ) {
-  if (shows.length < 1) {
+  if (!shows || shows?.length < 1) {
     return [];
   }
 
@@ -192,7 +187,7 @@ export function groupShowsByProximity(
   // 2. Iterate through shows starting from the second one
   for (let i = 1; i < shows.length; i++) {
     const currentShow = shows[i];
-    const lastShowInGroup = currentGroup[currentGroup.length - 1];
+    const lastShowInGroup = currentGroup.at(-1);
     const firstShowInGroup = currentGroup[0];
 
     // Calculate time differences relative to the current potential group
@@ -227,7 +222,8 @@ export function groupShowsByProximity(
       // Check if the new difference significantly deviates from the established average
       if (
         Math.abs(diffFromLastInCurrentGroup - averageExistingInterval) >
-        equidistanceTolerance
+          equidistanceTolerance &&
+        currentShow.airingAt != lastShowInGroup.airingAt
       ) {
         shouldSplit = true;
       }
@@ -275,4 +271,94 @@ export function groupShowsByProximity(
   }
 
   return groupedShows;
+}
+
+/**
+ * Calculates the average of the differences between consecutive elements
+ * in an array of numbers.
+ *
+ * For an array [a, b, c, d], the differences are (b-a), (c-b), (d-c).
+ * The function then returns the average of these calculated differences.
+ *
+ * @param {number[]} dataSeries - An array of numbers. For example,
+ * these could be timestamps, measurements, etc.
+ * @returns {number} The average of the consecutive differences.
+ * Returns NaN (Not a Number) if the array contains fewer than two
+ * elements, as differences cannot be computed.
+ * @throws {TypeError} If the input is not an array, or if any element used in
+ * a difference calculation is not a number.
+ */
+export function calcAvgDiff(dataSeries) {
+  // Check if the input is an array
+  if (!Array.isArray(dataSeries)) {
+    throw new TypeError('Input must be an array.');
+  }
+
+  // Check if there are enough elements to compute differences
+  if (dataSeries.length < 2) {
+    return NaN;
+  }
+
+  const differences = [];
+  for (let i = 0; i < dataSeries.length - 1; i++) {
+    const currentElement = dataSeries[i];
+    const nextElement = dataSeries[i + 1];
+
+    // Ensure both elements involved in the subtraction are numbers
+    if (typeof currentElement !== 'number') {
+      throw new TypeError(
+        `All elements used in difference calculations must be numbers. Found type '${typeof currentElement}' with value '${currentElement}' at index ${i}.`
+      );
+    }
+    if (typeof nextElement !== 'number') {
+      throw new TypeError(
+        `All elements used in difference calculations must be numbers. Found type '${typeof nextElement}' with value '${nextElement}' at index ${
+          i + 1
+        }.`
+      );
+    }
+
+    const difference = nextElement - currentElement;
+    differences.push(difference);
+  }
+
+  // If dataSeries.length >= 2, the 'differences' array will not be empty.
+  // Calculate the sum of all differences
+  const sumOfDifferences = differences.reduce(
+    (accumulator, currentValue) => accumulator + currentValue,
+    0
+  );
+
+  // Calculate and return the average difference
+  return sumOfDifferences / differences.length;
+}
+
+/**
+ * Finds the group (marker) that contains a specific show object.
+ *
+ * @param {Array<Object>} groupedShows - The array of grouped show objects returned by groupShowsByProximity.
+ * @param {Object} targetShow - The specific show object you are looking for.
+ * @returns {Object | undefined} The group object that contains the targetShow, or undefined if not found.
+ */
+export function findMarkerContainingShow(groupedShows, targetShow) {
+  if (!targetShow) {
+    return targetShow;
+  }
+  if (!groupedShows) {
+    return groupedShows;
+  }
+  for (const group of groupedShows) {
+    // Check if the targetShow is present in the 'shows' array of the current group
+    // Using find for efficiency if the show is unique, otherwise you could use includes
+    const foundInGroup = group.shows.find(
+      (show) =>
+        show === targetShow ||
+        (show.id && targetShow.id && show.id === targetShow.id)
+    );
+
+    if (foundInGroup) {
+      return group; // Return the entire group (marker)
+    }
+  }
+  return undefined; // Show not found in any group
 }

@@ -1,15 +1,12 @@
 'use client';
 
-import { useSchedule } from '@/lib/client/hooks/react_query/get/media/schedule'
-import { useUserMediaList } from '@/lib/client/hooks/react_query/get/user/media/list'
-import { formatTimeLeft } from '@/utils/general'
-import AppStorage from '@/utils/local-storage'
-import { Carousel, CarouselSlide } from '@yamada-ui/carousel'
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  SunIcon
-} from '@yamada-ui/lucide'
+import { useSchedule } from '@/lib/client/hooks/react_query/get/media/schedule';
+import { useUserMediaList } from '@/lib/client/hooks/react_query/get/user/media/list';
+import { MS_IN_DAY, MS_IN_MINUTE, MS_IN_SECOND } from '@/lib/constants';
+import { formatTimeLeft } from '@/utils/general';
+import AppStorage from '@/utils/local-storage';
+import { Carousel, CarouselSlide } from '@yamada-ui/carousel';
+import { ChevronLeftIcon, ChevronRightIcon, SunIcon } from '@yamada-ui/lucide';
 import {
   Box,
   Button,
@@ -22,6 +19,10 @@ import {
   InputRightAddon,
   Link,
   Loading,
+  Popover,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
   Radio,
   RadioGroup,
   Slider,
@@ -30,21 +31,34 @@ import {
   Text,
   Tooltip,
   useBoolean,
-  useMediaQuery
-} from '@yamada-ui/react'
-import NextLink from 'next/link'
-import { useEffect, useRef, useState } from 'react'
+  useMediaQuery,
+} from '@yamada-ui/react';
+import NextLink from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  findMarkerContainingShow,
   getAdjustedMaxTimestamp,
   getAdjustedMinTimestamp,
   getBaseTimestamp,
   getSkyGradient,
   getTimeProgress,
   groupShowsByProximity,
-} from './utils'
+} from './utils';
 
-export default function SchedulePage() {
-  const [offset, setOffset] = useState(0);
+export default function SchedulePageWrapper() {
+  return (
+    <Suspense>
+      <SchedulePage />
+    </Suspense>
+  );
+}
+
+function SchedulePage() {
+  const searchParams = useSearchParams();
+  const [offset, setOffset] = useState(
+    parseInt(searchParams.get('offset') ?? 0)
+  );
   const [scheduleIsLoading, setIsLoading] = useState();
 
   const {
@@ -59,14 +73,21 @@ export default function SchedulePage() {
   });
 
   useEffect(() => {
-    if (userCurrentMedia) {
-      if (hasNextPage) {
-        fetchNextPage();
-      }
+    if (userCurrentMedia && hasNextPage) {
+      fetchNextPage();
     }
   }, [userCurrentMedia]);
 
   const [onList, setOnList] = useState('all');
+
+  const releasingMediaIds = useMemo(
+    () =>
+      (userCurrentMedia?.pages ?? [])
+        .flatMap((page) => page.mediaList)
+        .filter((entry) => entry.media.status === 'RELEASING')
+        .map((entry) => entry.media.id),
+    [userCurrentMedia]
+  );
 
   return (
     <Flex w="full" justifyContent={'center'} direction={'column'} gap="4">
@@ -75,7 +96,16 @@ export default function SchedulePage() {
           as={Button}
           disabled={scheduleIsLoading}
           onClick={() => {
-            setOffset((prev) => prev - 1);
+            setOffset((prev) => {
+              const newSearchParams = new URLSearchParams();
+              newSearchParams.set('offset', prev - 1);
+              window.history.replaceState(
+                null,
+                '',
+                `?${newSearchParams.toString()}`
+              );
+              return prev - 1;
+            });
           }}
         >
           <ChevronLeftIcon />
@@ -85,7 +115,7 @@ export default function SchedulePage() {
           value={Intl.DateTimeFormat(AppStorage.get('locale') ?? 'en', {
             timeZone: AppStorage.get('timezone') ?? undefined,
             dateStyle: 'medium',
-          }).format(new Date(Date.now() + offset * 24 * 60 * 60 * 1000))}
+          }).format(new Date(Date.now() + offset * MS_IN_DAY))}
           w="fit-content"
           textAlign={'center'}
         />
@@ -93,7 +123,16 @@ export default function SchedulePage() {
           as={Button}
           disabled={scheduleIsLoading}
           onClick={() => {
-            setOffset((prev) => prev + 1);
+            setOffset((prev) => {
+              const newSearchParams = new URLSearchParams();
+              newSearchParams.set('offset', prev + 1);
+              window.history.replaceState(
+                null,
+                '',
+                `?${newSearchParams.toString()}`
+              );
+              return prev + 1;
+            });
           }}
         >
           <ChevronRightIcon />
@@ -118,29 +157,14 @@ export default function SchedulePage() {
       <SchedulePageComponent
         searchOptions={{
           startTimestamp:
-            getBaseTimestamp(
-              new Date(Date.now() + offset * 24 * 60 * 60 * 1000)
-            ) / 1000,
+            getBaseTimestamp(new Date(Date.now() + offset * MS_IN_DAY)) / 1000,
           endTimestamp:
-            getBaseTimestamp(
-              new Date(Date.now() + offset * 24 * 60 * 60 * 1000)
-            ) /
-              1000 +
-            24 * 60 * 60,
+            getBaseTimestamp(new Date(Date.now() + (offset + 1) * MS_IN_DAY)) /
+            1000,
           ...(onList === 'inList'
-            ? {
-                mediaIdIn: userCurrentMedia.pages
-                  .flatMap((page) => page.mediaList)
-                  .filter((entry) => entry.media.status === 'RELEASING')
-                  .map((entry) => entry.media.id),
-              }
+            ? { mediaIdIn: releasingMediaIds }
             : onList === 'notInList'
-            ? {
-                mediaIdNotIn: userCurrentMedia.pages
-                  .flatMap((page) => page.mediaList)
-                  .filter((entry) => entry.media.status === 'RELEASING')
-                  .map((entry) => entry.media.id),
-              }
+            ? { mediaIdNotIn: releasingMediaIds }
             : {}),
         }}
         setIsLoading={setIsLoading}
@@ -186,12 +210,7 @@ function SchedulePageComponent({ searchOptions, setIsLoading }) {
 
   useEffect(() => {
     if (data) {
-      const prevFirstMarker = markerHistory[0];
-      const prevSelectedMarkerShow = prevFirstMarker?.shows.at(
-        carouselRef.current
-      );
-
-      const groupedData = groupShowsByProximity(
+      let groupedShows = groupShowsByProximity(
         data?.data,
         (xsTimeThreshold // < 320
           ? 2 * 60
@@ -209,43 +228,46 @@ function SchedulePageComponent({ searchOptions, setIsLoading }) {
           ? 35
           : 20) * 60
       );
-      const rootSliderSelectedMarker = groupedData.find((data) =>
-        data.shows.some((show) => show.id === prevSelectedMarkerShow?.id)
-      );
-      const newLeafSliderMarkers = rootSliderSelectedMarker
-        ? groupShowsByProximity(rootSliderSelectedMarker.shows, 60)
-        : [];
-      setTimeSliders(() => {
-        const newSlidersArray = [
-          {
-            id: 'root',
-            markers: groupedData,
-          },
-          ...(rootSliderSelectedMarker
-            ? [
-                {
-                  id: rootSliderSelectedMarker.id, // Leve 1 Slider id
-                  markers: newLeafSliderMarkers,
-                },
-              ]
-            : []),
-        ];
 
-        return newSlidersArray;
-      });
+      const newSliders = [{ id: 'root', markers: groupedShows }];
+      const newMarkerHistory = [];
+      let level = 0;
 
-      if (rootSliderSelectedMarker) {
-        const leafSliderSelectedMarker = (prevMarkerHistory) => [
-          newLeafSliderMarkers?.find(
-            (markers) =>
-              markers?.shows[0]?.id === prevMarkerHistory.at(-1)?.shows[0]?.id
-          ),
-        ];
-        setMarkerHistory((prev) => [
-          rootSliderSelectedMarker,
-          ...(markerHistory.length > 1 ? leafSliderSelectedMarker(prev) : []),
-        ]);
+      const leafNode = markerHistory
+        ?.at(-1)
+        ?.shows?.at(carouselRef.current - 1);
+
+      while (true) {
+        const marker = findMarkerContainingShow(groupedShows, leafNode);
+        if (!marker) {
+          break;
+        }
+
+        newMarkerHistory.push(marker);
+
+        if (
+          Array.from(new Set(marker.shows.map((show) => show.airingAt)))
+            .length < 2
+        ) {
+          break;
+        }
+        groupedShows = groupShowsByProximity(
+          marker.shows,
+          level === 0 ? 5 * 60 : 60
+        );
+        newSliders.push({
+          id: marker.id,
+          markers: groupedShows,
+          level: level,
+        });
+        level++;
       }
+
+      setTimeSliders(newSliders);
+      setMarkerHistory((prev) => {
+        if (prev?.at(-1)?.shows?.length === 1) return newMarkerHistory;
+        else return newMarkerHistory.slice(0, -1);
+      });
     }
   }, [
     data,
@@ -261,7 +283,7 @@ function SchedulePageComponent({ searchOptions, setIsLoading }) {
   ]);
 
   return (
-    <Flex w="full" gap="20" px="4" flexDirection={'column'} mt="10">
+    <Flex w="full" gap="20" px="4" flexDirection={'column'} pt="10" overflow={"clip"}>
       {timeSliders.map((slider, index) => (
         <ScheduleTimeline
           key={slider.id}
@@ -270,6 +292,7 @@ function SchedulePageComponent({ searchOptions, setIsLoading }) {
           setSliders={setTimeSliders}
           markerHistory={markerHistory}
           setMarkerHistory={setMarkerHistory}
+          searchOptions={searchOptions}
         />
       ))}
 
@@ -288,30 +311,65 @@ function ScheduleTimeline({
   markerHistory,
   setMarkerHistory,
   level,
+  searchOptions,
 }) {
-  const startTime = useRef(
-    getAdjustedMinTimestamp(
-      Math.min(...markers?.map((marker) => marker?.timestampMark)) * 1000,
-      level > 0 ? 10 * 60 * 1000 : 30 * 60 * 1000
-    )
-  );
-  const endTime = useRef(
-    getAdjustedMaxTimestamp(
-      Math.max(...markers?.map((marker) => marker?.timestampMark)) * 1000,
-      level > 0 ? 10 * 60 * 1000 : 30 * 60 * 1000
-    )
-  );
+  const [
+    xsTimeThreshold,
+    smTimeThreshold,
+    mdTimeThreshold,
+    lgTimeThreshold,
+    xlTimeThreshold,
+    xxlTimeThreshold,
+    xxxlTimeThreshold,
+  ] = useMediaQuery([
+    '(width < 320px)',
+    '(width < 576px)',
+    '(width < 992px)',
+    '(width < 1200px)',
+    '(width < 1440px)',
+    '(width < 1600px)',
+    '(width < 2000px)',
+  ]);
+  const delay =
+    ((xsTimeThreshold // < 320
+      ? 2 * 60
+      : smTimeThreshold //  320 -  576
+      ? 60
+      : mdTimeThreshold //  576 -  992
+      ? 55
+      : lgTimeThreshold //  992 - 1200
+      ? 50
+      : xlTimeThreshold // 1200 - 1440
+      ? 45
+      : xxlTimeThreshold // 1440 - 1600
+      ? 40
+      : xxxlTimeThreshold // 1600 - 2000
+      ? 35
+      : 20) *
+      MS_IN_MINUTE) /
+    Math.pow(level + 1, 4);
 
-  useEffect(() => {
-    startTime.current = getAdjustedMinTimestamp(
-      Math.min(...markers?.map((marker) => marker?.timestampMark)) * 1000,
-      level > 0 ? 10 * 60 * 1000 : 30 * 60 * 1000
+  const startTime = useMemo(() => {
+    // Handle cases where markers might be empty or null
+    if (!markers || markers.length === 0) {
+      return Date.now(); // Or some sensible default
+    }
+    return getAdjustedMinTimestamp(
+      Math.min(...markers.map((marker) => marker?.timestampMark)) * 1000,
+      delay
     );
-    endTime.current = getAdjustedMaxTimestamp(
-      Math.max(...markers?.map((marker) => marker?.timestampMark)) * 1000,
-      level > 0 ? 10 * 60 * 1000 : 30 * 60 * 1000
+  }, [markers, level]); // Dependencies: markers and level
+
+  const endTime = useMemo(() => {
+    // Handle cases where markers might be empty or null
+    if (!markers || markers.length === 0) {
+      return Date.now() + MS_IN_DAY; // Or some sensible default
+    }
+    return getAdjustedMaxTimestamp(
+      Math.max(...markers.map((marker) => marker?.timestampMark)) * 1000,
+      delay
     );
-  }, [markers]);
+  }, [markers, level]); // Dependencies: markers and level
 
   const [open, { on, off }] = useBoolean(false);
   const [currentTime, setCurrentTime] = useState();
@@ -321,63 +379,38 @@ function ScheduleTimeline({
       setCurrentTime(
         100 *
           getTimeProgress({
-            lowerTimestamp: startTime.current,
-            upperTimestamp: endTime.current,
+            lowerTimestamp: startTime, // use state variable
+            upperTimestamp: endTime, // use state variable
           })
       );
     }, 1000);
     return () => {
       clearInterval(interval);
     };
-  }, [markers]);
+  }, [startTime, endTime]); // Add startTime and endTime here
 
   return (
     <Slider
       defaultValue={
         100 *
         getTimeProgress({
-          lowerTimestamp: startTime.current,
-          upperTimestamp: endTime.current,
+          lowerTimestamp: startTime,
+          upperTimestamp: endTime,
         })
       }
       value={currentTime}
       focusThumbOnChange={false}
       onMouseEnter={on}
       onMouseLeave={off}
-      trackColor={getSkyGradient(
-        new Date(startTime.current),
-        new Date(endTime.current)
-      )}
+      trackColor={getSkyGradient(startTime, endTime)}
       filledTrackColor={'transparent'}
     >
-      <SliderMark
-        value={
-          100 *
-          getTimeProgress({
-            currentTimestamp:
-              (getBaseTimestamp() + getBaseTimestamp() + 1000 * 60 * 60 * 24) /
-              2,
-            lowerTimestamp: startTime.current,
-            upperTimestamp: endTime.current,
-          })
-        }
-        mt="-7"
-      >
-        <SunIcon color="yellow.200" fontSize={'xl'} />
-      </SliderMark>
-      <SliderMark
-        value={
-          100 *
-          getTimeProgress({
-            currentTimestamp: 1748750400000,
-            lowerTimestamp: startTime.current,
-            upperTimestamp: endTime.current,
-          })
-        }
-        mt="-7"
-      >
-        <SunIcon color="yellow.200" fontSize={'xl'} />
-      </SliderMark>
+      <FixedSunTimelineMark
+        endTime={endTime}
+        searchOptions={searchOptions}
+        startTime={startTime}
+      />
+
       <For each={markers}>
         {(marker) => (
           <SliderMark
@@ -385,117 +418,32 @@ function ScheduleTimeline({
             value={
               100 *
               getTimeProgress({
-                currentTimestamp: marker.timestampMark * 1000,
-                lowerTimestamp: startTime.current,
-                upperTimestamp: endTime.current,
+                timestamp: marker.timestampMark * MS_IN_SECOND,
+                lowerTimestamp: startTime,
+                upperTimestamp: endTime,
               })
             }
             pointerEvents={'all'}
             w="fit-content"
             h="fit-content"
+            ml="-3"
           >
-            <Flex
-              pointerEvents={'all'}
-              onClick={() => {
-                if (
-                  Array.from(new Set(marker.shows.map((ep) => ep.airingAt)))
-                    .length > 1
-                ) {
-                  setSliders((prev) => {
-                    const newSlidersArray = [...prev];
-                    const lastSlider = newSlidersArray.at(-1);
-                    if (lastSlider?.id === marker.id) {
-                      setMarkerHistory([]);
-                      return newSlidersArray.slice(0, -1);
-                    }
-
-                    newSlidersArray[level + 1] = {
-                      id: marker.id,
-                      markers: groupShowsByProximity(marker.shows, 60),
-                    };
-
-                    return newSlidersArray;
-                  });
-                } else {
-                  // once deleted had to revive, this code ensures that a marker with only one episode when clicked clears the slider of next level if exists,
-                  // if this code is not present, then clicking a marker with many shows first and then a marker with 1 episode will retain the 2nd slider.
-                  setSliders((prev) => {
-                    return prev.slice(0, level + 1);
-                  });
-                }
-                setMarkerHistory((prev) => {
-                  const newVal = [...prev];
-                  const lastMarker = newVal.at(-1);
-                  const sameAsLast = lastMarker?.id === marker.id;
-
-                  if (sameAsLast) {
-                    return newVal.slice(0, -1);
-                  }
-
-                  newVal[level] = marker;
-
-                  return newVal.slice(0, level + 1);
-                });
-              }}
-              direction={'column'}
-            >
-              <Box
-                rounded={'full'}
-                aspectRatio={1 / 1}
-                textAlign={'center'}
-                color={'white'}
-                bg={
-                  markerHistory.map((m) => m.id).includes(marker.id)
-                    ? 'fuchsia'
-                    : 'primary'
-                }
-                w="fit-content"
-              >
-                {marker.shows.length}
-              </Box>
-              <Text transform={'translateX(-30%)'}>
-                {markerHistory.map((m) => m.id).includes(marker.id) &&
-                  (marker.timeRange.length < 2
-                    ? Intl.DateTimeFormat(AppStorage.get('locale'), {
-                        hour12: true,
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      }).format(new Date(marker.timeRange[0] * 1000))
-                    : Intl.DateTimeFormat(AppStorage.get('locale'), {
-                        hour12: true,
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      }).formatRange(
-                        new Date(marker.timeRange[0] * 1000),
-                        new Date(marker.timeRange[1] * 1000)
-                      ))}
-              </Text>
-            </Flex>
+            <TimelineSliderMarker
+              level={level}
+              marker={marker}
+              markerHistory={markerHistory}
+              setMarkerHistory={setMarkerHistory}
+              setSliders={setSliders}
+            />
           </SliderMark>
         )}
       </For>
-      <Tooltip
-        placement="right"
-        label={
-          getBaseTimestamp(new Date(startTime.current)) < Date.now() &&
-          Date.now() <
-            getBaseTimestamp(new Date(endTime.current)) + 24 * 60 * 60 * 1000
-            ? Intl.DateTimeFormat(AppStorage.get('locale'), {
-                timeZone: AppStorage.get('timezone'),
-                hour: 'numeric',
-                minute: 'numeric',
-                second: 'numeric',
-              }).format(new Date())
-            : Intl.DateTimeFormat(AppStorage.get('locale'), {
-                dateStyle: 'short',
-                timeStyle: 'medium',
-                timeZone: AppStorage.get('timezone'),
-              }).format(new Date())
-        }
+
+      <TimelineSliderThumb
+        endTime={endTime}
         open={open}
-      >
-        <SliderThumb />
-      </Tooltip>
+        startTime={startTime}
+      />
     </Slider>
   );
 }
@@ -556,7 +504,7 @@ function Gallery({ carouselRef, data, markerHistory }) {
                     <Text lineClamp={1}>{media.title.userPreferred}</Text>
                   </Link>
 
-                  <GalleryMediaTImeComponent
+                  <GalleryMediaTimeComponent
                     airingAt={airingAt}
                     duration={media.duration}
                     nextEp={nextEp}
@@ -603,7 +551,7 @@ function Gallery({ carouselRef, data, markerHistory }) {
   );
 }
 
-function GalleryMediaTImeComponent({ airingAt, duration, nextEp }) {
+function GalleryMediaTimeComponent({ airingAt, duration, nextEp }) {
   const [currentTime, setCurrentTime] = useState();
 
   useEffect(() => {
@@ -625,4 +573,159 @@ function GalleryMediaTImeComponent({ airingAt, duration, nextEp }) {
       {formatTimeLeft(airingAt, duration * 60 ?? 0)}
     </Text>
   );
+}
+
+function FixedSunTimelineMark({ endTime, searchOptions, startTime }) {
+  return (
+    <SliderMark
+      value={
+        100 *
+        getTimeProgress({
+          timestamp:
+            ((searchOptions.startTimestamp + searchOptions.endTimestamp) *
+              MS_IN_SECOND) /
+            2,
+          lowerTimestamp: startTime,
+          upperTimestamp: endTime,
+        })
+      }
+      mt="-7"
+    >
+      <SunIcon color="yellow.200" fontSize={'xl'} />
+    </SliderMark>
+  );
+}
+
+function TimelineSliderThumb({ endTime, open, startTime }) {
+  return (
+    <Tooltip
+      placement="right"
+      label={
+        getBaseTimestamp(new Date(startTime)) < Date.now() &&
+        Date.now() < getBaseTimestamp(new Date(endTime)) + MS_IN_DAY
+          ? Intl.DateTimeFormat(AppStorage.get('locale'), {
+              timeZone: AppStorage.get('timezone'),
+              hour: 'numeric',
+              minute: 'numeric',
+              second: 'numeric',
+            }).format(new Date())
+          : Intl.DateTimeFormat(AppStorage.get('locale'), {
+              dateStyle: 'short',
+              timeStyle: 'medium',
+              timeZone: AppStorage.get('timezone'),
+            }).format(new Date())
+      }
+      open={open}
+    >
+      <SliderThumb />
+    </Tooltip>
+  );
+}
+
+function TimelineSliderMarker({
+  level,
+  marker,
+  markerHistory,
+  setMarkerHistory,
+  setSliders,
+}) {
+  return (
+    <Flex
+      pointerEvents={'all'}
+      onClick={() => {
+        markerClickHandler();
+      }}
+      direction={'column'}
+    >
+      <Popover
+        open={markerHistory.map((m) => m.id).includes(marker.id)}
+        offset={[0, 0]}
+        closeOnEsc
+        closeOnButton={false}
+        lazy
+      >
+        <PopoverTrigger>
+          <Box
+            rounded={'full'}
+            aspectRatio={1 / 1}
+            textAlign={'center'}
+            color={'white'}
+            bg={
+              markerHistory.map((m) => m.id).includes(marker.id)
+                ? 'fuchsia'
+                : 'primary'
+            }
+            w="fit-content"
+          >
+            {marker.shows.length}
+          </Box>
+        </PopoverTrigger>
+        <PopoverContent>
+          <PopoverBody>
+            {markerHistory.map((m) => m.id).includes(marker.id) &&
+              (marker.timeRange.length < 2
+                ? Intl.DateTimeFormat(AppStorage.get('locale'), {
+                    hour12: true,
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  }).format(new Date(marker.timeRange[0] * 1000))
+                : Intl.DateTimeFormat(AppStorage.get('locale'), {
+                    hour12: true,
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  }).formatRange(
+                    new Date(marker.timeRange[0] * 1000),
+                    new Date(marker.timeRange[1] * 1000)
+                  ))}
+          </PopoverBody>
+        </PopoverContent>
+      </Popover>
+    </Flex>
+  );
+
+  function markerClickHandler() {
+    setSliders((prev) => {
+      if (
+        Array.from(new Set(marker.shows.map((ep) => ep.airingAt))).length > 1
+      ) {
+        const newSlidersArray = [...prev];
+        const lastSlider = newSlidersArray.at(-1);
+
+        if (
+          lastSlider &&
+          markerHistory.map((marker) => marker.id).includes(marker.id)
+        ) {
+          setMarkerHistory((prev) => prev.slice(0, level));
+          return newSlidersArray.slice(0, level + 1);
+        }
+
+        newSlidersArray[level + 1] = {
+          id: marker.id,
+          markers: groupShowsByProximity(
+            marker.shows,
+            level === 0 ? 5 * 60 : 60
+          ),
+        };
+
+        return newSlidersArray.slice(0, level + 2);
+      } else {
+        // once deleted had to revive, this code ensures that a marker with only one episode when clicked clears the slider of next level if exists,
+        // if this code is not present, then clicking a marker with many shows first and then a marker with 1 episode will retain the 2nd slider.
+        return prev.slice(0, level + 1);
+      }
+    });
+    setMarkerHistory((prev) => {
+      const newVal = [...prev];
+      const lastMarker = newVal.at(-1);
+      const sameAsLast = lastMarker?.id === marker.id;
+
+      if (sameAsLast) {
+        return newVal.slice(0, -1);
+      }
+
+      newVal[level] = marker;
+
+      return newVal.slice(0, level + 1);
+    });
+  }
 }

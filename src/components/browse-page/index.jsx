@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDownIcon, ChevronUpIcon } from '@yamada-ui/lucide';
+import { ChevronDownIcon, ChevronUpIcon } from '@yamada-ui/lucide'
 import {
   Box,
   Button,
@@ -14,22 +14,21 @@ import {
   Heading,
   Input,
   Separator,
-  Snacks,
   useDisclosure,
   useDynamicAnimation,
-  useSnacks,
-  VStack,
-} from '@yamada-ui/react';
-import { useEffect, useState } from 'react';
-import { Controller, FormProvider } from 'react-hook-form';
-import { SearchResults } from './search-results';
-import { CountryOfOriginSelector } from './selectors/country-of-origin';
-import { DateSelector } from './selectors/date';
-import { MediaSeasonSelector } from './selectors/media-season';
-import { MediaSortMethodSelector } from './selectors/media-sort';
-import { MediaSourceSelector } from './selectors/media-source';
-import { MediaTypeSelector } from './selectors/media-type';
-import { OpenEndedRange } from './selectors/open-ended-range';
+  VStack
+} from '@yamada-ui/react'
+import { useEffect, useState } from 'react'
+import { Controller, FormProvider } from 'react-hook-form'
+import { useSearchForm } from './hooks'
+import { SearchResults } from './search-results'
+import { CountryOfOriginSelector } from './selectors/country-of-origin'
+import { DateSelector } from './selectors/date'
+import { MediaSeasonSelector } from './selectors/media-season'
+import { MediaSortMethodSelector } from './selectors/media-sort'
+import { MediaSourceSelector } from './selectors/media-source'
+import { MediaTypeSelector } from './selectors/media-type'
+import { OpenEndedRange } from './selectors/open-ended-range'
 import {
   CheckBoxes,
   GenreSelector,
@@ -39,13 +38,12 @@ import {
   MediaTagSelector,
   OnListRadio,
   SeasonYearSelector,
-} from './small-components';
+} from './small-components'
 import {
   animOptions,
   searchParamsToFormControlValues,
   setSearchOptionOnSubmit,
-} from './utils';
-import { useSearchForm } from './hooks';
+} from './utils'
 
 export default function SearchPageComponent() {
   const { open: basicOptionsOpen, onToggle: basicOptionsToggle } =
@@ -144,17 +142,6 @@ export default function SearchPageComponent() {
               colorScheme={'primary'}
               variant={'outline'}
               w={{ base: 'max-content', md: 'full' }}
-              onClick={() => {
-                // methods.reset({
-                //   ...methods.formState.defaultValues,
-                //   ...searchParamsToFormControlValues(
-                //     searchParams,
-                //     tagsInfo.data?.data,
-                //     tagCategories,
-                //     genresInfo.data?.data
-                //   ),
-                // });
-              }}
             >
               Search {methods.formState.isDirty ? '*' : ''}
             </Button>

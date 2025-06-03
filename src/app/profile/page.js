@@ -97,8 +97,8 @@ export default function ProfilePage() {
         duration: SNACK_DURATION,
         isClosable: true,
       });
-      AppStorage.get('locale', methods.watch('locale'));
-      AppStorage.get('timezone', methods.watch('timezone'));
+      AppStorage.set('locale', methods.watch('locale'));
+      AppStorage.set('timezone', methods.watch('timezone'));
 
       methods.reset({ ...methods.watch() });
       resetCheckUsername();

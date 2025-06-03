@@ -48,6 +48,7 @@ export function useOptimisticUpdateMediaProgress({ mediaProgress }) {
         description: 'Progress updated: +1',
         status: 'success',
         duration: SNACK_DURATION,
+        isClosable: true,
       });
     },
     handleError: (error) => {
@@ -55,6 +56,7 @@ export function useOptimisticUpdateMediaProgress({ mediaProgress }) {
         description: error.message,
         status: 'error',
         duration: SNACK_DURATION,
+        isClosable: true,
       });
     },
   });

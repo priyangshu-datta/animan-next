@@ -64,6 +64,7 @@ function useListEditor({ onListEditorClose }) {
         } the entry.`,
         status: 'success',
         duration: SNACK_DURATION,
+        isClosable: true,
       });
 
       onListEditorClose();
@@ -83,6 +84,7 @@ function useListEditor({ onListEditorClose }) {
         description: `Toggled favourite.`,
         status: 'success',
         duration: SNACK_DURATION,
+        isClosable: true,
       });
     },
   });
@@ -124,6 +126,7 @@ function useListEditor({ onListEditorClose }) {
       notice({
         status: 'success',
         description: 'Media List Entry deleted',
+        isClosable: true,
       });
       onListEditorClose();
     },

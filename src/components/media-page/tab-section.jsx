@@ -39,6 +39,7 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
         description: 'Deleted the review',
         status: 'success',
         duration: SNACK_DURATION,
+        isClosable: true,
       });
       setDelReview(null);
       onCloseReviewDeleteModal();
@@ -49,6 +50,7 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
         title: error.name,
         description: error.message,
         duration: SNACK_DURATION,
+        isClosable: true,
       });
       setDelReview(null);
     },

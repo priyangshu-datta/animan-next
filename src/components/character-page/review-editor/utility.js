@@ -14,6 +14,7 @@ export function handleReviewResponse(
       description: reviewResponse.error.message,
       status: 'error',
       duration: SNACK_DURATION,
+      isClosable: true,
     });
   }
   if (reviewResponse.isSuccess) {
@@ -21,6 +22,7 @@ export function handleReviewResponse(
       description: successMessage,
       status: 'success',
       duration: SNACK_DURATION,
+      isClosable: true,
     });
     onSuccessCallback();
     localStorage.removeItem(clearLocalStorageKey);

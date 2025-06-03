@@ -48,6 +48,7 @@ export function useOptimisticToggleMediaFavourite({ mediaIsFavourite }) {
         description: `${!isFavourite ? 'F' : 'Unf'}avourited!`,
         status: 'success',
         duration: SNACK_DURATION,
+        isClosable: true,
       });
     },
 
@@ -57,6 +58,7 @@ export function useOptimisticToggleMediaFavourite({ mediaIsFavourite }) {
         description: error.message,
         status: 'error',
         duration: SNACK_DURATION,
+        isClosable: true,
       });
     },
   });

@@ -87,6 +87,7 @@ export default function ProfilePage() {
         status: 'error',
         description: error.message,
         duration: SNACK_DURATION,
+        isClosable: true
       });
     },
     handleSuccess: () => {
@@ -94,6 +95,7 @@ export default function ProfilePage() {
         status: 'success',
         description: 'Updated successfully',
         duration: SNACK_DURATION,
+        isClosable: true,
       });
       AppStorage.get('locale', methods.watch('locale'));
       AppStorage.get('timezone', methods.watch('timezone'));
@@ -131,6 +133,7 @@ export default function ProfilePage() {
           status: 'warning',
           description: 'Username already exists. Choose something different.',
           duration: SNACK_DURATION,
+          isClosable: true,
         });
         return;
       }
@@ -144,6 +147,7 @@ export default function ProfilePage() {
         status: 'info',
         description: 'No changes are made',
         duration: SNACK_DURATION,
+        isClosable: true,
       });
     }
   }

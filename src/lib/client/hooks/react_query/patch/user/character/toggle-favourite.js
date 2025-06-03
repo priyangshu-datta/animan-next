@@ -47,6 +47,7 @@ export function useOptimisticToggleCharacterFavourite({
         description: `${!isFavourite ? 'F' : 'Unf'}avourited!`,
         status: 'success',
         duration: SNACK_DURATION,
+        isClosable: true,
       });
     },
 
@@ -56,6 +57,7 @@ export function useOptimisticToggleCharacterFavourite({
         description: error.message,
         status: 'error',
         duration: SNACK_DURATION,
+        isClosable: true,
       });
     },
   });

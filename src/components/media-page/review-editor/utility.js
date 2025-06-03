@@ -18,10 +18,10 @@ export function handleReviewResponse(
   }
   if (reviewResponse.isSuccess) {
     notice({
-      title: 'Success',
       description: successMessage,
       status: 'success',
       duration: SNACK_DURATION,
+      isClosable: true,
     });
     onSuccessCallback();
     localStorage.removeItem(clearLocalStorageKey);

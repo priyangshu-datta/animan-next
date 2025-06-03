@@ -54,6 +54,7 @@ export default function MediaCard({ listEntry }) {
       notice({
         status: 'success',
         description: 'Media List Entry Updated',
+        isClosable: true,
       });
     },
     handleError: (error) => {
@@ -61,6 +62,7 @@ export default function MediaCard({ listEntry }) {
         status: 'error',
         description: error.message,
         title: error.name,
+        isClosable: true,
       });
     },
   });
@@ -164,71 +166,9 @@ export default function MediaCard({ listEntry }) {
                 </DataListItem>
               )
             )}
-            {/* <DataListItem>
-              <DataListTerm>
-                {listEntry.media.status === 'NOT_YET_RELEASED'
-                  ? 'Release in'
-                  : 'Progress'}
-              </DataListTerm>
-              <DataListDescription>
-                {listEntry.media.status === 'NOT_YET_RELEASED' ? (
-                  // computeStartDate(listEntry.startDate)
-                  listEntry?.startDate?.day
-                ) : (
-                  <Flex gap={'1'} alignItems={'center'}>
-                    {totalEpisodes - listEntry.progress > 0 ? (
-                      <Tooltip
-                        label={`Behind ${
-                          totalEpisodes - listEntry.progress
-                        } epsiodes`}
-                      >
-                        <span className="decoration-dashed underline-offset-2 underline">
-                          {listEntry.progress}
-                        </span>
-                      </Tooltip>
-                    ) : (
-                      listEntry.progress
-                    )}
-                    <Button
-                      variant={'link'}
-                      onClick={() => {
-                        mutate({
-                          mediaId: listEntry.media.id,
-                          mediaType: listEntry.media.type,
-                          progress: listEntry.progress + 1,
-                        });
-                      }}
-                      disabled={isPending}
-                    >
-                      {isPending ? '...' : '+'}
-                    </Button>
-                  </Flex>
-                )}
-              </DataListDescription>
-            </DataListItem>
-            <DataListItem>
-              <DataListTerm>
-                {listEntry.media.status === 'RELEASING' &&
-                  (listEntry.media.type !== 'MANGA' ? 'Time Left' : 'Status')}
-              </DataListTerm>
-              <DataListDescription>
-                {timeLeft ??
-                  sentenceCase(listEntry.media.status.replaceAll('_', ' '))}
-              </DataListDescription>
-            </DataListItem> */}
           </DataList>
         </CardBody>
       </Card>
     </Flex>
   );
 }
-
-/**
-
-not yet released
-start date: known | unknown
-release in, status
-
-
-
- */

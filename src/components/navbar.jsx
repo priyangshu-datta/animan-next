@@ -103,8 +103,8 @@ export default function NavBar({}) {
               Browse
             </Link>
           )}
-          <Link as={NextLink} href={'/timeline'} textDecoration={'underline'}>
-            Timeline
+          <Link as={NextLink} href={'/reviews'} textDecoration={'underline'}>
+            My Reviews
           </Link>
           {pathname !== '/schedule' && (
             <Link as={NextLink} href={'/schedule'} textDecoration={'underline'}>

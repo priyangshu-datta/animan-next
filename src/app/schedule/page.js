@@ -253,12 +253,35 @@ function SchedulePageComponent({ searchOptions, setIsLoading }) {
         }
         groupedShows = groupShowsByProximity(
           marker.shows,
-          level === 0 ? 5 * 60 : 60
+          getThresholdByLevel(level + 1)
         );
+
+        let newLevel = level;
+        while (
+          groupedShows.length === 1 &&
+          Array.from(
+            new Set(groupedShows[0].shows.map((show) => show.airingAt))
+          ).length > 1
+        ) {
+          if (newLevel > 10) {
+            groupedShows = groupShowsByProximity(
+              groupedShows[0].shows,
+              SECOND_IN_MS
+            );
+            newLevel = level;
+            break;
+          }
+          newLevel++;
+          groupedShows = groupShowsByProximity(
+            groupedShows[0].shows,
+            getThresholdByLevel(newLevel + 1)
+          );
+        }
+
         newSliders.push({
           id: marker.id,
           markers: groupedShows,
-          level: level,
+          level: newLevel,
         });
         level++;
       }
@@ -697,6 +720,31 @@ function TimelineSliderMarker({
         ) {
           setMarkerHistory((prev) => prev.slice(0, level));
           return newSlidersArray.slice(0, level + 1);
+        }
+
+        let newMarkers = groupShowsByProximity(
+          marker.shows,
+          getThresholdByLevel(level + 1)
+        );
+
+        let newLevel = level;
+        while (
+          newMarkers.length === 1 &&
+          Array.from(new Set(newMarkers[0].shows.map((show) => show.airingAt)))
+            .length > 1
+        ) {
+          if (newLevel > 10) {
+            newMarkers = groupShowsByProximity(
+              newMarkers[0].shows,
+              SECOND_IN_MS
+            );
+            break;
+          }
+          newLevel++;
+          newMarkers = groupShowsByProximity(
+            newMarkers[0].shows,
+            getThresholdByLevel(newLevel + 1)
+          );
         }
 
         newSlidersArray[level + 1] = {

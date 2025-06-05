@@ -20,14 +20,11 @@ import AppStorage from '@/utils/local-storage';
 export default function ReviewCard({ review }) {
   const emotionList = review.emotions ? review.emotions.split(';') : [];
 
-  let associatedMedia = null;
-
-  if (review.associatedMediaId && review.associatedMediaType) {
-    associatedMedia = useMediaBasicInfoById({
-      mediaId: review.associatedMediaId,
-      mediaType: review.associatedMediaType,
-    });
-  }
+  // extract to parent logic, or multiple small requests will rate limit the provider server.
+  let associatedMedia = useMediaBasicInfoById({
+    mediaId: review.associatedMediaId,
+    mediaType: review.associatedMediaType,
+  });
 
   return (
     <Container>

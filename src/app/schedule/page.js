@@ -2,7 +2,14 @@
 
 import { useSchedule } from '@/lib/client/hooks/react_query/get/media/schedule';
 import { useUserMediaList } from '@/lib/client/hooks/react_query/get/user/media/list';
-import { MS_IN_DAY, MS_IN_MINUTE, MS_IN_SECOND } from '@/lib/constants';
+import {
+  DAY_IN_MS,
+  HALF_HOUR_IN_MS,
+  HOUR_IN_MS,
+  MINUTE_IN_MS,
+  QUARTER_HOUR_IN_MS,
+  SECOND_IN_MS,
+} from '@/lib/constants';
 import { formatTimeLeft } from '@/utils/general';
 import AppStorage from '@/utils/local-storage';
 import { Carousel, CarouselSlide } from '@yamada-ui/carousel';
@@ -115,7 +122,7 @@ function SchedulePage() {
           value={Intl.DateTimeFormat(AppStorage.get('locale') ?? 'en', {
             timeZone: AppStorage.get('timezone') ?? undefined,
             dateStyle: 'medium',
-          }).format(new Date(Date.now() + offset * MS_IN_DAY))}
+          }).format(new Date(Date.now() + offset * DAY_IN_MS))}
           w="fit-content"
           textAlign={'center'}
         />
@@ -157,10 +164,11 @@ function SchedulePage() {
       <SchedulePageComponent
         searchOptions={{
           startTimestamp:
-            getBaseTimestamp(new Date(Date.now() + offset * MS_IN_DAY)) / 1000,
+            getBaseTimestamp(new Date(Date.now() + offset * DAY_IN_MS)) /
+            SECOND_IN_MS,
           endTimestamp:
-            getBaseTimestamp(new Date(Date.now() + (offset + 1) * MS_IN_DAY)) /
-            1000,
+            getBaseTimestamp(new Date(Date.now() + (offset + 1) * DAY_IN_MS)) /
+            SECOND_IN_MS,
           ...(onList === 'inList'
             ? { mediaIdIn: releasingMediaIds }
             : onList === 'notInList'
@@ -204,6 +212,58 @@ function SchedulePageComponent({ searchOptions, setIsLoading }) {
     '(width < 2000px)',
   ]);
 
+  function getThresholdByLevel(level) {
+    if (level === 0) {
+      return xsTimeThreshold
+        ? 2 * HOUR_IN_MS
+        : smTimeThreshold
+        ? HOUR_IN_MS
+        : mdTimeThreshold
+        ? 55 * MINUTE_IN_MS
+        : lgTimeThreshold
+        ? 50 * MINUTE_IN_MS
+        : xlTimeThreshold
+        ? 45 * MINUTE_IN_MS
+        : xxlTimeThreshold
+        ? 40 * MINUTE_IN_MS
+        : xxxlTimeThreshold
+        ? 35 * MINUTE_IN_MS
+        : 20 * MINUTE_IN_MS;
+    } else if (level === 1) {
+      return xsTimeThreshold
+        ? HOUR_IN_MS
+        : smTimeThreshold
+        ? 50 * MINUTE_IN_MS
+        : mdTimeThreshold
+        ? 40 * MINUTE_IN_MS
+        : lgTimeThreshold
+        ? 30 * MINUTE_IN_MS
+        : xlTimeThreshold
+        ? 20 * MINUTE_IN_MS
+        : xxlTimeThreshold
+        ? 10 * MINUTE_IN_MS
+        : xxxlTimeThreshold
+        ? 5 * MINUTE_IN_MS
+        : MINUTE_IN_MS;
+    } else if (level === 2) {
+      return xsTimeThreshold
+        ? HALF_HOUR_IN_MS
+        : smTimeThreshold
+        ? 25 * MINUTE_IN_MS
+        : mdTimeThreshold
+        ? 20 * MINUTE_IN_MS
+        : lgTimeThreshold
+        ? 15 * MINUTE_IN_MS
+        : xlTimeThreshold
+        ? 10 * MINUTE_IN_MS
+        : xxlTimeThreshold
+        ? 5 * MINUTE_IN_MS
+        : xxxlTimeThreshold
+        ? MINUTE_IN_MS
+        : 30 * SECOND_IN_MS;
+    }
+  }
+
   const carouselRef = useRef();
 
   const [markerHistory, setMarkerHistory] = useState([]);
@@ -212,21 +272,7 @@ function SchedulePageComponent({ searchOptions, setIsLoading }) {
     if (data) {
       let groupedShows = groupShowsByProximity(
         data?.data,
-        (xsTimeThreshold // < 320
-          ? 2 * 60
-          : smTimeThreshold //  320 -  576
-          ? 60
-          : mdTimeThreshold //  576 -  992
-          ? 55
-          : lgTimeThreshold //  992 - 1200
-          ? 50
-          : xlTimeThreshold // 1200 - 1440
-          ? 45
-          : xxlTimeThreshold // 1440 - 1600
-          ? 40
-          : xxxlTimeThreshold // 1600 - 2000
-          ? 35
-          : 20) * 60
+        getThresholdByLevel(0)
       );
 
       const newSliders = [{ id: 'root', markers: groupedShows }];
@@ -306,7 +352,14 @@ function SchedulePageComponent({ searchOptions, setIsLoading }) {
   ]);
 
   return (
-    <Flex w="full" gap="20" px="4" flexDirection={'column'} pt="10" overflow={"clip"}>
+    <Flex
+      w="full"
+      gap="20"
+      px="4"
+      flexDirection={'column'}
+      pt="10"
+      overflow={'clip'}
+    >
       {timeSliders.map((slider, index) => (
         <ScheduleTimeline
           key={slider.id}
@@ -369,7 +422,7 @@ function ScheduleTimeline({
       : xxxlTimeThreshold // 1600 - 2000
       ? 35
       : 20) *
-      MS_IN_MINUTE) /
+      MINUTE_IN_MS) /
     Math.pow(level + 1, 4);
 
   const startTime = useMemo(() => {
@@ -378,7 +431,7 @@ function ScheduleTimeline({
       return Date.now(); // Or some sensible default
     }
     return getAdjustedMinTimestamp(
-      Math.min(...markers.map((marker) => marker?.timestampMark)) * 1000,
+      Math.min(...markers.map((marker) => marker?.timestampMark)),
       delay
     );
   }, [markers, level]); // Dependencies: markers and level
@@ -386,10 +439,10 @@ function ScheduleTimeline({
   const endTime = useMemo(() => {
     // Handle cases where markers might be empty or null
     if (!markers || markers.length === 0) {
-      return Date.now() + MS_IN_DAY; // Or some sensible default
+      return Date.now() + DAY_IN_MS; // Or some sensible default
     }
     return getAdjustedMaxTimestamp(
-      Math.max(...markers.map((marker) => marker?.timestampMark)) * 1000,
+      Math.max(...markers.map((marker) => marker?.timestampMark)),
       delay
     );
   }, [markers, level]); // Dependencies: markers and level
@@ -441,7 +494,7 @@ function ScheduleTimeline({
             value={
               100 *
               getTimeProgress({
-                timestamp: marker.timestampMark * MS_IN_SECOND,
+                timestamp: marker.timestampMark,
                 lowerTimestamp: startTime,
                 upperTimestamp: endTime,
               })
@@ -579,7 +632,7 @@ function GalleryMediaTimeComponent({ airingAt, duration, nextEp }) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTime(new Date());
+      setCurrentTime(Date.now());
     }, 1000);
     return () => {
       clearInterval(interval);
@@ -588,12 +641,12 @@ function GalleryMediaTimeComponent({ airingAt, duration, nextEp }) {
   return (
     <Text>
       Ep {nextEp} air
-      {airingAt > currentTime / 1000
+      {airingAt > currentTime
         ? 's'
-        : airingAt + duration * 60 > currentTime / 1000
+        : airingAt + duration * MINUTE_IN_MS > currentTime
         ? 'ing'
         : 'ed'}{' '}
-      {formatTimeLeft(airingAt, duration * 60 ?? 0)}
+      {formatTimeLeft(airingAt, duration * MINUTE_IN_MS ?? 0)}
     </Text>
   );
 }
@@ -606,7 +659,7 @@ function FixedSunTimelineMark({ endTime, searchOptions, startTime }) {
         getTimeProgress({
           timestamp:
             ((searchOptions.startTimestamp + searchOptions.endTimestamp) *
-              MS_IN_SECOND) /
+              SECOND_IN_MS) /
             2,
           lowerTimestamp: startTime,
           upperTimestamp: endTime,
@@ -625,7 +678,7 @@ function TimelineSliderThumb({ endTime, open, startTime }) {
       placement="right"
       label={
         getBaseTimestamp(new Date(startTime)) < Date.now() &&
-        Date.now() < getBaseTimestamp(new Date(endTime)) + MS_IN_DAY
+        Date.now() < getBaseTimestamp(new Date(endTime)) + DAY_IN_MS
           ? Intl.DateTimeFormat(AppStorage.get('locale'), {
               timeZone: AppStorage.get('timezone'),
               hour: 'numeric',
@@ -652,6 +705,76 @@ function TimelineSliderMarker({
   setMarkerHistory,
   setSliders,
 }) {
+  const [
+    xsTimeThreshold,
+    smTimeThreshold,
+    mdTimeThreshold,
+    lgTimeThreshold,
+    xlTimeThreshold,
+    xxlTimeThreshold,
+    xxxlTimeThreshold,
+  ] = useMediaQuery([
+    '(width < 320px)',
+    '(width < 576px)',
+    '(width < 992px)',
+    '(width < 1200px)',
+    '(width < 1440px)',
+    '(width < 1600px)',
+    '(width < 2000px)',
+  ]);
+
+  function getThresholdByLevel(level) {
+    if (level === 0) {
+      return xsTimeThreshold
+        ? 2 * HOUR_IN_MS
+        : smTimeThreshold
+        ? HOUR_IN_MS
+        : mdTimeThreshold
+        ? 55 * MINUTE_IN_MS
+        : lgTimeThreshold
+        ? 50 * MINUTE_IN_MS
+        : xlTimeThreshold
+        ? 45 * MINUTE_IN_MS
+        : xxlTimeThreshold
+        ? 40 * MINUTE_IN_MS
+        : xxxlTimeThreshold
+        ? 35 * MINUTE_IN_MS
+        : 20 * MINUTE_IN_MS;
+    } else if (level === 1) {
+      return xsTimeThreshold
+        ? HOUR_IN_MS
+        : smTimeThreshold
+        ? HALF_HOUR_IN_MS
+        : mdTimeThreshold
+        ? 25 * MINUTE_IN_MS
+        : lgTimeThreshold
+        ? 20 * MINUTE_IN_MS
+        : xlTimeThreshold
+        ? 15 * MINUTE_IN_MS
+        : xxlTimeThreshold
+        ? 10 * MINUTE_IN_MS
+        : xxxlTimeThreshold
+        ? 5 * MINUTE_IN_MS
+        : MINUTE_IN_MS;
+    } else if (level === 2) {
+      return xsTimeThreshold
+        ? HALF_HOUR_IN_MS
+        : smTimeThreshold
+        ? QUARTER_HOUR_IN_MS
+        : mdTimeThreshold
+        ? 10 * MINUTE_IN_MS
+        : lgTimeThreshold
+        ? 5 * MINUTE_IN_MS
+        : xlTimeThreshold
+        ? MINUTE_IN_MS
+        : xxlTimeThreshold
+        ? 30 * SECOND_IN_MS
+        : xxxlTimeThreshold
+        ? SECOND_IN_MS
+        : SECOND_IN_MS;
+    }
+  }
+
   return (
     <Flex
       pointerEvents={'all'}
@@ -691,14 +814,14 @@ function TimelineSliderMarker({
                     hour12: true,
                     hour: 'numeric',
                     minute: '2-digit',
-                  }).format(new Date(marker.timeRange[0] * 1000))
+                  }).format(new Date(marker.timeRange[0]))
                 : Intl.DateTimeFormat(AppStorage.get('locale'), {
                     hour12: true,
                     hour: 'numeric',
                     minute: '2-digit',
                   }).formatRange(
-                    new Date(marker.timeRange[0] * 1000),
-                    new Date(marker.timeRange[1] * 1000)
+                    new Date(marker.timeRange[0]),
+                    new Date(marker.timeRange[1])
                   ))}
           </PopoverBody>
         </PopoverContent>
@@ -749,10 +872,7 @@ function TimelineSliderMarker({
 
         newSlidersArray[level + 1] = {
           id: marker.id,
-          markers: groupShowsByProximity(
-            marker.shows,
-            level === 0 ? 5 * 60 : 60
-          ),
+          markers: newMarkers,
         };
 
         return newSlidersArray.slice(0, level + 2);

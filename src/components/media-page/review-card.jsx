@@ -18,8 +18,10 @@ export default function ReviewCard({ review }) {
         <HStack spacing="2">
           {!['anime', 'manga'].includes(review.subjectType) && (
             <Badge colorScheme="primary" variant="solid">
-              {review.subjectType === 'chapter' && `Ch. ${review.chapterNumber}`}
-              {review.subjectType === 'episode' && `Ep. ${review.episodeNumber}`}
+              {review.subjectType === 'chapter' &&
+                `Ch. ${review.chapterNumber}`}
+              {review.subjectType === 'episode' &&
+                `Ep. ${review.episodeNumber}`}
               {review.subjectType === 'volume' && `Vl. ${review.volume}`}
             </Badge>
           )}
@@ -58,7 +60,11 @@ export default function ReviewCard({ review }) {
         )}
 
         <Text fontSize="xs" color="gray.500" mt="2">
-          {new Date(review.updatedAt).toLocaleString()}
+          {Intl.DateTimeFormat(AppStorage.get('locale'), {
+            timeZone: AppStorage.get('timezone'),
+            timeStyle: 'medium',
+            dateStyle: "long"
+          }).format(new Date(review.updatedAt))}
         </Text>
       </VStack>
     </Container>

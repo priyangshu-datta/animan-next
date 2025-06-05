@@ -41,6 +41,8 @@ import { getMediaTagCollection } from './get/media/tag-collection';
 import { getSearchResults } from './get/search-results';
 import { deleteUserMedia } from './delete/user/media';
 import { getAnimeSchedule } from './get/media/schedule';
+import { getMedia$subjectType$ReviewsByUserPaginated } from './get/media/review/by-user-paginated';
+import { getCharacterReviewsByUserPaginated } from './get/character/review/by-user-paginated';
 
 const schema = Joi.object({
   action: Joi.string(),
@@ -107,6 +109,10 @@ const COMMANDS = {
   'anilist:get:search:results:{searchOptions}': getSearchResults,
 
   'anilist:get:anime:schedule': getAnimeSchedule,
+  'anilist:get:media:[subjectType]:reviews-paginated:{mediaType,subjectType,cursor,limit}':
+    getMedia$subjectType$ReviewsByUserPaginated,
+  'anilist:get:character:reviews-paginated:{cursor,limit}':
+    getCharacterReviewsByUserPaginated,
 };
 
 export async function POST(request) {

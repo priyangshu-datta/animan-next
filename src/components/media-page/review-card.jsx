@@ -1,3 +1,4 @@
+import AppStorage from '@/utils/local-storage';
 import { HeartIcon } from '@yamada-ui/lucide';
 import {
   Badge,

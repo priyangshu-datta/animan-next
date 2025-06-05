@@ -81,5 +81,10 @@ export async function getAnimeSchedule(
     { headers: { Authorization: `Bearer ${anilistAccessToken}` } }
   );
 
-  return respondSuccess(response.data?.data?.Page?.airingSchedules);
+  return respondSuccess(
+    response.data?.data?.Page?.airingSchedules.map((as) => ({
+      ...as,
+      airingAt: as.airingAt * 1000,
+    }))
+  );
 }

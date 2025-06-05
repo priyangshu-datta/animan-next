@@ -93,5 +93,14 @@ export async function getFullMediaInfoById(
     }
   );
 
-  return respondSuccess(response.data.data.Media);
+  return respondSuccess({
+    ...response.data.data.Media,
+    ...(response.data.data.Media.nextAiringEpisode && {
+      nextAiringEpisode: {
+        airingAt: response.data.data.Media.nextAiringEpisode.airingAt
+          ? response.data.data.Media.nextAiringEpisode.airingAt * 1000
+          : response.data.data.Media.nextAiringEpisode?.airingAt,
+      },
+    }),
+  });
 }

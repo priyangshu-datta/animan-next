@@ -1,3 +1,9 @@
+import {
+  DAY_IN_MS,
+  HOUR_IN_MS,
+  MINUTE_IN_MS,
+  SECOND_IN_MS,
+} from '@/lib/constants';
 import AppStorage from '@/utils/local-storage';
 import { useState, useEffect } from 'react';
 
@@ -8,20 +14,20 @@ export function useCountDownTimer(nextEpisodeAiringAt) {
     if (!nextEpisodeAiringAt) return;
 
     function updateCountdown() {
-      const now = Date.now() / 1000; // current time in seconds
+      const now = Date.now(); // current time in seconds
       const diff = Math.max(0, nextEpisodeAiringAt - now);
 
       if (diff < 5) return 'Airing now!';
 
-      const seconds = Math.floor(diff % 60)
+      const seconds = Math.floor((diff / SECOND_IN_MS) % 60)
         .toString()
         .padStart(2, '0');
-      const minutes = Math.floor((diff / 60) % 60)
+      const minutes = Math.floor((diff / MINUTE_IN_MS) % 60)
         .toString()
         .padStart(2, '0');
-      const hours = Math.floor((diff / 3600) % 24);
+      const hours = Math.floor((diff / HOUR_IN_MS) % 24);
 
-      const days = Math.floor(diff / 86400);
+      const days = Math.floor(diff / DAY_IN_MS);
 
       let duration = null;
 
@@ -46,7 +52,7 @@ export function useCountDownTimer(nextEpisodeAiringAt) {
         };
       }
       setTimeLeft(
-        new Intl.DurationFormat(AppStorage.get('locale') ?? undefined, {
+        new Intl.DurationFormat(AppStorage.get('locale'), {
           style: 'long',
         }).format(duration)
       );

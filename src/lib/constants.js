@@ -1,13 +1,14 @@
-export const MS_IN_SECOND = 1000;
-export const MS_IN_MINUTE = 60 * MS_IN_SECOND;
-export const MS_IN_15_MINUTES = 15 * MS_IN_MINUTE;
-export const MS_IN_HOUR = 60 * MS_IN_MINUTE;
-export const MS_IN_DAY = 24 * MS_IN_HOUR;
-export const MS_IN_WEEK = 7 * MS_IN_DAY;
-export const MS_IN_YEAR = 365 * MS_IN_DAY; // 1 year (non-leap)
-export const MS_IN_MONTH = 30.44 * MS_IN_DAY; // Average month length
+export const SECOND_IN_MS = 1000;
+export const MINUTE_IN_MS = 60 * SECOND_IN_MS;
+export const QUARTER_HOUR_IN_MS = 15 * MINUTE_IN_MS;
+export const HALF_HOUR_IN_MS = 2 * QUARTER_HOUR_IN_MS;
+export const HOUR_IN_MS = 60 * MINUTE_IN_MS;
+export const DAY_IN_MS = 24 * HOUR_IN_MS;
+export const WEEK_IN_MS = 7 * DAY_IN_MS;
+export const YEAR_IN_MS = 365 * DAY_IN_MS; // 1 year (non-leap)
+export const MONTH_IN_MS = 30.44 * DAY_IN_MS; // Average month length
 
-export const SNACK_DURATION = 5 * MS_IN_SECOND;
+export const SNACK_DURATION = 5 * SECOND_IN_MS;
 
 export const ANILIST_GRAPHQL_ENDPOINT = 'https://graphql.anilist.co';
 

@@ -1,5 +1,5 @@
 import db from '@/db/index';
-import { MS_IN_15_MINUTES, MS_IN_HOUR, MS_IN_MONTH } from '@/lib/constants';
+import { QUARTER_HOUR_IN_MS, HOUR_IN_MS, MONTH_IN_MS } from '@/lib/constants';
 import { AppError } from '@/lib/server/errors/AppError';
 import { ERROR_CODES } from '@/lib/server/errors/errorCodes';
 import { respondError, respondSuccess } from '@/lib/server/responses';
@@ -47,10 +47,10 @@ export async function POST(request) {
           accessToken: malNewAccessToken,
           refreshToken: malNewRefreshToken,
           accessTokenExpiration: new Date(
-            Date.now() + MS_IN_HOUR - MS_IN_15_MINUTES
+            Date.now() + HOUR_IN_MS - QUARTER_HOUR_IN_MS
           ),
           refreshTokenExpiration: new Date(
-            Date.now() + MS_IN_MONTH - MS_IN_15_MINUTES
+            Date.now() + MONTH_IN_MS - QUARTER_HOUR_IN_MS
           ),
         })
       )

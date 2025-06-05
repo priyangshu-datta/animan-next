@@ -1,3 +1,9 @@
+import {
+  DAY_IN_MS,
+  HOUR_IN_MS,
+  MINUTE_IN_MS,
+  SECOND_IN_MS,
+} from '@/lib/constants';
 import AppStorage from './local-storage';
 
 export const camelToSnake = (str) =>
@@ -119,7 +125,7 @@ export function formatPartialDate(dateParts) {
  * @returns {string} The formatted time left, e.g., "in 3 days", "in 5 hours", "10 minutes".
  */
 export function formatTimeLeft(nextAiringAt, duration = 0) {
-  const now = Date.now() / 1000; // current time in seconds
+  const now = Date.now(); // current time in seconds
   const diff = nextAiringAt - now; // difference in seconds (can be negative for past times)
 
   const rtf = new Intl.RelativeTimeFormat(AppStorage.get('locale'), {
@@ -135,10 +141,10 @@ export function formatTimeLeft(nextAiringAt, duration = 0) {
 
   const absDiff = Math.abs(diff); // Use absolute difference for calculations
 
-  const seconds = Math.floor(absDiff);
-  const minutes = Math.floor(absDiff / 60);
-  const hours = Math.floor(absDiff / 3600);
-  const days = Math.floor(absDiff / 86400);
+  const seconds = Math.floor(absDiff / SECOND_IN_MS);
+  const minutes = Math.floor(absDiff / MINUTE_IN_MS);
+  const hours = Math.floor(absDiff / HOUR_IN_MS);
+  const days = Math.floor(absDiff / DAY_IN_MS);
 
   // Determine the sign for the value passed to format()
   const sign = diff < 0 ? -1 : 1;

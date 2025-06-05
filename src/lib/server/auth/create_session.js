@@ -4,10 +4,10 @@ import { AppError } from '@/lib/server/errors/AppError';
 import { ERROR_CODES } from '@/lib/server/errors/errorCodes';
 import { issueAccessToken, issueRefreshToken } from '@/utils/token-utils';
 import {
-  MS_IN_15_MINUTES,
-  MS_IN_HOUR,
-  MS_IN_MONTH,
-  MS_IN_WEEK,
+  QUARTER_HOUR_IN_MS,
+  HOUR_IN_MS,
+  MONTH_IN_MS,
+  WEEK_IN_MS,
 } from '@/lib/constants';
 import { camelKeysToSnakeKeys } from '@/utils/general';
 import { cookies } from 'next/headers';
@@ -45,7 +45,7 @@ export async function storeSession(userId, refreshToken, timesRotated) {
       camelKeysToSnakeKeys({
         userId,
         refreshToken: refreshToken,
-        expiresAt: new Date(Date.now() + MS_IN_WEEK),
+        expiresAt: new Date(Date.now() + WEEK_IN_MS),
         timesRotated: timesRotated,
       })
     )
@@ -63,7 +63,7 @@ export async function setRefreshTokenCookie(refreshToken) {
     secure: true,
     path: '/',
     httpOnly: true,
-    maxAge: MS_IN_WEEK / 1000,
+    maxAge: WEEK_IN_MS / 1000,
   });
 }
 
@@ -131,11 +131,11 @@ export async function createNewUserWithOAuth(
         providerUserId: providerUserId,
         accessToken: accessToken,
         accessTokenExpiration: new Date(
-          Date.now() + MS_IN_HOUR - MS_IN_15_MINUTES
+          Date.now() + HOUR_IN_MS - QUARTER_HOUR_IN_MS
         ),
         refreshToken: refreshToken,
         refreshTokenExpiration: new Date(
-          Date.now() + MS_IN_MONTH - MS_IN_15_MINUTES
+          Date.now() + MONTH_IN_MS - QUARTER_HOUR_IN_MS
         ),
       })
     )

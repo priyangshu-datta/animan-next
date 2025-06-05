@@ -1,3 +1,5 @@
+import { HOUR_IN_MS, SECOND_IN_MS } from "@/lib/constants"
+
 export function getSkyGradient(startTimestamp, endTimestamp) {
   const gradientStops = [
     { time: 0, color: '#0d0b1d' }, // Midnight (deep violet/navy)
@@ -168,8 +170,8 @@ if (typeof crypto === 'undefined' || !crypto.randomUUID) {
  */
 export function groupShowsByProximity(
   shows,
-  threshold = 60, // Renamed from proximityThreshold to 'threshold' as per your provided code
-  maxGroupDuration = 2 * 60 * 60, // Default as per your provided code (2 hours)
+  threshold = SECOND_IN_MS, // Renamed from proximityThreshold to 'threshold' as per your provided code
+  maxGroupDuration = 2 * HOUR_IN_MS, // Default as per your provided code (2 hours)
   equidistanceTolerance = Infinity // New parameter for equidistant check
 ) {
   if (!shows || shows?.length < 1) {

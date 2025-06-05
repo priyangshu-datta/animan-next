@@ -96,7 +96,18 @@ export async function getUserMediaList(
   );
 
   const baseData = response.data.data.Page;
-  const data = baseData.mediaList;
+  const data = baseData.mediaList.map((listEntry) => ({
+    ...listEntry,
+    media: {
+      ...listEntry.media,
+      ...(listEntry.media.nextAiringEpisode && {
+        nextAiringEpisode: {
+          ...listEntry.media.nextAiringEpisode,
+          airingAt: listEntry.media.nextAiringEpisode.airingAt * 1000,
+        },
+      }),
+    },
+  }));
   const meta = baseData.pageInfo;
 
   return respondSuccess(data, null, undefined, meta);

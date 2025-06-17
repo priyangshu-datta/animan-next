@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDownIcon, ChevronUpIcon } from '@yamada-ui/lucide'
+import { ChevronDownIcon, XIcon } from '@yamada-ui/lucide'
 import {
   Box,
   Button,
@@ -20,7 +20,7 @@ import {
 } from '@yamada-ui/react'
 import { useEffect, useState } from 'react'
 import { Controller, FormProvider } from 'react-hook-form'
-import { useSearchForm } from './hooks'
+import { defaultFormValues, useSearchForm } from './hooks'
 import { SearchResults } from './search-results'
 import { CountryOfOriginSelector } from './selectors/country-of-origin'
 import { DateSelector } from './selectors/date'
@@ -41,7 +41,7 @@ import {
 } from './small-components'
 import {
   animOptions,
-  searchParamsToFormControlValues,
+  getCurrentAnimeSeason,
   setSearchOptionOnSubmit,
 } from './utils'
 
@@ -142,6 +142,75 @@ export default function SearchPageComponent() {
               w={{ base: 'max-content', md: 'full' }}
             >
               Search {methods.formState.isDirty ? '*' : ''}
+            </Button>
+          </Flex>
+          <Flex
+            justifyContent={'space-between'}
+            alignItems={'flex-start'}
+            flexWrap={{ base: 'nowrap', md: 'wrap' }}
+            mt="2"
+            px="2"
+            gap="2"
+          >
+            <Flex
+              gap="2"
+              alignItems={'flex-start'}
+              flexWrap={{ base: 'nowrap', md: 'wrap' }}
+            >
+              <Button
+                onClick={() => {
+                  methods.reset({
+                    ...defaultFormValues,
+                    season: getCurrentAnimeSeason(),
+                    seasonYear: new Date(),
+                  });
+                }}
+                variant={'outline'}
+                size="sm"
+                colorScheme={'primary'}
+              >
+                This Season
+              </Button>
+              <Button
+                onClick={() => {
+                  methods.reset({
+                    ...defaultFormValues,
+                    mediaSort: 'SCORE_DESC',
+                  });
+                }}
+                variant={'outline'}
+                size="sm"
+                colorScheme={'primary'}
+              >
+                Top Anime
+              </Button>
+              <Button
+                onClick={() => {
+                  methods.reset({
+                    ...defaultFormValues,
+                    mediaSort: 'SCORE_DESC',
+                    mediaFormat: 'MOVIE',
+                  });
+                }}
+                variant={'outline'}
+                size="sm"
+                colorScheme={'primary'}
+              >
+                Top Movies
+              </Button>
+            </Flex>
+            <Button
+              onClick={() => {
+                methods.reset({
+                  ...defaultFormValues,
+                });
+              }}
+              variant={'subtle'}
+              size="sm"
+              colorScheme={'red'}
+              startIcon={<XIcon />}
+            >
+              Clear all Filters
             </Button>
           </Flex>
           {basicOptionsOpen && (

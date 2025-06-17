@@ -40,6 +40,7 @@ export async function getFullMediaInfoById(
     season
     seasonYear
     isFavourite
+    isAdult
     nextAiringEpisode {
       episode
       airingAt

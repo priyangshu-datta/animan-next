@@ -47,9 +47,7 @@ import {
 
 export default function SearchPageComponent() {
   const { open: basicOptionsOpen, onToggle: basicOptionsToggle } =
-    useDisclosure({
-      defaultOpen: true,
-    });
+    useDisclosure();
 
   const { open: advancedOptionsOpen, onToggle: advancedOptionsToggle } =
     useDisclosure();
@@ -92,7 +90,7 @@ export default function SearchPageComponent() {
             gap="2"
             alignItems={'flex-start'}
             flexWrap={{ base: 'nowrap', md: 'wrap' }}
-            p="2"
+            px="2"
           >
             <Box w={{ base: 'max-content', md: 'full' }}>
               <MediaTypeSelector />
@@ -113,13 +111,13 @@ export default function SearchPageComponent() {
                 <Button
                   variant={'link'}
                   onClick={() => {
-                    basicOptionsToggle();
                     setBasicLabelAnim((prev) =>
                       prev === 'open' ? 'close' : 'open'
                     );
+                    basicOptionsToggle();
                   }}
                 >
-                  <ChevronUpIcon animation={basicLabelAnim} />
+                  <ChevronDownIcon animation={basicLabelAnim} />
                   Basic Options
                 </Button>
                 <Separator orientation="vertical" h={'4'} />

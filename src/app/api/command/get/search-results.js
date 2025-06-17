@@ -194,8 +194,8 @@ export async function getSearchResults(
 	$chaptersLesser: Int
 	$volumesGreater: Int
 	$volumesLesser: Int
-	$genreIn: [String]
-	$genreNotIn: [String]
+	$genresIn: [String]
+	$genresNotIn: [String]
 	$mediaTagIn: [String]
 	$mediaTagNotIn: [String]
 	$mediaTagCategoryIn: [String]
@@ -246,8 +246,8 @@ export async function getSearchResults(
 			chapters_lesser: $chaptersLesser
 			volumes_greater: $volumesGreater
 			volumes_lesser: $volumesLesser
-			genre_in: $genreIn
-			genre_not_in: $genreNotIn
+			genre_in: $genresIn
+			genre_not_in: $genresNotIn
 			tag_in: $mediaTagIn
 			tag_not_in: $mediaTagNotIn
 			tagCategory_in: $mediaTagCategoryIn

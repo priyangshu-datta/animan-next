@@ -97,6 +97,7 @@ export async function getFullMediaInfoById(
     ...response.data.data.Media,
     ...(response.data.data.Media.nextAiringEpisode && {
       nextAiringEpisode: {
+        ...response.data.data.Media.nextAiringEpisode,
         airingAt: response.data.data.Media.nextAiringEpisode.airingAt
           ? response.data.data.Media.nextAiringEpisode.airingAt * 1000
           : response.data.data.Media.nextAiringEpisode?.airingAt,

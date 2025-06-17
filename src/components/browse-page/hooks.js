@@ -8,7 +8,7 @@ import { useTagCollection } from '@/lib/client/hooks/react_query/get/media/tag-c
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 
-const defaultFormValues = {
+export const defaultFormValues = {
   query: '',
   mediaType: 'ANIME',
   season: '',

@@ -7,6 +7,8 @@ import {
   MEDIA_STATUS,
   REVIEW_CATEGORIES,
 } from '@/lib/constants';
+import { formatPartialDate } from '@/utils/general';
+import AppStorage from '@/utils/local-storage';
 import {
   CalendarIcon,
   ChevronDownIcon,
@@ -37,11 +39,10 @@ import {
   MenuButton,
   MenuItem,
   MenuList,
-  Popover,
-  PopoverBody,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTrigger,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
   Rating,
   Separator,
   Skeleton,
@@ -52,17 +53,10 @@ import {
   useDisclosure,
   useNotice,
   VStack,
-  Link,
-  Modal,
-  ModalBody,
-  ModalHeader,
-  ModalFooter,
 } from '@yamada-ui/react';
 import NextLink from 'next/link';
 import { useEffect, useState } from 'react';
 import ListEditor from './list-editor';
-import { formatPartialDate } from '@/utils/general';
-import AppStorage from '@/utils/local-storage';
 
 function computeProgressString(progress, total, latest) {
   if (latest) {
@@ -551,10 +545,10 @@ function MediaInfoDataList() {
               formatPartialDate(media.startDate)
             ) : (
               `Not airing (${
-                  MEDIA_STATUS[media.type.toLowerCase()].find(
-                    ({ value }) => value === media.status
-                  ).label
-                })`
+                MEDIA_STATUS[media.type.toLowerCase()].find(
+                  ({ value }) => value === media.status
+                ).label
+              })`
             )
           ) : media.status === 'RELEASING' ? (
             'Ongoing'

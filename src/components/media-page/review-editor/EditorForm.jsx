@@ -1,5 +1,6 @@
 import { useMedia } from '@/context/use-media';
 import { EMOTIONS } from '@/lib/constants';
+import { sentenceCase } from '@/utils/general';
 import { HeartIcon } from '@yamada-ui/lucide';
 import {
   FormControl,
@@ -42,7 +43,11 @@ export function EditorForm() {
               color={field.value ? 'red' : 'white'}
               fill={field.value ? 'red' : 'white'}
             />{' '}
-            Episode {watch('unit')}
+            {watch('subjectType') === 'volume'
+              ? `Volume ${watch('volume')}`
+              : watch('unit')
+              ? `${sentenceCase(watch('subjectType'))} ${watch('unit')}`
+              : `this ${sentenceCase(watch('subjectType'))} review`}
           </Toggle>
         )}
       />
@@ -103,7 +108,7 @@ export function EditorForm() {
               control={control}
               rules={{
                 min: {
-                  value: 1,
+                  value: 0,
                   message: `Volume cannot be 0`,
                 },
               }}

@@ -1,21 +1,12 @@
 import { useMedia } from '@/context/use-media';
 import { useCountDownTimer } from '@/lib/client/hooks/use-count-down-timer';
 import { REVIEW_CATEGORIES } from '@/lib/constants';
-import { HeartIcon } from '@yamada-ui/lucide';
-import {
-  Flex,
-  Heading,
-  Image,
-  Select,
-  Text,
-  Toggle,
-  VStack,
-} from '@yamada-ui/react';
+import { Flex, Heading, Image, Select, Text, VStack } from '@yamada-ui/react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 export function Header({ currentReviewMetadata }) {
   const media = useMedia();
-  const { control, watch } = useFormContext();
+  const { control, reset, getValues } = useFormContext();
   const timeLeft = useCountDownTimer(media.nextAiringEpisode?.airingAt);
   return (
     <>
@@ -45,6 +36,22 @@ export function Header({ currentReviewMetadata }) {
                 disabled={!!currentReviewMetadata?.id}
                 w={'fit-content'}
                 items={REVIEW_CATEGORIES[media.type.toLowerCase()]}
+                onChange={(value) => {
+                  if (value === 'anime' || value === 'manga') {
+                    const { unit, ...values } = getValues();
+                    reset(values);
+                  } else {
+                    reset({
+                      ...getValues(),
+                      ...(['episode', 'chapter'].includes(
+                        currentReviewMetadata?.subjectType
+                      ) && {
+                        unit: media.listEntry.progress ?? 0,
+                      }),
+                    });
+                  }
+                  field.onChange(value);
+                }}
               />
             )}
           />

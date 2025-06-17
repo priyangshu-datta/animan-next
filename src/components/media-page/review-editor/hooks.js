@@ -35,11 +35,12 @@ export function useReviewEditor(
         review: reviewData?.reviewText,
         favourite: reviewData?.favourite,
         emotions: reviewData?.emotions.split(';').filter((s) => !!s),
-
-        unit:
-          media.type === 'ANIME'
-            ? reviewData.episodeNumber
-            : reviewData.chapterNumber,
+        ...(['episode', 'chapter'].includes(reviewData.subjectType) && {
+          unit:
+            media.type === 'ANIME'
+              ? reviewData.episodeNumber
+              : reviewData.chapterNumber,
+        }),
         ...(media.type === 'MANGA' && { volume: reviewData.volume ?? 0 }),
         subjectType: reviewData.subjectType,
         favourite: reviewData.favourite,
@@ -50,7 +51,11 @@ export function useReviewEditor(
         review: '',
         favourite: false,
         emotions: [],
-        unit: media.listEntry.progress ?? 0,
+        ...(['episode', 'chapter'].includes(
+          currentReviewMetadata?.subjectType
+        ) && {
+          unit: media.listEntry.progress ?? 0,
+        }),
         ...(media.type === 'MANGA' && {
           volume: media.listEntry.progressVolume ?? 0,
         }),

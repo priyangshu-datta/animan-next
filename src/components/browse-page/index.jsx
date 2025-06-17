@@ -56,21 +56,13 @@ export default function SearchPageComponent() {
 
   const [basicLabelAnim, setBasicLabelAnim] = useDynamicAnimation(animOptions);
 
-  const { methods, genresInfo, tagCategories, tagsInfo, searchParams } =
+  const { methods, genresInfo, tagCategories, tagsInfo } =
     useSearchForm();
 
   const [searchOptions, setSearchOptions] = useState();
 
   function onSubmit() {
-    methods.reset({
-      ...methods.formState.defaultValues,
-      ...searchParamsToFormControlValues(
-        searchParams,
-        tagsInfo.data?.data,
-        tagCategories,
-        genresInfo.data?.data
-      ),
-    });
+    methods.reset(methods.getValues());
   }
 
   useEffect(() => {

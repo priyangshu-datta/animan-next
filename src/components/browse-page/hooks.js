@@ -70,14 +70,6 @@ export function useSearchForm() {
       genresInfo.data?.data
     );
 
-    // for (const [name, value] of Object.entries(formValues)) {
-    //   methods.setValue(name, value, {
-    //     shouldDirty: true,
-    //     shouldTouch: true,
-    //     shouldValidate: true,
-    //   });
-    // }
-
     methods.reset({ ...methods.formState.defaultValues, ...formValues });
   }, [tagsInfo.data, genresInfo.data, tagCategories]);
 

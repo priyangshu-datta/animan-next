@@ -65,7 +65,7 @@ export async function getSearchResults(
       day: Joi.number(),
     }),
 
-    isAdult: Joi.bool(),
+    isAdult: Joi.bool().default(false),
     onList: Joi.bool(),
     isLicensed: Joi.bool()
   })

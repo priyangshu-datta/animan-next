@@ -34,6 +34,8 @@ import {
   HStack,
   IconButton,
   Image,
+  Indicator,
+  Link,
   Loading,
   Menu,
   MenuButton,
@@ -125,7 +127,14 @@ export default function MediaInfo({
                 <Heading size="lg">One Piece</Heading>
               </SkeletonText>
             ) : (
-              <Heading size="lg">{media.title?.userPreferred}</Heading>
+              <Indicator
+                label={'18+'}
+                colorScheme={'red'}
+                size={'sm'}
+                disabled={!media.isAdult}
+              >
+                <Heading size="lg">{media.title?.userPreferred}</Heading>
+              </Indicator>
             )}
 
             <MediaToggleFavourite />

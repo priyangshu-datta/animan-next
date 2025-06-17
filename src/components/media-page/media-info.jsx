@@ -533,19 +533,34 @@ function MediaInfoDataList() {
             : 'Airing Status'}
         </DataListTerm>
         <DataListDescription>
-          {media.type === 'ANIME'
-            ? media.nextAiringEpisode
-              ? `Next episode ${media.nextAiringEpisode.episode} is airing in ${timeLeft}`
-              : media.status === 'NOT_YET_RELEASED' && media.startDate?.year
-              ? formatPartialDate(media.startDate)
-              : `Not airing (${
+          {media.type === 'ANIME' ? (
+            media.nextAiringEpisode ? (
+              <Flex gap="1">
+                Next episode {media.nextAiringEpisode.episode} is airing in
+                <Tooltip
+                  label={Intl.DateTimeFormat(AppStorage.get('locale'), {
+                    timeZone: AppStorage.get('timezone'),
+                    timeStyle: 'medium',
+                    dateStyle: 'medium',
+                  }).format(new Date(media.nextAiringEpisode?.airingAt))}
+                >
+                  <Box>{timeLeft}</Box>
+                </Tooltip>
+              </Flex>
+            ) : media.status === 'NOT_YET_RELEASED' && media.startDate?.year ? (
+              formatPartialDate(media.startDate)
+            ) : (
+              `Not airing (${
                   MEDIA_STATUS[media.type.toLowerCase()].find(
                     ({ value }) => value === media.status
                   ).label
                 })`
-            : media.status === 'RELEASING'
-            ? 'Ongoing'
-            : media.status}
+            )
+          ) : media.status === 'RELEASING' ? (
+            'Ongoing'
+          ) : (
+            media.status
+          )}
         </DataListDescription>
       </DataListItem>
       {media.listEntry?.status === 'CURRENT' && (

@@ -296,7 +296,7 @@ export function searchParamsToFormControlValues(
     mediaFormatIn
       .split(',')
       .every((mfUrl) =>
-        MEDIA_FORMAT[formValues['mediaType'] ?? 'anime']
+        MEDIA_FORMAT[formValues['mediaType'].toLowerCase() ?? 'anime']
           .map((mf) => mf.value)
           .includes(mfUrl.trim().toUpperCase())
       )

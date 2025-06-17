@@ -15,7 +15,7 @@ export const defaultFormValues = {
   seasonYear: null,
   countryOfOrigin: 'JP',
   mediaSource: [],
-  mediaSort: [],
+  mediaSort: ['TRENDING_DESC', 'POPULARITY_DESC'],
   mediaFormat: [],
   mediaFormatInclusion: true,
   mediaStatus: [],

@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form';
 export function Footer({ onReviewEditorClose }) {
   const {
     reset,
-    formState: { isDirty },
+    formState: { isDirty, isSubmitting },
   } = useFormContext();
 
   return (
@@ -19,7 +19,7 @@ export function Footer({ onReviewEditorClose }) {
         Close
       </Button>
       <Button
-        disabled={!isDirty}
+        disabled={!isDirty || isSubmitting}
         onClick={() => {
           reset();
           assocMedia.getState().reset();
@@ -27,7 +27,11 @@ export function Footer({ onReviewEditorClose }) {
       >
         Reset
       </Button>
-      <Button type="submit" colorScheme="primary" disabled={!isDirty}>
+      <Button
+        type="submit"
+        colorScheme="primary"
+        disabled={!isDirty || isSubmitting}
+      >
         Save
       </Button>
     </>

@@ -93,6 +93,7 @@ function MediaCardList({ mediaType, mediaListStatus }) {
       placeItems={'center'}
       gridTemplateColumns={'repeat(auto-fill, minmax(220px, 1fr))'}
     >
+      {/* If status is current then show statistics: how many episodes in total the user is behind. if season is near, show the first anime ending, show total epsiodes behind for current season, etc. */}
       {isFetched
         ? data.pages
             .flatMap((page) => page.mediaList)

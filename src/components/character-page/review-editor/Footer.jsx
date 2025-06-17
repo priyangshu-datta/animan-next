@@ -2,10 +2,10 @@ import { assocMedia } from '@/stores/assoc-media';
 import { Button } from '@yamada-ui/react';
 import { useFormContext } from 'react-hook-form';
 
-export function Footer({ onReviewEditorClose }) {
+export function Footer({ onReviewEditorClose, isPending }) {
   const {
     reset,
-    formState: { isDirty, isSubmitting },
+    formState: { isDirty },
   } = useFormContext();
 
   return (
@@ -19,7 +19,7 @@ export function Footer({ onReviewEditorClose }) {
         Close
       </Button>
       <Button
-        disabled={!isDirty || isSubmitting}
+        disabled={!isDirty || isPending}
         onClick={() => {
           reset();
           assocMedia.getState().reset();
@@ -30,9 +30,9 @@ export function Footer({ onReviewEditorClose }) {
       <Button
         type="submit"
         colorScheme="primary"
-        disabled={!isDirty || isSubmitting}
+        disabled={!isDirty || isPending}
       >
-        Save
+        Sav{isPending ? 'ing' : 'e'}
       </Button>
     </>
   );

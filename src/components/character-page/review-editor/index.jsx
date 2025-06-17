@@ -103,7 +103,14 @@ export default function ReviewEditor({
         </DrawerBody>
 
         <DrawerFooter>
-          <Footer onReviewEditorClose={onReviewEditorClose} />
+          <Footer
+            onReviewEditorClose={onReviewEditorClose}
+            isPending={
+              currentReviewMetadata?.id
+                ? updateReview.isPending
+                : saveReview.isPending
+            }
+          />
         </DrawerFooter>
       </Drawer>
     </FormProvider>

@@ -24,19 +24,14 @@ export default function ReviewEditor({
     mode: 'all',
   });
 
-  let reviewData = null;
-
-  if (currentReviewMetadata?.id) {
-    const { data: rData } = useMediaReviewById(
-      currentReviewMetadata.id,
-      media.type
-    );
-    reviewData = rData.data;
-  }
+  const { data: review } = useMediaReviewById(
+    currentReviewMetadata?.id,
+    media.type
+  );
 
   const { drafts, setDrafts, saveReview, snack, snacks, updateReview } =
     useReviewEditor(
-      reviewData,
+      review.data,
       media,
       methods,
       onReviewEditorClose,

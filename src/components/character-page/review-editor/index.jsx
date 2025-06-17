@@ -25,20 +25,15 @@ export default function ReviewEditor({
     mode: 'all',
   });
 
-  let reviewData = null,
-    mediaData = null;
-
-  if (currentReviewMetadata?.id) {
-    const { data: rData } = useCharacterReviewById({
-      reviewId: currentReviewMetadata.id,
-    });
-    reviewData = rData.data;
-    const { data: mData } = useMediaBasicInfoById({
-      mediaId: reviewData.associatedMediaId,
-      mediaType: reviewData.associatedMediaType,
-    });
-    mediaData = mData.data;
-  }
+  const { data: rData } = useCharacterReviewById({
+    reviewId: currentReviewMetadata?.id,
+  });
+  const reviewData = rData?.data;
+  const { data: mData } = useMediaBasicInfoById({
+    mediaId: reviewData?.associatedMediaId,
+    mediaType: reviewData?.associatedMediaType,
+  });
+  const mediaData = mData?.data;
 
   const { drafts, setDrafts, saveReview, snack, snacks, updateReview } =
     useReviewEditor(

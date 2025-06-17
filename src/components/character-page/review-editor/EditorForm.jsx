@@ -5,19 +5,45 @@ import {
   MultiSelect,
   Tag,
   Textarea,
+  Toggle,
 } from '@yamada-ui/react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { AssociatedMedia } from './AssociatedMedia';
+import { HeartIcon } from '@yamada-ui/lucide'
 
 export function EditorForm() {
   const {
     formState: { errors },
     control,
   } = useFormContext();
-  
+
   return (
     <>
       <AssociatedMedia />
+      <Controller
+        name="favourite"
+        control={control}
+        render={({ field }) => (
+          <Toggle
+            {...field}
+            w={'fit-content'}
+            py="4"
+            borderRadius={'full'}
+            value="favourite"
+            selected={field.value}
+            variant={'unstyled'}
+            onChange={(selected) => field.onChange(selected)}
+            gap={'2'}
+            display={'flex'}
+          >
+            <HeartIcon
+              color={field.value ? 'red' : 'white'}
+              fill={field.value ? 'red' : 'white'}
+            />{' '}
+            this Character review
+          </Toggle>
+        )}
+      />
       <FormControl
         required
         label="Rating"

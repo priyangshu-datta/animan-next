@@ -28,7 +28,7 @@ export default function ReviewCard({ review }) {
 
   return (
     <Container>
-      <Flex align="start" mb="2">
+      <Flex align="start" mb="2" justify={"space-between"}>
         {review.associatedMediaId && associatedMedia?.isFetching && (
           <HStack alignItems={'flex-start'}>
             <Skeleton>

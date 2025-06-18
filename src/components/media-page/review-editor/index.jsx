@@ -31,7 +31,7 @@ export default function ReviewEditor({
 
   const { drafts, setDrafts, saveReview, snack, snacks, updateReview } =
     useReviewEditor(
-      review.data,
+      review?.data,
       media,
       methods,
       onReviewEditorClose,

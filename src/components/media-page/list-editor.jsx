@@ -491,7 +491,8 @@ function MediaListEntryStartEndDateSelector() {
             today
             placeholder="YYYY/MM/DD"
             firstDayOfWeek="sunday"
-            weekendDays={[0]}
+            amountOfMonths={2}
+            // weekendDays={[0]} // maybe add in user settings to control
           />
         )}
       />

@@ -2,7 +2,7 @@ import { sentenceCase } from '@/utils/general';
 import { DatePicker } from '@yamada-ui/calendar';
 import { Flex, FormControl } from '@yamada-ui/react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { ReactSelectCustom } from '../reusable-components'
+import { ReactSelectCustom } from '../reusable-components';
 
 export function DateSelector({ name }) {
   const { control } = useFormContext();
@@ -45,6 +45,8 @@ export function DateSelector({ name }) {
           render={({ field }) => (
             <DatePicker
               {...field}
+              today
+              firstDayOfWeek="sunday"
               placeholder="YYYY/MM/DD"
               fieldProps={{ borderLeftRadius: 'none' }}
             />

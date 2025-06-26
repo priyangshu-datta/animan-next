@@ -488,6 +488,7 @@ function MediaListEntryStartEndDateSelector() {
         render={({ field }) => (
           <RangeDatePicker
             {...field}
+            today
             placeholder="YYYY/MM/DD"
             firstDayOfWeek="sunday"
             weekendDays={[0]}

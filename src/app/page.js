@@ -87,50 +87,57 @@ function HomePageComponent() {
           boxShadow={'base'}
           bgColor={'AppWorkspace'}
         >
-          <Flex gap="2" align={'center'}>
-            <Select
-              value={mediaType}
-              onChange={(option) => {
-                const newSearchParams = new URLSearchParams();
-                newSearchParams.set('type', option);
-                newSearchParams.set(
-                  'status',
-                  mediaEntryStatus.split('-').at(1)
-                );
-                window.history.replaceState(
-                  null,
-                  '',
-                  `?${newSearchParams.toString()}`
-                );
-                setMediaType(option);
-                setMediaEntryStatus(
-                  `${option}-${mediaEntryStatus.split('-').at(1)}`
-                );
-              }}
+          <Flex align={"center"} gap="2">
+            <Flex
+              gap="2"
+              align={'center'}
+              wrap={{ base: 'nowrap', sm: 'wrap' }}
+              w="full"
             >
-              <Option value={'ANIME'}>Anime</Option>
-              <Option value={'MANGA'}>Manga</Option>
-            </Select>
-            <Select
-              value={mediaEntryStatus}
-              onChange={(option) => {
-                const newSearchParams = new URLSearchParams();
-                newSearchParams.set('type', mediaType);
-                newSearchParams.set('status', option.split('-').at(1));
-                window.history.replaceState(
-                  null,
-                  '',
-                  `?${newSearchParams.toString()}`
-                );
-                setMediaEntryStatus(option);
-              }}
-              items={MEDIA_ENTRY_STATUS[mediaType.toLowerCase()].map(
-                ({ label, value }) => ({
-                  label,
-                  value: `${mediaType}-${value}`,
-                })
-              )}
-            />
+              <Select
+                value={mediaType}
+                onChange={(option) => {
+                  const newSearchParams = new URLSearchParams();
+                  newSearchParams.set('type', option);
+                  newSearchParams.set(
+                    'status',
+                    mediaEntryStatus.split('-').at(1)
+                  );
+                  window.history.replaceState(
+                    null,
+                    '',
+                    `?${newSearchParams.toString()}`
+                  );
+                  setMediaType(option);
+                  setMediaEntryStatus(
+                    `${option}-${mediaEntryStatus.split('-').at(1)}`
+                  );
+                }}
+              >
+                <Option value={'ANIME'}>Anime</Option>
+                <Option value={'MANGA'}>Manga</Option>
+              </Select>
+              <Select
+                value={mediaEntryStatus}
+                onChange={(option) => {
+                  const newSearchParams = new URLSearchParams();
+                  newSearchParams.set('type', mediaType);
+                  newSearchParams.set('status', option.split('-').at(1));
+                  window.history.replaceState(
+                    null,
+                    '',
+                    `?${newSearchParams.toString()}`
+                  );
+                  setMediaEntryStatus(option);
+                }}
+                items={MEDIA_ENTRY_STATUS[mediaType.toLowerCase()].map(
+                  ({ label, value }) => ({
+                    label,
+                    value: `${mediaType}-${value}`,
+                  })
+                )}
+              />
+            </Flex>
             {mediaEntryStatus === 'ANIME-CURRENT' && (
               <IconButton
                 icon={<InfoIcon fontSize={'lg'} />}

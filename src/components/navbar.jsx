@@ -1,13 +1,23 @@
 'use client';
 
-import { useUserInfo } from '@/lib/client/hooks/react_query/get/user/info';
-import { authStore } from '@/stores/auth-store';
-import AppStorage from '@/utils/local-storage';
+import { useUserInfo } from '@/lib/client/hooks/react_query/get/user/info'
+import { authStore } from '@/stores/auth-store'
+import AppStorage from '@/utils/local-storage'
+import {
+  CalendarDaysIcon,
+  LogOutIcon,
+  NotebookIcon,
+  SearchIcon,
+  Settings2Icon,
+  UserRoundIcon
+} from '@yamada-ui/lucide'
 import {
   Avatar,
   Box,
   Button,
   Flex,
+  Image,
+  Link,
   Menu,
   MenuButton,
   MenuItem,
@@ -16,15 +26,13 @@ import {
   Snacks,
   Text,
   useColorModeValue,
-  useSnacks,
-  Link,
-  Image,
   useMediaQuery,
-} from '@yamada-ui/react';
-import axios from 'axios';
-import NextLink from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+  useSnacks,
+} from '@yamada-ui/react'
+import axios from 'axios'
+import NextLink from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 
 export default function NavBar({}) {
   const router = useRouter();
@@ -92,42 +100,122 @@ export default function NavBar({}) {
           <Image src={'/animan-logo.png'} width={'12'} />
         </Link>
         {!isSmallScreen && <Text>AniMan</Text>}
-        <Flex ml="auto" gap="2">
-          {pathname !== '/browse' && (
-            <Link
-              as={NextLink}
-              href={'/browse'}
-              ml="auto"
-              textDecoration={'underline'}
-            >
-              Browse
+        {!isSmallScreen && (
+          <Flex ml="auto" gap="2">
+            {pathname !== '/browse' && (
+              <Link
+                as={NextLink}
+                href={'/browse'}
+                ml="auto"
+                textDecoration={'underline'}
+              >
+                Browse
+              </Link>
+            )}
+            <Link as={NextLink} href={'/reviews'} textDecoration={'underline'}>
+              My Reviews
             </Link>
-          )}
-          <Link as={NextLink} href={'/reviews'} textDecoration={'underline'}>
-            My Reviews
-          </Link>
-          {pathname !== '/schedule' && (
-            <Link as={NextLink} href={'/schedule'} textDecoration={'underline'}>
-              Schedule
-            </Link>
-          )}
-        </Flex>
+            {pathname !== '/schedule' && (
+              <Link
+                as={NextLink}
+                href={'/schedule'}
+                textDecoration={'underline'}
+              >
+                Schedule
+              </Link>
+            )}
+          </Flex>
+        )}
         <Menu>
           <MenuButton as={Button} variant={'link'} h="full" ml="auto">
             <Avatar name={userData?.username} />
           </MenuButton>
 
           <MenuList>
-            <Box px="3" py="2">
-              User: {userData?.username}
-            </Box>
-            <MenuItem as={NextLink} href="/profile">
-              Profile Settings
+            <Flex px="3" py="2" align="center" gap="3">
+              <UserRoundIcon
+                fontSize={'lg'}
+                _dark={{ stroke: 'white' }}
+                stroke={'black'}
+              />{' '}
+              <span>{userData?.username}</span>
+            </Flex>
+
+            {isSmallScreen && (
+              <>
+                <MenuItem
+                  as={NextLink}
+                  href="/browse"
+                  icon={
+                    <SearchIcon
+                      fontSize={'lg'}
+                      _dark={{ stroke: 'white' }}
+                      stroke={'black'}
+                    />
+                  }
+                >
+                  Browse
+                </MenuItem>
+
+                <MenuItem
+                  as={NextLink}
+                  href="/reviews"
+                  icon={
+                    <NotebookIcon
+                      fontSize={'lg'}
+                      _dark={{ stroke: 'white' }}
+                      stroke={'black'}
+                    />
+                  }
+                >
+                  My Reviews
+                </MenuItem>
+
+                <MenuItem
+                  as={NextLink}
+                  href="/schedule"
+                  icon={
+                    <CalendarDaysIcon
+                      fontSize={'lg'}
+                      _dark={{ stroke: 'white' }}
+                      stroke={'black'}
+                    />
+                  }
+                >
+                  Schedule
+                </MenuItem>
+              </>
+            )}
+
+
+            <MenuItem
+              as={NextLink}
+              href="/profile"
+              icon={
+                <Settings2Icon
+                fontSize={'lg'}
+                _dark={{ stroke: 'white' }}
+                stroke={'black'}
+                />
+              }
+            >
+              Settings
             </MenuItem>
 
-            <MenuSeparator />
+              <MenuSeparator />
 
-            <MenuItem onClick={() => handleLogout()}>Sign out</MenuItem>
+            <MenuItem
+              onClick={() => handleLogout()}
+              icon={
+                <LogOutIcon
+                  fontSize={'lg'}
+                  _dark={{ stroke: 'white' }}
+                  stroke={'black'}
+                />
+              }
+            >
+              Sign out
+            </MenuItem>
           </MenuList>
         </Menu>
       </Flex>

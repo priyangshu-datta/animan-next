@@ -90,7 +90,7 @@ function SchedulePage() {
   const releasingMediaIds = useMemo(
     () =>
       (userCurrentMedia?.pages ?? [])
-        .flatMap((page) => page.mediaList)
+        .flatMap((page) => page.mediaEntry)
         .filter((entry) => entry.media.status === 'RELEASING')
         .map((entry) => entry.media.id),
     [userCurrentMedia]
@@ -103,16 +103,14 @@ function SchedulePage() {
           as={Button}
           disabled={scheduleIsLoading}
           onClick={() => {
-            setOffset((prev) => {
-              const newSearchParams = new URLSearchParams();
-              newSearchParams.set('offset', prev - 1);
-              window.history.replaceState(
-                null,
-                '',
-                `?${newSearchParams.toString()}`
-              );
-              return prev - 1;
-            });
+            const newSearchParams = new URLSearchParams();
+            newSearchParams.set('offset', offset - 1);
+            window.history.replaceState(
+              null,
+              '',
+              `?${newSearchParams.toString()}`
+            );
+            setOffset((prev) => prev - 1);
           }}
         >
           <ChevronLeftIcon />
@@ -130,16 +128,14 @@ function SchedulePage() {
           as={Button}
           disabled={scheduleIsLoading}
           onClick={() => {
-            setOffset((prev) => {
-              const newSearchParams = new URLSearchParams();
-              newSearchParams.set('offset', prev + 1);
-              window.history.replaceState(
-                null,
-                '',
-                `?${newSearchParams.toString()}`
-              );
-              return prev + 1;
-            });
+            const newSearchParams = new URLSearchParams();
+            newSearchParams.set('offset', offset + 1);
+            window.history.replaceState(
+              null,
+              '',
+              `?${newSearchParams.toString()}`
+            );
+            setOffset((prev) => prev + 1);
           }}
         >
           <ChevronRightIcon />
@@ -527,6 +523,7 @@ function ScheduleTimeline({
 function Gallery({ carouselRef, data, markerHistory }) {
   return (
     <Carousel
+      slideSize={'50%'}
       autoplay
       onChange={(index) => {
         carouselRef.current = index;

@@ -13,15 +13,15 @@ export function CountryOfOriginSelector() {
         render={({ field }) => (
           <ReactSelectCustom
             {...field}
-            placeholder="Any"
             isSearchable={false}
-            options={COUNTRY_OF_ORIGIN}
+            options={[...COUNTRY_OF_ORIGIN, { label: 'Any', value: 'all' }]}
             components={{ IndicatorSeparator: null }}
             value={
               field.value && {
-                label: COUNTRY_OF_ORIGIN.find(
-                  ({ value }) => value === field.value
-                )['label'],
+                label: [
+                  ...COUNTRY_OF_ORIGIN,
+                  { label: 'Any', value: 'all' },
+                ].find(({ value }) => value === field.value)['label'],
                 value: field.value,
               }
             }

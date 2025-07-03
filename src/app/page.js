@@ -357,7 +357,7 @@ function InformaitonModalBody({ mediaCardsDetails, hasMoreData }) {
   return (
     <>
       {hasMoreData && (
-        <Alert status="warning">
+        <Alert status="warning" flexShrink={0}>
           <AlertIcon />
           <AlertTitle>Load more data for more accurate summary.</AlertTitle>
         </Alert>
@@ -398,8 +398,9 @@ function InformaitonModalBody({ mediaCardsDetails, hasMoreData }) {
         size="lg"
         data={piechartData}
         tooltipDataSource="segment"
+        flexShrink={0}
       />
-      <Alert status="info">
+      <Alert status="info" flexShrink={0}>
         <AlertIcon />
         <AlertTitle>Legends represent anime airing status.</AlertTitle>
       </Alert>

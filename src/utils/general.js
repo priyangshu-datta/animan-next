@@ -162,3 +162,48 @@ export function formatTimeLeft(nextAiringAt, duration = 0) {
     return rtf.format(sign * seconds, 'second');
   }
 }
+
+export function formatDateOfBirth(dateOfBirthInParts) {
+  const { day, month, year } = dateOfBirthInParts || {};
+
+  // Check if at least one component is present
+  if (day === undefined && month === undefined && year === undefined) {
+    return 'Date of Birth Not Available';
+  }
+
+  let date;
+  let options = {};
+
+  // Construct the Date object based on available parts
+  // Note: Month in Date constructor is 0-indexed (January is 0, December is 11)
+  if (!!year && !!month && !!day) {
+    date = new Date(year, month - 1, day); // month - 1 for 0-indexed month
+    options = { year: 'numeric', month: 'long', day: 'numeric' };
+  } else if (!!year && !!month) {
+    date = new Date(year, month - 1, 1); // Default to day 1 if only year and month
+    options = { year: 'numeric', month: 'long' };
+  } else if (!!month && !!day) {
+    // If no year, assume current year for a valid Date object, but only display month/day
+    console.log("hell")
+    date = new Date(new Date().getFullYear(), month - 1, day);
+    options = { month: 'long', day: 'numeric' };
+  } else if (!!year) {
+    date = new Date(year, 0, 1); // Default to January 1st if only year
+    options = { year: 'numeric' };
+  } else if (!!month) {
+    date = new Date(new Date().getFullYear(), month - 1, 1); // Default to current year, day 1
+    options = { month: 'long' };
+  } else if (!!day) {
+    date = new Date(new Date().getFullYear(), new Date().getMonth(), day); // Default to current year and month
+    options = { day: 'numeric' };
+  } else {
+    // This case should ideally be caught by the initial check, but as a fallback:
+    return 'Invalid Date of Birth Data';
+  }
+
+  // Create an Intl.DateTimeFormat instance
+  const formatter = new Intl.DateTimeFormat(AppStorage.get('locale'), options);
+
+  // Format the date
+  return formatter.format(date);
+}

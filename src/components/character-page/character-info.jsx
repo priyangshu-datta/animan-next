@@ -1,7 +1,7 @@
-import { useCharacter } from '@/context/use-character';
-import { useOptimisticToggleCharacterFavourite } from '@/lib/client/hooks/react_query/patch/user/character/toggle-favourite';
-import { MONTH_NAMES } from '@/lib/constants';
-import { HeartIcon } from '@yamada-ui/lucide';
+import { useCharacter } from '@/context/use-character'
+import { useOptimisticToggleCharacterFavourite } from '@/lib/client/hooks/react_query/patch/user/character/toggle-favourite'
+import { formatDateOfBirth } from '@/utils/general'
+import { HeartIcon } from '@yamada-ui/lucide'
 import {
   Button,
   CardBody,
@@ -12,11 +12,10 @@ import {
   DataListTerm,
   Heading,
   Loading,
-  Skeleton,
   SkeletonText,
   Toggle,
-  VStack,
-} from '@yamada-ui/react';
+  VStack
+} from '@yamada-ui/react'
 
 export default function CharacterInfo({
   onReviewEditorOpen,
@@ -148,11 +147,11 @@ function CharacterInfoDataList() {
         <DataListItem>
           <DataListTerm>Date of Birth</DataListTerm>
           <DataListDescription>
-            {character?.dateOfBirth?.day ?? ''}
-            {character?.dateOfBirth?.month
-              ? MONTH_NAMES[character.dateOfBirth.month - 1]
-              : ''}{' '}
-            {character?.dateOfBirth?.year ?? ''}
+            {formatDateOfBirth({
+              day: character?.dateOfBirth?.day,
+              month: character?.dateOfBirth?.month,
+              year: character?.dateOfBirth?.year,
+            })}
           </DataListDescription>
         </DataListItem>
       )}

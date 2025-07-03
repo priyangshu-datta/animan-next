@@ -46,7 +46,6 @@ export function ChooseMediaModal({ onClose, open }) {
                   : {})}
                 cursor={"pointer"}
                 onClick={() => {
-                  console.log("weweircni")
                   assocMedia.setState({
                     id: media.id,
                     role: characterRole,

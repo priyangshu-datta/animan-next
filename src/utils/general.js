@@ -184,7 +184,6 @@ export function formatDateOfBirth(dateOfBirthInParts) {
     options = { year: 'numeric', month: 'long' };
   } else if (!!month && !!day) {
     // If no year, assume current year for a valid Date object, but only display month/day
-    console.log("hell")
     date = new Date(new Date().getFullYear(), month - 1, day);
     options = { month: 'long', day: 'numeric' };
   } else if (!!year) {

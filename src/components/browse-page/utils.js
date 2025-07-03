@@ -37,12 +37,15 @@ export function setSearchOptionOnSubmit(data) {
 
     onList,
 
+    countryOfOrigin,
+
     ...restData
   } = data;
 
   const searchOptions = Object.fromEntries([
     ...Object.entries({
       ...restData,
+      ...(countryOfOrigin !== 'all' && { countryOfOrigin }),
       ...{ seasonYear: seasonYear?.getFullYear() },
       ...(mediaFormatInclusion
         ? { mediaFormatIn: mediaFormat }
@@ -133,11 +136,13 @@ export function formControlValuesToSearchParams(formValues) {
     checkboxes,
     onList,
     seasonYear,
+    countryOfOrigin,
     ...restData
   } = formValues;
   const searchOptions = Object.fromEntries([
     ...Object.entries({
       ...restData,
+      ...(countryOfOrigin !== 'all' && { countryOfOrigin }),
       ...{ seasonYear: seasonYear?.getFullYear() },
       ...(mediaFormatInclusion
         ? { mediaFormatIn: mediaFormat }

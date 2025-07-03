@@ -21,8 +21,11 @@ export function EditorForm() {
     control,
     watch,
   } = useFormContext();
+
+  const totalEpisodes =
+    media?.nextAiringEpisode?.episode - 1 || media?.episodes;
   return (
-    <VStack spacing="4">
+    <VStack>
       <Controller
         name="favourite"
         control={control}
@@ -42,6 +45,7 @@ export function EditorForm() {
             <HeartIcon
               color={field.value ? 'red' : 'white'}
               fill={field.value ? 'red' : 'white'}
+              filter={'drop-shadow(0 0 0.75rem crimson)'}
             />{' '}
             {watch('subjectType') === 'volume'
               ? `Volume ${watch('volume')}`
@@ -63,12 +67,12 @@ export function EditorForm() {
               name="unit"
               control={control}
               rules={{
-                // max: {
-                //   value: maxEpisodes,
-                //   message: `${
-                //     media.type === 'ANIME' ? 'Episode' : 'Chapter'
-                //   } cannot be above than ${maxEpisodes}`,
-                // },
+                max: {
+                  value: totalEpisodes,
+                  message: `${
+                    media.type === 'ANIME' ? 'Episode' : 'Chapter'
+                  } cannot be above than ${totalEpisodes}`,
+                },
                 min: {
                   value: 1,
                   message: `${

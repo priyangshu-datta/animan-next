@@ -23,7 +23,7 @@ export function useCharacterMedia({ characterId, mediaType }) {
       const { data, meta } = response;
 
       return {
-        media: data,
+        data,
         currentPage: meta.currentPage,
         hasNextPage: meta.hasNextPage,
       };

@@ -67,7 +67,7 @@ export async function getSearchResults(
 
     isAdult: Joi.bool().default(false),
     onList: Joi.bool(),
-    isLicensed: Joi.bool()
+    isLicensed: Joi.bool(),
   })
     .when(Joi.object({ mediaType: 'ANIME' }).unknown(), {
       then: Joi.object({
@@ -268,6 +268,30 @@ export async function getSearchResults(
         extraLarge
       }
       status
+      format
+      type
+      chapters
+      episodes
+      nextAiringEpisode {
+        airingAt
+        episode
+      }
+      startDate {
+        day
+        month
+        year
+      }
+      endDate {
+        day
+        month
+        year
+      }
+      entry: mediaListEntry {
+        id
+				score
+				progress
+				status
+			}
 		}
 	}
 }`;
@@ -288,7 +312,18 @@ export async function getSearchResults(
   const baseData = respone.data.data.Page;
 
   const meta = baseData.pageInfo;
-  const data = baseData.media;
+  const data = baseData.media.map(({ entry, ...media }) => ({
+    entry,
+    media: {
+      ...media,
+      ...(media.nextAiringEpisode && {
+        nextAiringEpisode: {
+          ...media.nextAiringEpisode,
+          airingAt: media.nextAiringEpisode.airingAt * 1000,
+        },
+      }),
+    },
+  }));
 
   return respondSuccess(data, null, 200, meta);
 }

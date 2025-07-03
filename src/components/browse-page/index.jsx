@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDownIcon, XIcon } from '@yamada-ui/lucide'
+import { ChevronDownIcon, XIcon } from '@yamada-ui/lucide';
 import {
   Box,
   Button,
@@ -16,19 +16,19 @@ import {
   Separator,
   useDisclosure,
   useDynamicAnimation,
-  VStack
-} from '@yamada-ui/react'
-import { useEffect, useState } from 'react'
-import { Controller, FormProvider } from 'react-hook-form'
-import { defaultFormValues, useSearchForm } from './hooks'
-import { SearchResults } from './search-results'
-import { CountryOfOriginSelector } from './selectors/country-of-origin'
-import { DateSelector } from './selectors/date'
-import { MediaSeasonSelector } from './selectors/media-season'
-import { MediaSortMethodSelector } from './selectors/media-sort'
-import { MediaSourceSelector } from './selectors/media-source'
-import { MediaTypeSelector } from './selectors/media-type'
-import { OpenEndedRange } from './selectors/open-ended-range'
+  VStack,
+} from '@yamada-ui/react';
+import { useEffect, useState } from 'react';
+import { Controller, FormProvider } from 'react-hook-form';
+import { defaultFormValues, useSearchForm } from './hooks';
+import { SearchResults } from './search-results';
+import { CountryOfOriginSelector } from './selectors/country-of-origin';
+import { DateSelector } from './selectors/date';
+import { MediaSeasonSelector } from './selectors/media-season';
+import { MediaSortMethodSelector } from './selectors/media-sort';
+import { MediaSourceSelector } from './selectors/media-source';
+import { MediaTypeSelector } from './selectors/media-type';
+import { OpenEndedRange } from './selectors/open-ended-range';
 import {
   CheckBoxes,
   GenreSelector,
@@ -38,12 +38,12 @@ import {
   MediaTagSelector,
   OnListRadio,
   SeasonYearSelector,
-} from './small-components'
+} from './small-components';
 import {
   animOptions,
   getCurrentAnimeSeason,
   setSearchOptionOnSubmit,
-} from './utils'
+} from './utils';
 
 export default function SearchPageComponent() {
   const { open: basicOptionsOpen, onToggle: basicOptionsToggle } =
@@ -56,8 +56,7 @@ export default function SearchPageComponent() {
 
   const [basicLabelAnim, setBasicLabelAnim] = useDynamicAnimation(animOptions);
 
-  const { methods, genresInfo, tagCategories, tagsInfo } =
-    useSearchForm();
+  const { methods, genresInfo, tagCategories, tagsInfo } = useSearchForm();
 
   const [searchOptions, setSearchOptions] = useState();
 
@@ -167,7 +166,22 @@ export default function SearchPageComponent() {
                 onClick={() => {
                   methods.reset({
                     ...defaultFormValues,
-                    mediaSort: 'SCORE_DESC',
+                    season: getCurrentAnimeSeason(),
+                    seasonYear: new Date(),
+                    mediaStatus: ['RELEASING'],
+                  });
+                }}
+                variant={'outline'}
+                size="sm"
+                colorScheme={'primary'}
+              >
+                This Season: Releasing
+              </Button>
+              <Button
+                onClick={() => {
+                  methods.reset({
+                    ...defaultFormValues,
+                    mediaSort: ['SCORE_DESC'],
                   });
                 }}
                 variant={'outline'}
@@ -180,8 +194,8 @@ export default function SearchPageComponent() {
                 onClick={() => {
                   methods.reset({
                     ...defaultFormValues,
-                    mediaSort: 'SCORE_DESC',
-                    mediaFormat: 'MOVIE',
+                    mediaSort: ['SCORE_DESC'],
+                    mediaFormat: ['MOVIE'],
                   });
                 }}
                 variant={'outline'}

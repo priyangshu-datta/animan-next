@@ -75,7 +75,7 @@ function SchedulePage() {
     isLoading: userCurrentMediaIsLoading,
   } = useUserMediaList({
     mediaType: 'ANIME',
-    mediaListStatus: 'CURRENT',
+    mediaEntryStatus: 'CURRENT',
     perPage: 25,
   });
 

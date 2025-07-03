@@ -25,7 +25,7 @@ export function useUpdateMediaProgress({
             query.queryKey[1] === variables.mediaId &&
             query.queryKey[2] === variables.mediaType) ||
           query.queryKey[0] ===
-            'get:user:media:list:{mediaType,mediaListStatus}',
+            'get:user:list-paginated:{mediaType,mediaEntryStatus}',
       });
       handleSuccess();
     },

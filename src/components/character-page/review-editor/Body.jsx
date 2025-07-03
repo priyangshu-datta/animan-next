@@ -18,7 +18,7 @@ export function Body({ drafts, setDrafts, snacks }) {
             changeTab={onChange}
           />
         </TabPanel>
-        <TabPanel>
+        <TabPanel px="0">
           <EditorForm />
         </TabPanel>
       </Tabs>

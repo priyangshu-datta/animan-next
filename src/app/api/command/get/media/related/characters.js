@@ -26,13 +26,30 @@ export async function getMediaRelatedCharacters(context) {
 
   const MEDIA_CHARACTERS_QUERY = `query ($mediaId: Int, $mediaType: MediaType, $page: Int, $perPage: Int) {
   Media(id: $mediaId, type: $mediaType) {
-    characters(page: $page, perPage: $perPage, sort: [FAVOURITES_DESC,ROLE,RELEVANCE,ID]) {
+    characters(page: $page, perPage: $perPage, sort: [RELEVANCE,ROLE,FAVOURITES_DESC,ID]) {
       pageInfo {
         currentPage
         hasNextPage
       }
       edges {
+        id
         role
+				voiceActorRoles {
+					roleNotes
+					dubGroup
+					voiceActor {
+						id
+						name {
+							userPreferred
+						}
+						language: languageV2
+						image {
+							large
+						}
+						description(asHtml: true)
+						isFavourite
+					}
+				}
         node {
           id
           name {
@@ -45,6 +62,7 @@ export async function getMediaRelatedCharacters(context) {
           image {
             large
           }
+          isFavourite
         }
       }
     }
@@ -65,10 +83,16 @@ export async function getMediaRelatedCharacters(context) {
 
   const baseData = response.data.data.Media.characters;
 
-  const data = baseData.edges.map((edge) => ({
-    role: edge.role,
-    ...edge.node,
-  }));
+  const data = baseData.edges.map((edge) => {
+    return {
+      id: edge.id,
+      character: { ...edge.node, role: edge.role },
+      voiceActors: edge.voiceActorRoles?.map(({ voiceActor, ...rest }) => ({
+        ...voiceActor,
+        ...rest,
+      })),
+    };
+  });
   const meta = baseData.pageInfo;
 
   return respondSuccess(data, null, 200, meta);

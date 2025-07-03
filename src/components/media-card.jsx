@@ -1,38 +1,45 @@
-'use client';
-
-import { useUpdateUserMedia } from '@/lib/client/hooks/react_query/patch/user/media'
-import { MEDIA_STATUS } from '@/lib/constants'
+import { useUpdateUserMedia } from '@/lib/client/hooks/react_query/patch/user/media';
+import { MEDIA_STATUS } from '@/lib/constants';
+import { formatPartialDate, formatTimeLeft } from '@/utils/general';
 import {
-  formatPartialDate,
-  formatTimeLeft
-} from '@/utils/general'
-import {
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
+  Box,
   DataList,
   DataListDescription,
   DataListItem,
   DataListTerm,
   Flex,
   Image,
+  Link,
+  Loading,
+  Popover,
+  PopoverBody,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
   Text,
-  Tooltip,
   useNotice,
-} from '@yamada-ui/react'
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { Rating } from './rating'
+} from '@yamada-ui/react';
+import NextLink from 'next/link';
+import { useEffect, useState } from 'react';
+import { Rating } from './rating';
 
-export default function MediaCard({ listEntry }) {
+export default function MediaCard({
+  media,
+  entry,
+  aboveDataListComponent,
+  dataListItems,
+  belowDataListComponent,
+}) {
   const [timeLeft, setTimeLeft] = useState();
 
   const totalEpisodes =
-    listEntry?.media?.nextAiringEpisode?.episode - 1 ||
-    listEntry?.media?.episodes;
+    media.type === 'ANIME'
+      ? media?.nextAiringEpisode?.episode - 1 || media?.episodes
+      : media.type === 'MANGA'
+      ? media?.chapters
+      : 'Error: Other media type found!';
 
-  const nextAiringAt = listEntry?.media?.nextAiringEpisode?.airingAt ?? '';
+  const nextAiringAt = media?.nextAiringEpisode?.airingAt ?? '';
 
   useEffect(() => {
     if (!nextAiringAt) return;
@@ -49,11 +56,15 @@ export default function MediaCard({ listEntry }) {
 
   const notice = useNotice();
 
+  const [progress, setProgress] = useState(entry?.progress);
+
   const { mutate, isPending } = useUpdateUserMedia({
+    optimistic: false,
     handleSuccess: () => {
+      setProgress((prev) => prev + 1);
       notice({
         status: 'success',
-        description: 'Media List Entry Updated',
+        description: 'Media Entry Updated',
         isClosable: true,
       });
     },
@@ -68,107 +79,128 @@ export default function MediaCard({ listEntry }) {
   });
 
   return (
-    <Flex direction={'column'} w={'full'} alignSelf={'stretch'}>
-      <Card maxW="md" variant={'outline'}>
-        <CardHeader>
+    <Popover closeOnButton={false} trigger="hover">
+      <PopoverTrigger>
+        <Box boxShadow={'2xl'} flexShrink={0}>
           <Image
-            src={listEntry?.media?.coverImage?.large}
+            src={media?.coverImage?.extraLarge}
             objectFit="cover"
-            minW={'40'}
-            maxW={'80'}
-            w="full"
-            aspectRatio={2 / 3}
+            w="32"
+            aspectRatio={0.61805}
+            alt={media?.title?.userPreferred}
+            _dark={{
+              boxShadow: '0px 2px 5px 0px rgb(123 118 118 / 94%)',
+            }}
+            boxShadow={
+              '0 1px 1px hsl(0deg 0% 0% / 0.075), 0 2px 2px hsl(0deg 0% 0% / 0.075), 0 4px 4px hsl(0deg 0% 0% / 0.075), 0 8px 8px hsl(0deg 0% 0% / 0.075), 0 16px 16px hsl(0deg 0% 0% / 0.075)'
+            }
           />
-        </CardHeader>
-        <CardBody>
-          <Tooltip label={listEntry?.media?.title?.userPreferred}>
-            <Link
-              href={`/media?id=${listEntry.media.id}&type=${listEntry.media.type}`}
-            >
-              <Text lineClamp={1} fontSize={'xl'}>
-                {listEntry?.media?.title?.userPreferred}
-              </Text>
-            </Link>
-          </Tooltip>
-          <DataList
-            col={2}
-            variant={'subtle'}
-            size={{ base: 'lg' }}
-            gapY={{ base: '2', lg: '2' }}
-          >
+        </Box>
+      </PopoverTrigger>
+
+      <PopoverContent style={{ width: '15rem' }}>
+        <PopoverHeader>
+          <Link as={NextLink} href={`/media?type=${media.type}&id=${media.id}`}>
+            <Text lineClamp={1}>{media.title?.userPreferred}</Text>
+          </Link>
+        </PopoverHeader>
+        <PopoverBody>
+          {aboveDataListComponent}
+          <DataList col={2} w="full">
             <DataListItem>
               <DataListTerm>
-                {listEntry.media?.status === 'NOT_YET_RELEASED' &&
-                listEntry.media?.startDate?.year
+                {media?.status === 'NOT_YET_RELEASED' && media?.startDate?.year
                   ? 'Release in'
-                  : listEntry.media?.status === 'RELEASING'
+                  : media?.status === 'RELEASING'
                   ? 'Airs'
-                  : 'Airing Status'}
+                  : 'Airing'}
               </DataListTerm>
               <DataListDescription>
-                {listEntry.media?.type === 'ANIME'
-                  ? listEntry.media?.nextAiringEpisode
-                    ? `${timeLeft} (Ep ${listEntry.media?.nextAiringEpisode.episode})`
-                    : listEntry.media?.status === 'NOT_YET_RELEASED' &&
-                      listEntry.media?.startDate?.year
-                    ? formatPartialDate(listEntry.media?.startDate)
+                {media?.type === 'ANIME'
+                  ? media?.nextAiringEpisode
+                    ? `${timeLeft} (Ep ${media?.nextAiringEpisode?.episode})`
+                    : media?.status === 'NOT_YET_RELEASED' &&
+                      media?.startDate?.year
+                    ? formatPartialDate(media?.startDate)
                     : `${
-                        MEDIA_STATUS[listEntry.media?.type.toLowerCase()].find(
-                          ({ value }) => value === listEntry.media?.status
-                        ).label
+                        MEDIA_STATUS[media?.type?.toLowerCase()].find(
+                          ({ value }) => value === media?.status
+                        )?.label
                       }`
-                  : listEntry.media?.status === 'RELEASING'
+                  : media?.status === 'RELEASING'
                   ? 'Ongoing'
-                  : listEntry.media?.status}
+                  : media?.status}
               </DataListDescription>
             </DataListItem>
-            {listEntry.status === 'CURRENT' ? (
-              <DataListItem>
+            {entry?.status === 'CURRENT' ? (
+              <DataListItem w="full">
                 <DataListTerm>Progress</DataListTerm>
-                <DataListDescription>
-                  <Flex gap={'1'} alignItems={'center'}>
-                    {totalEpisodes - listEntry.progress > 0 ? (
-                      <Tooltip
-                        label={`Behind ${
-                          totalEpisodes - listEntry.progress
-                        } epsiodes`}
-                      >
-                        <span className="decoration-dashed underline-offset-2 underline">
-                          {listEntry.progress}
-                        </span>
-                      </Tooltip>
-                    ) : (
-                      listEntry.progress
-                    )}
-                    <Button
-                      variant={'link'}
-                      onClick={() => {
-                        mutate({
-                          mediaId: listEntry.media.id,
-                          mediaType: listEntry.media.type,
-                          progress: listEntry.progress + 1,
-                        });
+                <DataListDescription w="full">
+                  <Flex
+                    justify={'space-between'}
+                    w="full"
+                    alignItems={'center'}
+                  >
+                    <Flex gap={'1'}>
+                      <span>
+                        {String(progress).padStart(
+                          String(totalEpisodes).length,
+                          0
+                        )}
+                      </span>
+                      /<span>{totalEpisodes}</span>
+                    </Flex>
+
+                    <Text
+                      fontSize="sm"
+                      tabIndex={0}
+                      role="button"
+                      onPointerDown={() => {
+                        if (!isPending) {
+                          mutate({
+                            mediaId: media.id,
+                            mediaType: media.type,
+                            progress: entry?.progress + 1,
+                          });
+                        }
                       }}
-                      disabled={isPending}
+                      onKeyDown={(e) => {
+                        if (
+                          !isPending &&
+                          (e.code === 'Enter' || e.code === 'Space')
+                        ) {
+                          mutate({
+                            mediaId: media.id,
+                            mediaType: media.type,
+                            progress: entry?.progress + 1,
+                          });
+                        }
+                      }}
+                      className="bg-[#E0E0E0] dark:bg-[#424242] hover:bg-[#BDBDBD] hover:dark:bg-[#616161]  focus:bg-[#BDBDBD] focus:dark:bg-[#616161]"
+                      cursor={'pointer'}
+                      rounded={'md'}
+                      px="1"
                     >
-                      {isPending ? '...' : '+'}
-                    </Button>
+                      {isPending ? <Loading /> : '+1'}
+                    </Text>
                   </Flex>
                 </DataListDescription>
               </DataListItem>
             ) : (
-              listEntry.status === 'COMPLETED' && (
+              entry?.status === 'COMPLETED' && (
                 <DataListItem>
                   <DataListTerm>Score</DataListTerm>
                   <DataListDescription>
-                    <Rating score={listEntry.score} />
+                    <Rating score={entry?.score} />
                   </DataListDescription>
                 </DataListItem>
               )
             )}
+            {dataListItems}
           </DataList>
-        </CardBody>
-      </Card>
-    </Flex>
+          {belowDataListComponent}
+        </PopoverBody>
+      </PopoverContent>
+    </Popover>
   );
 }

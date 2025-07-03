@@ -1,23 +1,37 @@
 import { useMedia } from '@/context/use-media';
 import { useDeleteMediaReview } from '@/lib/client/hooks/react_query/delete/media/review';
+import { useMediaRelatedMedia } from '@/lib/client/hooks/react_query/get/media/related/media';
 import { REVIEW_CATEGORIES, SNACK_DURATION } from '@/lib/constants';
+import { Columns3Icon, Grid3x3Icon } from '@yamada-ui/lucide';
 import {
+  Accordion,
+  AccordionItem,
+  AccordionLabel,
+  AccordionPanel,
+  Box,
   Button,
+  Flex,
+  Loading,
   Modal,
   ModalBody,
   ModalFooter,
   ModalHeader,
   Select,
+  Skeleton,
   Tab,
   TabList,
   TabPanel,
   Tabs,
+  Toggle,
+  ToggleGroup,
   useDisclosure,
   useNotice,
 } from '@yamada-ui/react';
 import { useEffect, useMemo, useState } from 'react';
-import MediaCharacters from './media-characters';
+import MediaCard from '../media-card';
+import MediaCharacters from './related-characters';
 import ReviewList from './review-list';
+import RelatedMedia from './related-media';
 
 export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
   const media = useMedia();
@@ -82,6 +96,9 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
             Characters
           </Tab>
           <Tab className="shrink-0" style={{ margin: 0 }}>
+            Related Media
+          </Tab>
+          <Tab className="shrink-0" style={{ margin: 0 }}>
             Reviews
           </Tab>
         </TabList>
@@ -89,6 +106,9 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
         <TabPanel dangerouslySetInnerHTML={memoedDescription} />
         <TabPanel>
           <MediaCharacters mediaId={media.id} mediaType={media.type} />
+        </TabPanel>
+        <TabPanel>
+          <RelatedMedia />
         </TabPanel>
         <TabPanel>
           <Select

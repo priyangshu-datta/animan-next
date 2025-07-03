@@ -1,21 +1,21 @@
 import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
 import { useInfiniteQuery } from '@tanstack/react-query';
 
-export function useUserMediaList({ mediaType, mediaListStatus, perPage = 10 }) {
+export function useUserMediaList({ mediaType, mediaEntryStatus, perPage = 10 }) {
   return useInfiniteQuery({
     queryKey: [
-      'get:user:media:list:{mediaType,mediaListStatus}',
+      'get:user:list-paginated:{mediaType,mediaEntryStatus}',
       mediaType,
-      mediaListStatus,
+      mediaEntryStatus,
     ],
     queryFn: async ({ pageParam }) => {
       const response = await rpcRequest({
-        action: 'get:user:list-paginated:{mediaType,mediaListStatus}',
-        context: { mediaType, mediaListStatus, page: pageParam, perPage },
+        action: 'get:user:list-paginated:{mediaType,mediaEntryStatus}',
+        context: { mediaType, mediaEntryStatus, page: pageParam, perPage },
       });
 
       return {
-        mediaList: response?.data,
+        mediaEntry: response?.data,
         hasNextPage: response?.meta.hasNextPage,
         currentPage: response?.meta.currentPage,
       };
@@ -24,6 +24,6 @@ export function useUserMediaList({ mediaType, mediaListStatus, perPage = 10 }) {
       return lastPage.hasNextPage ? lastPage.currentPage + 1 : undefined;
     },
     initialPageParam: 1,
-    enabled: !!mediaType && !!mediaListStatus && typeof window !== 'undefined',
+    enabled: !!mediaType && !!mediaEntryStatus && typeof window !== 'undefined',
   });
 }

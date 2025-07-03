@@ -1,13 +1,13 @@
 'use client';
 
-import { MediaProvider } from '@/context/use-media'
-import { useMediaFullInfoById } from '@/lib/client/hooks/react_query/get/media/info/full-by-id'
-import { Center, Flex, useDisclosure } from '@yamada-ui/react'
-import { useSearchParams } from 'next/navigation'
-import { useState } from 'react'
-import MediaInfo from './media-info'
-import ReviewEditor from './review-editor'
-import TabSection from './tab-section'
+import { MediaProvider } from '@/context/use-media';
+import { useMediaFullInfoById } from '@/lib/client/hooks/react_query/get/media/info/full-by-id';
+import { Center, Flex, useDisclosure } from '@yamada-ui/react';
+import { useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import MediaInfo from './media-info';
+import ReviewEditor from './review-editor';
+import TabSection from './tab-section';
 
 export default function MediaPage() {
   const searchParams = useSearchParams();

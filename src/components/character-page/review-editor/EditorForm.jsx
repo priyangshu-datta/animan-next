@@ -9,7 +9,7 @@ import {
 } from '@yamada-ui/react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { AssociatedMedia } from './AssociatedMedia';
-import { HeartIcon } from '@yamada-ui/lucide'
+import { HeartIcon } from '@yamada-ui/lucide';
 
 export function EditorForm() {
   const {

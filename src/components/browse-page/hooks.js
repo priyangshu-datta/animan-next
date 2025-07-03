@@ -13,7 +13,7 @@ export const defaultFormValues = {
   mediaType: 'ANIME',
   season: '',
   seasonYear: null,
-  countryOfOrigin: 'JP',
+  countryOfOrigin: 'all',
   mediaSource: [],
   mediaSort: ['TRENDING_DESC', 'POPULARITY_DESC'],
   mediaFormat: [],

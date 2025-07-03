@@ -2,9 +2,10 @@ import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function useUpdateUserMedia({
+  optimistic = false,
   handleSuccess = () => {},
   handleError = () => {},
-} = {}) {
+}) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ mediaId, mediaType, ...patchData }) =>
@@ -21,8 +22,9 @@ export function useUpdateUserMedia({
           ].includes(query.queryKey[0]) &&
             query.queryKey[1] === variables.mediaId &&
             query.queryKey[2] === variables.mediaType) ||
-          query.queryKey[0] ===
-            'get:user:media:list:{mediaType,mediaListStatus}',
+          (query.queryKey[0] ===
+            'get:user:list-paginated:{mediaType,mediaEntryStatus}' &&
+            !optimistic),
       });
 
       handleSuccess();

@@ -43,6 +43,7 @@ import { deleteUserMedia } from './delete/user/media';
 import { getAnimeSchedule } from './get/media/schedule';
 import { getMedia$subjectType$ReviewsByUserPaginated } from './get/media/review/by-user-paginated';
 import { getCharacterReviewsByUserPaginated } from './get/character/review/by-user-paginated';
+import { getMediaRelatedMedia } from './get/media/related/media';
 
 const schema = Joi.object({
   action: Joi.string(),
@@ -86,7 +87,7 @@ const COMMANDS = {
 
   'anilist:get:user:media:{mediaId,mediaType}': getUserMediaDetailsById,
   'anilist:get:user:media:custom-lists:{mediaType}': getUserCustomLists,
-  'anilist:get:user:list-paginated:{mediaType,mediaListStatus}':
+  'anilist:get:user:list-paginated:{mediaType,mediaEntryStatus}':
     getUserMediaList,
   'anilist:patch:user:media-progress:{mediaId,mediaType,progress}':
     patchUserMediaProgress,
@@ -113,6 +114,8 @@ const COMMANDS = {
     getMedia$subjectType$ReviewsByUserPaginated,
   'anilist:get:character:reviews-paginated:{cursor,limit}':
     getCharacterReviewsByUserPaginated,
+
+  'anilist:get:media:related-media:{mediaId,mediaType}': getMediaRelatedMedia,
 };
 
 export async function POST(request) {

@@ -14,7 +14,7 @@ export async function getUserMediaList(
   { providerAccessToken: anilistAccessToken, providerUserId: anilistUserId }
 ) {
   const contextSchema = Joi.object({
-    mediaListStatus: Joi.string()
+    mediaEntryStatus: Joi.string()
       .valid(...MEDIA_ENTRY_STATUS.anime.map((a) => a.value))
       .required(),
     mediaType: Joi.string()
@@ -34,16 +34,16 @@ export async function getUserMediaList(
     });
   }
 
-  const { mediaListStatus, mediaType, page, perPage } = value;
+  const { mediaEntryStatus, mediaType, page, perPage } = value;
 
-  const QUERY = `query ($userId: Int!, $type: MediaType = ANIME, $listStatus: MediaListStatus = CURRENT, $page: Int = 1, $perPage: Int = 10) {
+  const QUERY = `query ($userId: Int!, $type: MediaType = ANIME, $entryStatus: MediaListStatus = CURRENT, $page: Int = 1, $perPage: Int = 10) {
   Page(page: $page, perPage: $perPage) {
     pageInfo {
       currentPage
       hasNextPage
     }
     mediaList(
-      status: $listStatus
+      status: $entryStatus
       userId: $userId
       type: $type
       sort: [UPDATED_TIME_DESC]
@@ -51,25 +51,34 @@ export async function getUserMediaList(
       id
       status
       progress
+      score
       media {
         id
         type
-        startDate {
-          year
-          month
-          day
-        }
         title {
           userPreferred
         }
         status
         coverImage {
-          large
+          extraLarge
         }
         episodes
+        chapters
+        season
+        seasonYear
         nextAiringEpisode {
           airingAt
           episode
+        }
+        startDate {
+          day
+          month
+          year
+        }
+        endDate {
+          day
+          month
+          year
         }
       }
     }
@@ -81,7 +90,7 @@ export async function getUserMediaList(
     {
       query: QUERY,
       variables: {
-        listStatus: mediaListStatus,
+        entryStatus: mediaEntryStatus,
         type: mediaType,
         userId: anilistUserId,
         page,
@@ -96,19 +105,28 @@ export async function getUserMediaList(
   );
 
   const baseData = response.data.data.Page;
-  const data = baseData.mediaList.map((listEntry) => ({
-    ...listEntry,
+  const data = baseData.mediaList.map((entry) => ({
+    ...entry,
     media: {
-      ...listEntry.media,
-      ...(listEntry.media.nextAiringEpisode && {
+      ...entry.media,
+      ...(entry.media.nextAiringEpisode && {
         nextAiringEpisode: {
-          ...listEntry.media.nextAiringEpisode,
-          airingAt: listEntry.media.nextAiringEpisode.airingAt * 1000,
+          ...entry.media.nextAiringEpisode,
+          airingAt: entry.media.nextAiringEpisode.airingAt * 1000,
         },
       }),
     },
   }));
+
   const meta = baseData.pageInfo;
 
-  return respondSuccess(data, null, undefined, meta);
+  return respondSuccess(
+    data.map((d) => {
+      const { media, ...entry } = d;
+      return { media, entry };
+    }),
+    null,
+    undefined,
+    meta
+  );
 }

@@ -1,6 +1,6 @@
-import { useCharacter } from '@/context/use-character'
-import { useDeleteMediaReview } from '@/lib/client/hooks/react_query/delete/character/review'
-import { SNACK_DURATION } from '@/lib/constants'
+import { useCharacter } from '@/context/use-character';
+import { useDeleteMediaReview } from '@/lib/client/hooks/react_query/delete/character/review';
+import { SNACK_DURATION } from '@/lib/constants';
 import {
   Button,
   Modal,
@@ -14,11 +14,11 @@ import {
   TabPanel,
   Tabs,
   useDisclosure,
-  useNotice
-} from '@yamada-ui/react'
-import { useMemo, useState } from 'react'
-import CharacterMedia from './character-media'
-import ReviewList from './review-list'
+  useNotice,
+} from '@yamada-ui/react';
+import { useMemo, useState } from 'react';
+import RelatedMedia from './related-media';
+import ReviewList from './review-list';
 
 export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
   const character = useCharacter();
@@ -54,7 +54,7 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
         title: error.name,
         description: error.message,
         duration: SNACK_DURATION,
-        isClosable: true
+        isClosable: true,
       });
       setDelReview(null);
     },
@@ -67,7 +67,6 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
   }
 
   const notice = useNotice();
-  const [mediaType, setMediaType] = useState('ANIME');
 
   return (
     <>
@@ -99,18 +98,7 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
           <div dangerouslySetInnerHTML={memoedDescription} />
         </TabPanel>
         <TabPanel>
-          <Select
-            defaultValue={mediaType}
-            onChange={(option) => setMediaType(option)}
-          >
-            <Option value="ANIME">Anime</Option>
-            <Option value="MANGA">Manga</Option>
-          </Select>
-          <CharacterMedia
-            characterId={character.id}
-            mediaType={mediaType}
-            style={'default'}
-          />
+          <RelatedMedia characterId={character.id} />
         </TabPanel>
         <TabPanel>
           <ReviewList

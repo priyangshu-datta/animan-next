@@ -1,17 +1,16 @@
 'use client';
 
-import { getCurrentAnimeSeason } from '@/components/browse-page/utils';
-import MediaCard from '@/components/media-card';
-import { useUserMediaList } from '@/lib/client/hooks/react_query/get/user/media/list';
-import { MEDIA_ENTRY_STATUS, MEDIA_STATUS } from '@/lib/constants';
-import { debounce } from '@/utils/general';
-import { PieChart, RadialChart } from '@yamada-ui/charts';
-import { Columns3Icon, Grid3x3Icon, InfoIcon } from '@yamada-ui/lucide';
+import { getCurrentAnimeSeason } from '@/components/browse-page/utils'
+import MediaCard from '@/components/media-card'
+import { useUserMediaList } from '@/lib/client/hooks/react_query/get/user/media/list'
+import { MEDIA_ENTRY_STATUS, MEDIA_STATUS } from '@/lib/constants'
+import { debounce } from '@/utils/general'
+import { PieChart } from '@yamada-ui/charts'
+import { Columns3Icon, Grid3x3Icon, InfoIcon } from '@yamada-ui/lucide'
 import {
   Alert,
   AlertIcon,
   AlertTitle,
-  Box,
   Button,
   EmptyState,
   EmptyStateTitle,
@@ -29,10 +28,10 @@ import {
   Text,
   Toggle,
   ToggleGroup,
-  useDisclosure,
-} from '@yamada-ui/react';
-import { useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useMemo, useState } from 'react';
+  useDisclosure
+} from '@yamada-ui/react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense, useMemo, useState } from 'react'
 
 export default function HomePage() {
   return (
@@ -87,7 +86,7 @@ function HomePageComponent() {
           boxShadow={'base'}
           bgColor={'AppWorkspace'}
         >
-          <Flex align={"center"} gap="2">
+          <Flex align={'center'} gap="2">
             <Flex
               gap="2"
               align={'center'}
@@ -192,12 +191,12 @@ function HomePageComponent() {
           <Loading />
         )}
       </Flex>
-      <Modal open={open} size="xl">
+      <Modal open={open} size="lg">
         <ModalHeader>
           <Heading size="lg">Summary</Heading>
         </ModalHeader>
         <ModalBody>
-          <InformaitonModalBody
+          <InformationModalBody
             mediaCardsDetails={mediaCardsDetails}
             hasMoreData={hasNextPage}
           />
@@ -270,7 +269,7 @@ function CustomComponent({ heading, value, loadMoreBtnRenders }) {
   );
 }
 
-function InformaitonModalBody({ mediaCardsDetails, hasMoreData }) {
+function InformationModalBody({ mediaCardsDetails, hasMoreData }) {
   const piechartData = useMemo(
     () => [
       {
@@ -392,22 +391,24 @@ function InformaitonModalBody({ mediaCardsDetails, hasMoreData }) {
           ? 's'
           : ''}
       </Text>
+
       {firstToEnd && (
         <Text>
           <strong>{firstToEnd.title.userPreferred}</strong>
           will end first this season.
         </Text>
       )}
-      <Heading size="md">Pending Episodes</Heading>
+
+      <Heading size="md" mt="4">Pending Episodes</Heading>
 
       <PieChart
-        withLegend
-        size="lg"
+        size="md"
         data={piechartData}
         tooltipDataSource="segment"
         flexShrink={0}
+        mx="auto"
       />
-      <Alert status="info" flexShrink={0}>
+      <Alert status="info" flexShrink={0} w="full" mt="2">
         <AlertIcon />
         <AlertTitle>Legends represent anime airing status.</AlertTitle>
       </Alert>

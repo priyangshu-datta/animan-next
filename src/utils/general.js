@@ -147,3 +147,132 @@ export function formatPartialDate(dateInParts) {
   // Format the date
   return formatter.format(date);
 }
+
+/**
+ * Converts a number of minutes into a human-readable string format using Intl APIs.
+ * Examples: 1 minute, half an hour, 1 hour, 2 hours and 30 minutes.
+ *
+ * @param {number} minutes The total number of minutes to convert.
+ * @returns {string} The human-readable string representation of the minutes.
+ */
+export function formatMinutesToReadableString(minutes) {
+  if (typeof minutes !== 'number' || isNaN(minutes)) {
+    return 'Invalid input: Please provide a valid number of minutes.';
+  }
+
+  if (minutes === 0) {
+    return '0 minutes'; // Explicitly handle 0 minutes
+  }
+
+  // Determine if the input is negative and get the absolute value for processing
+  const isNegative = minutes < 0;
+  minutes = Math.abs(minutes);
+  let prefix = isNegative ? 'minus ' : '';
+
+  // Create Intl.NumberFormat instances for minutes and hours.
+  // 'style: unit' tells it to format a number with a unit.
+  // 'unitDisplay: long' ensures the full unit name (e.g., "minute", "hour") is used.
+  const minuteFormatter = new Intl.NumberFormat(AppStorage.get('locale'), {
+    style: 'unit',
+    unit: 'minute',
+    unitDisplay: 'long',
+  });
+
+  const hourFormatter = new Intl.NumberFormat(AppStorage.get('locale'), {
+    style: 'unit',
+    unit: 'hour',
+    unitDisplay: 'long',
+  });
+
+  // Handle specific cases as requested:
+  if (minutes === 1) {
+    return `${prefix}${minuteFormatter.format(1)}`;
+  }
+
+  if (minutes === 30) {
+    // This is a specific phrase that Intl.NumberFormat doesn't directly provide.
+    return `${prefix}half an hour`;
+  }
+
+  // If minutes are less than an hour, format directly as minutes.
+  if (minutes < 60) {
+    return `${prefix}${minuteFormatter.format(minutes)}`;
+  }
+
+  // Calculate hours and remaining minutes
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  // Start building the result string with the hours part
+  let result = `${prefix}${hourFormatter.format(hours)}`;
+
+  // If there are remaining minutes, append them to the string
+  if (remainingMinutes > 0) {
+    if (remainingMinutes === 30) {
+      // Again, a specific phrase for 30 remaining minutes.
+      result += ' and half an hour';
+    } else {
+      // Format the remaining minutes using the minuteFormatter.
+      result += ` and ${minuteFormatter.format(remainingMinutes)}`;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Formats a number into its English ordinal form (e.g., 1 -> "1st", 2 -> "2nd", 11 -> "11th").
+ *
+ * @param {number} n The number to format.
+ * @returns {string} The ordinal string.
+ */
+export function formatOrdinal(n) {
+  // Ensure the input is a valid number
+  if (typeof n !== 'number' || !Number.isInteger(n)) {
+    throw new Error('Input must be an integer.');
+  }
+
+  // Handle negative numbers or zero if necessary (e.g., "-1st", "0th")
+  // For most ordinal use cases, numbers are positive.
+  // If you want to only handle positive numbers and throw for others:
+  // if (n < 0) {
+  //   throw new Error("Input must be a non-negative integer for ordinal formatting.");
+  // }
+  // You might want "0th" as well, which the logic below handles correctly.
+
+  const pr = new Intl.PluralRules('en-US', { type: 'ordinal' });
+
+  // Define suffixes based on the categories returned by PluralRules
+  // 'one', 'two', 'few' correspond to 'st', 'nd', 'rd' respectively.
+  // 'other' covers 'th' for most cases, including teens (11-13).
+  const suffixes = new Map([
+    ['one', 'st'],
+    ['two', 'nd'],
+    ['few', 'rd'],
+    ['other', 'th'],
+  ]);
+
+  const rule = pr.select(n); // Gets the ordinal category (e.g., 'one', 'two', 'few', 'other')
+  const suffix = suffixes.get(rule);
+
+  return `${n}${suffix}`;
+}
+
+export function getCurrentAnimeSeason() {
+  const date = new Date();
+  const month = date.getMonth(); // 0 for January, 11 for December
+
+  if (month >= 0 && month <= 2) {
+    // January, February, March
+    return 'WINTER';
+  } else if (month >= 3 && month <= 5) {
+    // April, May, June
+    return 'SPRING';
+  } else if (month >= 6 && month <= 8) {
+    // July, August, September
+    return 'SUMMER';
+  } else {
+    // October, November, December
+    return 'FALL';
+  }
+}

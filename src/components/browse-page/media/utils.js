@@ -563,10 +563,10 @@ export function searchParamsToFormControlValues(
     formValues['checkboxes'].push('isLicensed');
   }
 
-  if (inList) {
+  if (searchParams.has('inList')) {
     formValues['onList'] = 'inList';
   }
-  if (notInList) {
+  if (searchParams.has('notInList')) {
     formValues['onList'] = 'notInList';
   }
   return formValues;
@@ -606,22 +606,3 @@ export const animOptions = {
     timingFunction: 'ease-in-out',
   },
 };
-
-export function getCurrentAnimeSeason() {
-  const date = new Date();
-  const month = date.getMonth(); // 0 for January, 11 for December
-
-  if (month >= 0 && month <= 2) {
-    // January, February, March
-    return 'WINTER';
-  } else if (month >= 3 && month <= 5) {
-    // April, May, June
-    return 'SPRING';
-  } else if (month >= 6 && month <= 8) {
-    // July, August, September
-    return 'SUMMER';
-  } else {
-    // October, November, December
-    return 'FALL';
-  }
-}

@@ -81,6 +81,7 @@ export function useSearchForm() {
       const value = searchOptions[key];
       newSearchParams.set(key, value);
     }
+    newSearchParams.set('subject', 'media');
 
     window.history.replaceState(
       null,

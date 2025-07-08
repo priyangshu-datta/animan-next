@@ -1,30 +1,22 @@
 import { useSearchResults } from '@/lib/client/hooks/react_query/get/search-results';
-import { debounce, sentenceCase } from '@/utils/general';
+import { debounce } from '@/utils/general';
 import {
   Box,
   Button,
   Card,
   CardBody,
-  CardHeader,
-  DataList,
-  DataListDescription,
-  DataListItem,
-  DataListTerm,
   EmptyState,
   EmptyStateTitle,
   Flex,
-  Grid,
   Image,
+  Link,
   Loading,
-  Skeleton,
   Text,
-  Tooltip,
 } from '@yamada-ui/react';
-import Link from 'next/link';
+import NextLink from 'next/link';
 import { useMemo } from 'react';
-import MediaCard from '../media-card';
 
-export function SearchResults({ searchOptions }) {
+export default function SearchResults({ searchOptions }) {
   const { data, hasNextPage, fetchNextPage, isFetchingNextPage, isFetched } =
     useSearchResults({
       searchOptions,
@@ -36,23 +28,50 @@ export function SearchResults({ searchOptions }) {
     }
   });
 
-  const mediaCardDetails = useMemo(
+  const studioCardDetails = useMemo(
     () => (isFetched ? data.pages.flatMap((page) => page.searchResults) : []),
     [data, isFetched]
   );
 
   return (
     <>
-      <Flex w={'full'} gap={'4'} p={'2'} justify="center" wrap="wrap">
+      <Flex
+        w={'full'}
+        // gap={'2'}
+        // p={'4'}
+        justifyContent="center"
+        wrap="wrap"
+        mt="2"
+      >
         {isFetched ? (
-          mediaCardDetails.length < 1 ? (
+          studioCardDetails.length < 1 ? (
             <EmptyState>
               <EmptyStateTitle>No results found</EmptyStateTitle>
             </EmptyState>
           ) : (
-            mediaCardDetails.map(({ entry, media }) => {
+            studioCardDetails.map(({ studio }) => {
               return (
-                <MediaCard entry={entry} media={media} key={media.id} />
+                <Card
+                  w={{ md: 'full', base: '50%' }}
+                  flexShrink={0}
+                  position={'relative'}
+                  key={studio.id}
+                >
+                  <CardBody>
+                    <Link as={NextLink} href={`/studio?id=${studio.id}`}>
+                      <Text
+                        bottom={0}
+                        fontWeight={'bold'}
+                        lineClamp={2}
+                        p="2"
+                        w="full"
+                        fontSize={'lg'}
+                      >
+                        {studio.name}
+                      </Text>
+                    </Link>
+                  </CardBody>
+                </Card>
               );
             })
           )

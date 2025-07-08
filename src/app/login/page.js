@@ -33,7 +33,7 @@ function LoginPage() {
     document.title = 'Login';
   }, []);
 
-  const nextRoute = decodeURIComponent(params.get('next') ?? '/');
+  const nextRoute = decodeURIComponent(params.get('next') ?? '/home');
 
   useEffect(() => {
     if (provider) {
@@ -53,7 +53,7 @@ function LoginPage() {
           flexWrap={'wrap'}
         >
           <Image src={'/animan-logo.png'} width={'32'} alt={'AniMan'} />
-          {nextRoute !== '/' && (
+          {nextRoute !== '/home' && (
             <>
               Continue to <Text color={'blue.400'}>{nextRoute}</Text>
             </>

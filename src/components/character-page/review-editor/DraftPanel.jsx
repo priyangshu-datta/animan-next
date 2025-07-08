@@ -1,7 +1,7 @@
-import Spoiler from '@/components/spoiler'
-import { useMediaBasicDetailsByIds } from '@/lib/client/hooks/react_query/get/media/info/basic/by-ids'
-import { assocMedia } from '@/stores/assoc-media'
-import { Trash2Icon } from '@yamada-ui/lucide'
+import Spoiler from '@/components/spoiler';
+import { useMediaBasicDetailsByIds } from '@/lib/client/hooks/react_query/get/media/info/basic/by-ids';
+import { assocMedia } from '@/stores/assoc-media';
+import { Trash2Icon } from '@yamada-ui/lucide';
 import {
   Box,
   Card,
@@ -13,9 +13,9 @@ import {
   Skeleton,
   Text,
   VStack,
-} from '@yamada-ui/react'
-import { useState } from 'react'
-import { useFormContext } from 'react-hook-form'
+} from '@yamada-ui/react';
+import { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 export function DraftPanel({ drafts, setDrafts, changeTab }) {
   const { setValue: setFormValue } = useFormContext();
@@ -80,7 +80,7 @@ export function DraftPanel({ drafts, setDrafts, changeTab }) {
             <Flex gap={'3'} align={'start'} w={'full'}>
               {draft.associatedMediaId ? (
                 draft.media ? (
-                  <Box justifyContent="center" aspectRatio={2 / 3} w={'24'}>
+                  <Box justifyContent="center" aspectRatio={0.61805} w={'24'}>
                     <Image
                       src={draft.media.coverImage.extraLarge}
                       objectFit="cover"
@@ -90,7 +90,7 @@ export function DraftPanel({ drafts, setDrafts, changeTab }) {
                   </Box>
                 ) : (
                   <Skeleton>
-                    <Box justifyContent="center" aspectRatio={2 / 3} w={'24'}>
+                    <Box justifyContent="center" aspectRatio={0.61805} w={'24'}>
                       <Image objectFit="cover" w={'full'} h={'full'} />
                     </Box>
                   </Skeleton>

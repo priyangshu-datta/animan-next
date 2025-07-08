@@ -1,3 +1,5 @@
+import { assocMedia } from '@/stores/assoc-media';
+import { sentenceCase } from '@/utils/general';
 import {
   Box,
   Card,
@@ -12,8 +14,6 @@ import {
 import { Controller, useFormContext } from 'react-hook-form';
 import { ChooseMediaModal } from './ChooseMediaModal';
 import { useAssociatedMedia } from './hooks';
-import { assocMedia } from '@/stores/assoc-media';
-import { sentenceCase } from '@/utils/general';
 
 export function AssociatedMedia() {
   const { setValue: setFormValue, control } = useFormContext();
@@ -41,7 +41,7 @@ export function AssociatedMedia() {
               right={0}
               onClick={closeButtonHandler(setFormValue)}
             />
-            <Box w={'28'} aspectRatio={5 / 7} h={'full'}>
+            <Box w={'28'} aspectRatio={0.61805} h={'full'}>
               <Image
                 src={assocMediaData.coverImage}
                 w={'full'}

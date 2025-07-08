@@ -45,7 +45,7 @@ export const debounce = (func, delay = 500) => {
 };
 
 export const sentenceCase = (s) => {
-  return s.toLowerCase().replace(/\b\w/g, (s) => s.toUpperCase());
+  return s?.toLowerCase().replace(/\b\w/g, (s) => s.toUpperCase());
 };
 
 export function fuzzyRegexMatch(query, target) {
@@ -56,65 +56,6 @@ export function fuzzyRegexMatch(query, target) {
 
   const regex = new RegExp(pattern, 'i'); // case-insensitive
   return regex.test(target);
-}
-
-function createDateObject(dateParts) {
-  const { year, month, day } = dateParts;
-
-  if (year === null || typeof year === 'undefined') {
-    return null; // Or throw an error, year is required
-  }
-
-  if (month !== null && day !== null) {
-    // All parts present
-    return new Date(year, month - 1, day); // month - 1 because Date months are 0-indexed
-  } else if (month !== null) {
-    // Year and month present, default to 1st of the month
-    return new Date(year, month - 1, 1);
-  } else {
-    // Only year present, default to Jan 1st
-    return new Date(year, 0, 1);
-  }
-}
-
-export function formatPartialDate(dateParts) {
-  const dateObj = createDateObject(dateParts);
-
-  if (!dateObj) {
-    return 'Invalid Date'; // Or handle as appropriate
-  }
-
-  let options = {};
-  const { year, month, day } = dateParts;
-
-  options.year = 'numeric'; // Year is always present
-
-  if (month !== null) {
-    options.month = 'long'; // or 'short', '2-digit', 'numeric'
-  }
-  if (day !== null) {
-    options.day = 'numeric'; // or '2-digit'
-  }
-
-  // If only year is present, ensure no month/day formatting is requested
-  if (month === null && day === null) {
-    options = { year: 'numeric' };
-  } else if (day === null) {
-    // Year and month, but no day
-    options = { year: 'numeric', month: 'long' };
-  }
-  // else, year, month, and day are all present, use the options defined above
-
-  try {
-    const formatter = new Intl.DateTimeFormat(AppStorage.get('locale'), {
-      ...options,
-      timeZone: AppStorage.get('timezone'),
-    });
-    return formatter.format(dateObj);
-  } catch (e) {
-    console.error('Error formatting date:', e);
-    return 'Error';
-  }
 }
 
 /**
@@ -163,12 +104,12 @@ export function formatTimeLeft(nextAiringAt, duration = 0) {
   }
 }
 
-export function formatDateOfBirth(dateOfBirthInParts) {
-  const { day, month, year } = dateOfBirthInParts || {};
+export function formatPartialDate(dateInParts) {
+  const { day, month, year } = dateInParts || {};
 
   // Check if at least one component is present
   if (day === undefined && month === undefined && year === undefined) {
-    return 'Date of Birth Not Available';
+    return null;
   }
 
   let date;
@@ -197,7 +138,7 @@ export function formatDateOfBirth(dateOfBirthInParts) {
     options = { day: 'numeric' };
   } else {
     // This case should ideally be caught by the initial check, but as a fallback:
-    return 'Invalid Date of Birth Data';
+    return null;
   }
 
   // Create an Intl.DateTimeFormat instance

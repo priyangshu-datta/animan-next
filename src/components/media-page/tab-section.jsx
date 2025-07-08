@@ -3,6 +3,8 @@ import { useDeleteMediaReview } from '@/lib/client/hooks/react_query/delete/medi
 import { SNACK_DURATION } from '@/lib/constants';
 import {
   Button,
+  EmptyState,
+  EmptyStateTitle,
   Modal,
   ModalBody,
   ModalFooter,
@@ -106,13 +108,9 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
           <Tab className="shrink-0" style={{ margin: 0 }}>
             Characters
           </Tab>
-          {media.streamingEpisodes?.length ? (
-            <Tab className="shrink-0" style={{ margin: 0 }}>
-              Episodes
-            </Tab>
-          ) : (
-            ''
-          )}
+          <Tab className="shrink-0" style={{ margin: 0 }}>
+            Episodes
+          </Tab>
           <Tab className="shrink-0" style={{ margin: 0 }}>
             Related Media
           </Tab>
@@ -126,16 +124,23 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
         <TabPanel>
           <RelatedCharacters mediaId={media.id} mediaType={media.type} />
         </TabPanel>
-        {media.streamingEpisodes?.length ? (
-          <TabPanel>{!media.isLoading && <Episodes />}</TabPanel>
-        ) : (
-          ''
-        )}
+        <TabPanel>
+          {!media.isLoading ? (
+            media.streamingEpisodes?.length ? (
+              <Episodes />
+            ) : (
+              <EmptyState>
+                <EmptyStateTitle>No Episode links found</EmptyStateTitle>
+              </EmptyState>
+            )
+          ) : (
+            ''
+          )}
+        </TabPanel>
         <TabPanel>
           <RelatedMedia />
         </TabPanel>
         <TabPanel>
-
           <ReviewList
             mediaType={media.type}
             mediaId={media.id}

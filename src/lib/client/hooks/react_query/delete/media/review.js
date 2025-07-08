@@ -1,10 +1,10 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { rpcRequest } from '@/lib/client/api-clients/rpc-client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function useDeleteMediaReview({
   handleError = () => {},
   handleSuccess = () => {},
-} = {}) {
+}) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ reviewId, mediaType }) =>
@@ -14,12 +14,19 @@ export function useDeleteMediaReview({
       }),
     onSuccess: (_, { mediaId, mediaType, subjectType }) => {
       queryClient.invalidateQueries({
-        queryKey: [
-          'get:media:[subjectType]:reviews-paginated:{mediaId,mediaType,subjectType,cursor,limit}',
-          mediaId,
-          mediaType,
-          subjectType,
-        ],
+        predicate: (query) => {
+          return (
+            (query.queryKey[0] ===
+              'get:media:[subjectType]:reviews-paginated:{mediaId,mediaType,subjectType,cursor,limit}' &&
+              query.queryKey[1] === mediaId &&
+              query.queryKey[2] === mediaType &&
+              query.queryKey[3] === subjectType) ||
+            (query.queryKey[0] ===
+              'get:media:[subjectType]:reviews-paginated:{mediaType,subjectType,cursor,limit}' &&
+              query.queryKey[1] === 'anime' &&
+              query.queryKey[2] === 'all')
+          );
+        },
       });
       handleSuccess();
     },

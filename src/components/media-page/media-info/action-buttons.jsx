@@ -124,15 +124,15 @@ export default function ActionButtons({
       ) : (
         <>
           {media.status === 'NOT_YET_RELEASED' ? (
-            media.listEntry?.status !== 'PLANNING' && (
+            media.entry?.status !== 'PLANNING' && (
               <>
                 {components['DEFAULT']}
                 <Separator orientation="vertical" h={'20px'} />
               </>
             )
-          ) : media.listEntry ? (
+          ) : media.entry ? (
             <>
-              {components[media.listEntry.status]}
+              {components[media.entry.status]}
               <Separator orientation="vertical" h={'20px'} />
             </>
           ) : (
@@ -142,8 +142,8 @@ export default function ActionButtons({
             </>
           )}
 
-          <Button onClick={onEntryEditorOpen} variant={'outline'}>
-            {media.listEntry ? 'Update entry' : 'Track'}
+          <Button onClick={onEntryEditorOpen} variant={'outline'} size="sm">
+            {media.entry ? 'Update entry' : 'Track'}
           </Button>
         </>
       )}

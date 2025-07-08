@@ -23,7 +23,7 @@ export default function UserProviderNote() {
       </Tooltip>
       <Modal open={open} size="4xl">
         <ModalHeader>Your Anilist note</ModalHeader>
-        <ModalBody>{media.listEntry.notes}</ModalBody>
+        <ModalBody>{media.entry.notes}</ModalBody>
         <ModalFooter>
           <Button onClick={() => onClose()}>Close</Button>
         </ModalFooter>

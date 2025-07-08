@@ -13,7 +13,7 @@ export default function UpdateMediaProgress({ isPending, mutate }) {
         mutate({
           mediaId: media.id,
           mediaType: media.type,
-          progress: media.listEntry?.progress + 1,
+          progress: media.entry?.progress + 1,
         });
       }}
       disabled={isPending}

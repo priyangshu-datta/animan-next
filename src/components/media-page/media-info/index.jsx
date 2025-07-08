@@ -45,7 +45,7 @@ export default function MediaInfo({
 
       <CardBody>
         <VStack gap="0">
-          {media.listEntry && <MediaEntryStatus />}
+          {media.entry && <MediaEntryStatus />}
           <HStack>
             {media.isLoading ? (
               <SkeletonText>
@@ -64,7 +64,7 @@ export default function MediaInfo({
 
             <MediaToggleFavourite />
 
-            {media.listEntry?.notes && <UserProviderNote />}
+            {media.entry?.notes && <UserProviderNote />}
           </HStack>
         </VStack>
         <Flex gap={'1.5'} wrap={'wrap'}>

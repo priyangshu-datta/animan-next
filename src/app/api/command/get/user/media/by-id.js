@@ -12,7 +12,7 @@ export async function getUserMediaDetailsById(
   const MEDIA_LIST_ENTRY_QUERY = `query($mediaId: Int!, $mediaType: MediaType) {
     Media(id: $mediaId, type: $mediaType) {
       isFavourite
-      listEntry: mediaListEntry {
+      entry: mediaListEntry {
         id
         status
         startedAt {
@@ -67,7 +67,7 @@ export async function getUserMediaDetailsById(
   );
 
   return respondSuccess({
-    ...response.data.data.Media.listEntry,
+    ...response.data.data.Media.entry,
     isFavourite: response.data.data.Media.isFavourite,
   });
 }

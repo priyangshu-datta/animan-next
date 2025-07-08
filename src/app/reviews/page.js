@@ -225,6 +225,13 @@ function MediaReviewList({ setIsLoading, mediaType, subjectType }) {
     }
   });
 
+  useEffect(() => {
+    console.log({
+      anime: basicAnimeDetails.data,
+      manga: basicMangaDetails.data,
+    });
+  }, [basicAnimeDetails, basicMangaDetails]);
+
   return (
     <>
       <Grid gap="5">

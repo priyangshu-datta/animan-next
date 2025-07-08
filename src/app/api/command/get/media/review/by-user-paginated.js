@@ -141,9 +141,14 @@ export async function getMediaReviewsByUserPaginatedBySubjectType(
   const assocMedia = response.data.data.Page.media;
 
   const mergedResult = reviews.map((review) => {
+    const media = assocMedia.find((m) => {
+      console.log({ m, review, isEqual: m.id === review[`${mediaType}Id`] });
+      return m.id === review[`${mediaType}Id`];
+    });
+    console.log({ media });
     return {
       review,
-      assocMedia: assocMedia.find((m) => m.id === review[`${mediaType}Id`]),
+      assocMedia: media,
     };
   });
 

@@ -1,8 +1,10 @@
 import db from '@/db';
+import { ANILIST_GRAPHQL_ENDPOINT } from '@/lib/constants';
 import { AppError } from '@/lib/server/errors/AppError';
 import { ERROR_CODES } from '@/lib/server/errors/errorCodes';
 import { respondSuccess } from '@/lib/server/responses';
 import { snakeKeysToCamelKeys } from '@/utils/general';
+import axios from 'axios';
 import Joi from 'joi';
 
 export async function getMediaReviewsByUserPaginatedBySubjectType(
@@ -40,6 +42,7 @@ export async function getMediaReviewsByUserPaginatedBySubjectType(
     animanUserId: Joi.string().required(),
     cursor: Joi.date().iso(),
     limit: Joi.number().default(10),
+    providerAccessToken: Joi.string(),
   });
   const { error: metaError, value: metaValue } = metaSchema.validate(metadata, {
     stripUnknown: true,
@@ -55,7 +58,12 @@ export async function getMediaReviewsByUserPaginatedBySubjectType(
   }
 
   const { mediaType, subjectType } = contextValue;
-  const { animanUserId, cursor, limit } = metaValue;
+  const {
+    animanUserId,
+    cursor,
+    limit,
+    providerAccessToken: anilistAccessToken,
+  } = metaValue;
 
   const query = db(`${mediaType}_reviews`)
     .where('user_id', animanUserId)
@@ -97,5 +105,49 @@ export async function getMediaReviewsByUserPaginatedBySubjectType(
     }
   }
 
-  return respondSuccess({ reviews }, null, 200, { nextCursor });
+  const BASIC_MEDIAS_QUERY = `query($mediaIds: [Int], $mediaType: MediaType) {
+    Page{
+      media(id_in: $mediaIds, type: $mediaType) {
+        id
+        type
+        title {
+          userPreferred
+        }
+        coverImage {
+          extraLarge
+        }
+      }
+    }
+  }`;
+
+  const response = await axios.post(
+    ANILIST_GRAPHQL_ENDPOINT,
+    {
+      query: BASIC_MEDIAS_QUERY,
+      variables: {
+        mediaIds: reviews.map((review) =>
+          mediaType === 'anime' ? review.animeId : review.mangaId
+        ),
+        mediaType: mediaType.toUpperCase(),
+      },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${anilistAccessToken}`,
+      },
+    }
+  );
+
+  const assocMedia = response.data.data.Page.media;
+
+  const mergedResult = reviews.map((review) => {
+    return {
+      review,
+      assocMedia: assocMedia.find((m) => m.id === review[`${mediaType}Id`]),
+    };
+  });
+
+  return respondSuccess({ reviews: mergedResult }, null, 200, {
+    nextCursor,
+  });
 }

@@ -1,8 +1,13 @@
-import AppStorage from '@/utils/local-storage'
+import AppStorage from '@/utils/local-storage';
 import { Rating as YamadaRating, Tooltip } from '@yamada-ui/react';
 import { useEffect } from 'react';
 
-export function Rating({ score, stars = 5, maxScore = 10, label = '' }) {
+export default function Rating({
+  score,
+  stars = 5,
+  maxScore = 10,
+  label = '',
+}) {
   const normalizedScore = (stars * score) / maxScore;
   let locale;
   useEffect(() => {

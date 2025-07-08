@@ -96,7 +96,7 @@ export default function NavBar({}) {
         alignItems={'center'}
         gap="2"
       >
-        <Link as={NextLink} href="/" display={'initial'}>
+        <Link as={NextLink} href="/home" display={'initial'}>
           <Image src={'/animan-logo.png'} width={'12'} />
         </Link>
         {!isSmallScreen && <Text>AniMan</Text>}

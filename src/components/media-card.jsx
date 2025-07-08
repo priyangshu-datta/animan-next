@@ -21,7 +21,7 @@ import {
 } from '@yamada-ui/react';
 import NextLink from 'next/link';
 import { useEffect, useState } from 'react';
-import { Rating } from './rating';
+import Rating from './rating';
 
 export default function MediaCard({
   media,
@@ -81,13 +81,14 @@ export default function MediaCard({
   return (
     <Popover closeOnButton={false} trigger="hover">
       <PopoverTrigger>
-        <Box boxShadow={'2xl'} flexShrink={0}>
+        <Box aspectRatio={0.61805} boxShadow={'2xl'} flexShrink={0} w="32">
           <Image
             src={media?.coverImage?.extraLarge}
             objectFit="cover"
-            w="32"
-            aspectRatio={0.61805}
+            objectPosition={'center'}
             alt={media?.title?.userPreferred}
+            w="full"
+            h="full"
             _dark={{
               boxShadow: '0px 2px 5px 0px rgb(123 118 118 / 94%)',
             }}
@@ -177,7 +178,7 @@ export default function MediaCard({
                         }
                       }}
                       className="bg-[#E0E0E0] dark:bg-[#424242] hover:bg-[#BDBDBD] hover:dark:bg-[#616161]  focus:bg-[#BDBDBD] focus:dark:bg-[#616161]"
-                      cursor={'pointer'}
+                      cursor={isPending ? 'not-allowed' : 'pointer'}
                       rounded={'md'}
                       px="1"
                     >

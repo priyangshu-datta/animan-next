@@ -147,6 +147,8 @@ export async function getMediaReviewsByUserPaginatedBySubjectType(
     };
   });
 
+  console.dir(mergedResult, { depth: Infinity });
+
   return respondSuccess({ reviews: mergedResult }, null, 200, {
     nextCursor,
   });

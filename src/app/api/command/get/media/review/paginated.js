@@ -5,7 +5,7 @@ import { respondSuccess } from '@/lib/server/responses';
 import { snakeKeysToCamelKeys } from '@/utils/general';
 import Joi from 'joi';
 
-export async function getMedia$subjectType$ReviewsPaginated(context, metadata) {
+export async function getMediaReviewsPaginatedBySubjectType(context, metadata) {
   const contextSchema = Joi.object({
     mediaType: Joi.string().valid('anime', 'manga').lowercase(),
     mediaId: Joi.number().required(),

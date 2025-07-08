@@ -38,7 +38,7 @@ export async function getAnimeSchedule(
           extraLarge
         }
         bannerImage
-				listEntry: mediaListEntry {
+				entry: mediaListEntry {
 					status
 					progress
 				}

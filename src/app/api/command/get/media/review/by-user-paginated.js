@@ -5,7 +5,7 @@ import { respondSuccess } from '@/lib/server/responses';
 import { snakeKeysToCamelKeys } from '@/utils/general';
 import Joi from 'joi';
 
-export async function getMedia$subjectType$ReviewsByUserPaginated(
+export async function getMediaReviewsByUserPaginatedBySubjectType(
   context,
   metadata
 ) {

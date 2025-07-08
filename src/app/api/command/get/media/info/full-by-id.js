@@ -11,7 +11,7 @@ export async function getFullMediaInfoById(
 ) {
   const contextSchema = Joi.object({
     mediaId: Joi.alternatives().try(Joi.string().regex(/\d+/), Joi.number()),
-    mediaType: Joi.string().valid('ANIME', 'MANGA'),
+    mediaType: Joi.string().valid('ANIME', 'MANGA').uppercase(),
   });
 
   const { error: contextError, value: contextValue } =
@@ -46,20 +46,39 @@ export async function getFullMediaInfoById(
       airingAt
     }
     title {
+      native
+      romaji
+      english
       userPreferred
     }
-    listEntry: mediaListEntry {
+    entry: mediaListEntry {
+      id
       progress
       progressVolumes
-      id
       score
       status
       notes
+      createdAt
+      updatedAt
+      customLists
+      startedAt {
+        day
+        month
+        year
+      }
+      completedAt {
+        day
+        month
+        year
+      }
+      repeat
+      customLists
     }
     coverImage {
       extraLarge
     }
     meanScore
+    averageScore
     genres
     tags {
 			id
@@ -72,6 +91,65 @@ export async function getFullMediaInfoById(
       day
       month
       year
+    }
+    endDate {
+      day
+      month
+      year
+    }
+    duration
+    volumes
+    countryOfOrigin
+    synonyms
+    source
+    hashtag
+    rankings {
+      rank
+      type
+      format
+      year
+      season
+      allTime
+      context
+    }
+    stats {
+      scoreDistribution {
+        score
+        amount
+      }
+      statusDistribution {
+        status
+        amount
+      }
+    }
+    favourites
+    externalLinks {
+      id
+      url
+      site
+      siteId
+      type
+      language
+      color
+      icon
+      notes
+      isDisabled
+    }
+    streamingEpisodes {
+      title
+      thumbnail
+      url
+      site
+    }
+    studios {
+      edges {
+        isMain
+        studio: node {
+          id
+          name
+          isAnimationStudio
+        }
+      }
     }
   }
 }`;
@@ -96,6 +174,18 @@ export async function getFullMediaInfoById(
 
   return respondSuccess({
     ...response.data.data.Media,
+    ...(response.data.data.Media.studios && {
+      studios: response.data.data.Media.studios.edges.map(
+        ({ isMain, studio }) => ({ ...studio, isMain })
+      ),
+    }),
+    ...(response.data.data.Media.entry && {
+      entry: {
+        ...response.data.data.Media.entry,
+        createdAt: response.data.data.Media.entry.createdAt * 1000,
+        updatedAt: response.data.data.Media.entry.updatedAt * 1000,
+      },
+    }),
     ...(response.data.data.Media.nextAiringEpisode && {
       nextAiringEpisode: {
         ...response.data.data.Media.nextAiringEpisode,

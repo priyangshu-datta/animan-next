@@ -49,12 +49,13 @@ export async function getMediaRelatedMedia(
 						score
 						status
 					}
-					meanScore
+					averageScore
           episodes
           nextAiringEpisode {
             airingAt
             episode
           }
+          seasonYear
         }
       }
     }

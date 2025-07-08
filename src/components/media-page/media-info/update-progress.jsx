@@ -17,6 +17,7 @@ export default function UpdateMediaProgress({ isPending, mutate }) {
         });
       }}
       disabled={isPending}
+      size="sm"
     />
   );
 }

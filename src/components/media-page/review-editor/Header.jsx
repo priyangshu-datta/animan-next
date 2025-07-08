@@ -20,9 +20,15 @@ export function Header({ currentReviewMetadata }) {
   return (
     <HStack align={'start'}>
       <Box aspectRatio={0.61805} w={{ md: '20', base: '24' }}>
-        <Image src={media.coverImage.extraLarge} w={'full'} height={'full'} />
+        <Image
+          objectFit={'cover'}
+          objectPosition={'center'}
+          src={media.coverImage.extraLarge}
+          w={'full'}
+          height={'full'}
+        />
       </Box>
-      <VStack>
+      <VStack gap="2">
         <Flex gap={'sm'} alignItems={'baseline'}>
           <Heading size={{ base: 'lg', sm: 'md' }}>
             {media.title.userPreferred}
@@ -47,13 +53,13 @@ export function Header({ currentReviewMetadata }) {
             control={control}
             render={({ field }) => (
               <Select
-                size={{ base: 'md', sm: 'sm' }}
                 {...field}
+                variant={"flushed"}
                 disabled={!!currentReviewMetadata?.id}
                 w={'fit-content'}
                 items={REVIEW_CATEGORIES[media.type.toLowerCase()]}
-                onChange={(value) => {
-                  if (value === 'anime' || value === 'manga') {
+                onChange={(option) => {
+                  if (option === 'anime' || option === 'manga') {
                     const { unit, ...values } = getValues();
                     reset(values);
                   } else {
@@ -62,11 +68,11 @@ export function Header({ currentReviewMetadata }) {
                       ...(['episode', 'chapter'].includes(
                         currentReviewMetadata?.subjectType
                       ) && {
-                        unit: media.listEntry.progress ?? 0,
+                        unit: media.entry.progress ?? 0,
                       }),
                     });
                   }
-                  field.onChange(value);
+                  field.onChange(option);
                 }}
               />
             )}

@@ -1,42 +1,31 @@
 import { useMedia } from '@/context/use-media';
 import { useDeleteMediaReview } from '@/lib/client/hooks/react_query/delete/media/review';
-import { useMediaRelatedMedia } from '@/lib/client/hooks/react_query/get/media/related/media';
-import { REVIEW_CATEGORIES, SNACK_DURATION } from '@/lib/constants';
-import { Columns3Icon, Grid3x3Icon } from '@yamada-ui/lucide';
+import { SNACK_DURATION } from '@/lib/constants';
 import {
-  Accordion,
-  AccordionItem,
-  AccordionLabel,
-  AccordionPanel,
-  Box,
   Button,
-  Flex,
-  Loading,
   Modal,
   ModalBody,
   ModalFooter,
   ModalHeader,
-  Select,
-  Skeleton,
   Tab,
   TabList,
   TabPanel,
   Tabs,
-  Toggle,
-  ToggleGroup,
   useDisclosure,
   useNotice,
 } from '@yamada-ui/react';
-import { useEffect, useMemo, useState } from 'react';
-import MediaCard from '../media-card';
-import MediaCharacters from './related-characters';
-import ReviewList from './review-list';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import RelatedCharacters from './related-characters';
 import RelatedMedia from './related-media';
+import ReviewList from './review-list';
+import Details from './tabs/details';
+import Stats from './tabs/stats';
+import Episodes from './tabs/episodes-list';
 
 export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
   const media = useMedia();
-
-  const memoedDescription = useMemo(() => ({ __html: media.description }));
+  const searchParams = useSearchParams();
 
   const {
     open: openReviewDeleteModal,
@@ -79,22 +68,51 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
     });
   }
 
-  const [subjectType, setSubjectType] = useState();
+  const [tabIndex, setTabIndex] = useState();
 
   useEffect(() => {
-    setSubjectType(media.type === 'ANIME' ? 'episode' : 'chapter');
-  }, [media]);
+    const tabIndexUrl = parseInt(searchParams.get('tabIndex'));
+    setTabIndex(tabIndexUrl < 6 && tabIndexUrl > -1 ? tabIndexUrl : 0);
+  }, []);
 
   return (
     <>
-      <Tabs orientation="horizontal">
+      <Tabs
+        orientation="horizontal"
+        variant={'sticky'}
+        mt="2"
+        index={tabIndex}
+        onChange={(index) => {
+          const newSearchParams = new URLSearchParams();
+          newSearchParams.set('tabIndex', index);
+          newSearchParams.set('id', media.id);
+          newSearchParams.set('type', media.type);
+
+          window.history.replaceState(
+            null,
+            '',
+            `?${newSearchParams.toString()}`
+          );
+          setTabIndex(index);
+        }}
+      >
         <TabList className="overflow-x-auto">
           <Tab className="shrink-0" style={{ margin: 0 }}>
-            Description
+            Details
+          </Tab>
+          <Tab className="shrink-0" style={{ margin: 0 }}>
+            Stats
           </Tab>
           <Tab className="shrink-0" style={{ margin: 0 }}>
             Characters
           </Tab>
+          {media.streamingEpisodes?.length ? (
+            <Tab className="shrink-0" style={{ margin: 0 }}>
+              Episodes
+            </Tab>
+          ) : (
+            ''
+          )}
           <Tab className="shrink-0" style={{ margin: 0 }}>
             Related Media
           </Tab>
@@ -103,22 +121,22 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
           </Tab>
         </TabList>
 
-        <TabPanel dangerouslySetInnerHTML={memoedDescription} />
+        <TabPanel>{!media.isLoading && <Details />}</TabPanel>
+        <TabPanel>{!media.isLoading && <Stats />}</TabPanel>
         <TabPanel>
-          <MediaCharacters mediaId={media.id} mediaType={media.type} />
+          <RelatedCharacters mediaId={media.id} mediaType={media.type} />
         </TabPanel>
+        {media.streamingEpisodes?.length ? (
+          <TabPanel>{!media.isLoading && <Episodes />}</TabPanel>
+        ) : (
+          ''
+        )}
         <TabPanel>
           <RelatedMedia />
         </TabPanel>
         <TabPanel>
-          <Select
-            defaultValue={subjectType}
-            onChange={(option) => setSubjectType(option)}
-            items={REVIEW_CATEGORIES[media.type?.toLowerCase()]}
-          />
 
           <ReviewList
-            subjectType={subjectType}
             mediaType={media.type}
             mediaId={media.id}
             onDrawerOpen={onDrawerOpen}

@@ -12,6 +12,7 @@ import { Footer } from './Footer';
 import { Header } from './Header';
 import { useReviewEditor } from './hooks';
 import { SNACK_DURATION } from '@/lib/constants';
+import { useEffect } from 'react';
 
 export default function ReviewEditor({
   openReviewEditor,

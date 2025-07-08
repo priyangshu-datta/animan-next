@@ -7,7 +7,7 @@ export function Body({ drafts, setDrafts, snacks }) {
   const [index, onChange] = useState(0);
   return (
     <>
-      <Tabs variant="rounded" index={index} onChange={onChange}>
+      <Tabs variant="sticky-subtle" index={index} onChange={onChange}>
         <Tab>Drafts</Tab>
         <Tab>Editor</Tab>
 
@@ -18,9 +18,7 @@ export function Body({ drafts, setDrafts, snacks }) {
             changeTab={onChange}
           />
         </TabPanel>
-        <TabPanel px="0">
-          <EditorForm />
-        </TabPanel>
+        <TabPanel px="0"><EditorForm /></TabPanel>
       </Tabs>
 
       <Snacks snacks={snacks} />

@@ -45,8 +45,8 @@ export default function ReviewCard({ review }) {
         </Menu> */}
       </Flex>
 
-      <VStack align="start" spacing="2">
-        <Text fontSize="md" fontWeight="medium">
+      <VStack align="start" spacing="2" w="full">
+        <Text fontSize="md" fontWeight="medium" wordBreak={'break-word'}>
           {review.reviewText}
         </Text>
 
@@ -64,7 +64,7 @@ export default function ReviewCard({ review }) {
           {Intl.DateTimeFormat(AppStorage.get('locale'), {
             timeZone: AppStorage.get('timezone'),
             timeStyle: 'medium',
-            dateStyle: "long"
+            dateStyle: 'long',
           }).format(new Date(review.updatedAt))}
         </Text>
       </VStack>

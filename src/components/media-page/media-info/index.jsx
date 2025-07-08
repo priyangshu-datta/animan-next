@@ -1,13 +1,26 @@
-import { Card, CardBody, CardHeader, Flex, Heading, HStack, Image, Indicator, Skeleton, SkeletonText, Tag, useDisclosure, VStack } from "@yamada-ui/react"
-import EntryEditor from "../entry-editor"
-import ActionButtons from "./action-buttons"
-import MediaInfoDataList from "./info-datalist"
-import UserProviderNote from "./user-provider-note"
-import MediaEntryStatus from "./media-entry-status"
-import { useMedia } from "@/context/use-media"
-import MediaToggleFavourite from "./toggle-favourite"
-import MediaTags from "./tags"
-import NextLink from 'next/link';
+import { useMedia } from '@/context/use-media';
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  Heading,
+  HStack,
+  Image,
+  Indicator,
+  SkeletonText,
+  Tab,
+  TabPanel,
+  Tabs,
+  useDisclosure,
+  VStack,
+} from '@yamada-ui/react';
+import EntryEditor from '../entry-editor';
+import ActionButtons from './action-buttons';
+import MediaEntry from './entry';
+import MediaEntryStatus from './media-entry-status';
+import Overview from './overview';
+import MediaToggleFavourite from './toggle-favourite';
+import UserProviderNote from './user-provider-note';
 
 export default function MediaInfo({
   onReviewEditorOpen,
@@ -21,29 +34,24 @@ export default function MediaInfo({
     onClose: onEntryEditorClose,
   } = useDisclosure();
 
-  const { open, onToggle } = useDisclosure();
-
   return (
     <Card
       flexDirection={{ base: 'row', md: 'column' }}
       overflow="hidden"
       variant="elevated"
-      alignItems={{ md: 'center', base: 'start' }}
+      px={{ md: '4', base: '0' }}
+      gap="6"
     >
-      <CardHeader>
-        {media.isLoading ? (
-          <Skeleton minW={'40'} maxW={'68'} h={'max-content'} />
-        ) : (
-          <Image
-            src={media.coverImage?.extraLarge}
-            objectFit="cover"
-            minW={'40'}
-            maxW={'68'}
-          />
-        )}
+      <CardHeader p="0" alignSelf={{ md: 'center', base: 'start' }}>
+        <Image
+          src={media.coverImage?.extraLarge}
+          objectFit="cover"
+          w="64"
+          aspectRatio={0.61805}
+        />
       </CardHeader>
 
-      <CardBody>
+      <CardBody p="0">
         <VStack gap="0">
           {media.entry && <MediaEntryStatus />}
           <HStack>
@@ -67,29 +75,29 @@ export default function MediaInfo({
             {media.entry?.notes && <UserProviderNote />}
           </HStack>
         </VStack>
-        <Flex gap={'1.5'} wrap={'wrap'}>
-          {(media.genres ?? []).map((genre) => {
-            return (
-              <Tag
-                key={genre}
-                as={NextLink}
-                href={`/browse?mediaType=${media.type}&genresIn=${genre}`}
-              >
-                {genre}
-              </Tag>
-            );
-          })}
-
-          <MediaTags onToggle={onToggle} open={open} />
-        </Flex>
-
-        <MediaInfoDataList />
-
         <ActionButtons
           onEntryEditorOpen={onEntryEditorOpen}
           onReviewEditorOpen={onReviewEditorOpen}
           setCurrentReviewMetadata={setCurrentReviewMetadata}
         />
+        {!media.isLoading && (
+          <Tabs
+            variant={'sticky'}
+            defaultIndex={Number(
+              ['CURRENT', 'REPEATING'].includes(media.entry?.status)
+            )}
+          >
+            <Tab>Overview</Tab>
+            <Tab>My Entry</Tab>
+
+            <TabPanel p="2">
+              <Overview />
+            </TabPanel>
+            <TabPanel p="2">
+              <MediaEntry />
+            </TabPanel>
+          </Tabs>
+        )}
       </CardBody>
       <EntryEditor
         onEntryEditorClose={onEntryEditorClose}

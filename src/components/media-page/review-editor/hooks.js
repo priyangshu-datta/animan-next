@@ -54,10 +54,10 @@ export function useReviewEditor(
         ...(['episode', 'chapter'].includes(
           currentReviewMetadata?.subjectType
         ) && {
-          unit: media.listEntry.progress ?? 0,
+          unit: media.entry.progress ?? 0,
         }),
         ...(media.type === 'MANGA' && {
-          volume: media.listEntry.progressVolume ?? 0,
+          volume: media.entry.progressVolume ?? 0,
         }),
         subjectType:
           currentReviewMetadata?.subjectType ??

@@ -1,9 +1,17 @@
-import { useMedia } from "@/context/use-media"
-import { useUpdateUserMedia } from "@/lib/client/hooks/react_query/patch/user/media"
-import { CalendarIcon } from "@yamada-ui/lucide"
-import { Button, HStack, IconButton, Loading, Separator, Skeleton, useNotice } from "@yamada-ui/react"
-import ReviewButtonGroup from "./review-button"
-import UpdateMediaProgress from "./update-progress"
+import { useMedia } from '@/context/use-media';
+import { useUpdateUserMedia } from '@/lib/client/hooks/react_query/patch/user/media';
+import { MEDIA_ENTRY_STATUS } from '@/lib/constants';
+import { CalendarIcon } from '@yamada-ui/lucide';
+import {
+  Button,
+  HStack,
+  IconButton,
+  Loading,
+  Separator,
+  useNotice,
+} from '@yamada-ui/react';
+import ReviewButtonGroup from './review-button';
+import UpdateMediaProgress from './update-progress';
 
 function PlanningComponent({ isPending, mutate }) {
   const media = useMedia();
@@ -17,8 +25,17 @@ function PlanningComponent({ isPending, mutate }) {
           status: 'CURRENT',
         });
       }}
+      size="sm"
     >
-      {isPending ? <Loading /> : 'Start Watching'}
+      {isPending ? (
+        <Loading />
+      ) : (
+        `Start ${
+          MEDIA_ENTRY_STATUS[media.type?.toLowerCase()]?.find(
+            ({ value }) => value === 'CURRENT'
+          )?.label
+        }`
+      )}
     </Button>
   );
 }
@@ -61,6 +78,7 @@ export default function ActionButtons({
             status: 'PLANNING',
           });
         }}
+        size="sm"
       />
     ),
     CURRENT: (
@@ -118,9 +136,7 @@ export default function ActionButtons({
   return (
     <HStack wrap={'wrap'}>
       {media.isLoading ? (
-        <Skeleton w="64">
-          <Button>ecrwerwrewrwqrq</Button>
-        </Skeleton>
+        <Loading />
       ) : (
         <>
           {media.status === 'NOT_YET_RELEASED' ? (

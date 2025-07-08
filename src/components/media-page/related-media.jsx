@@ -1,30 +1,27 @@
 import { useMedia } from '@/context/use-media';
 import { useMediaRelatedMedia } from '@/lib/client/hooks/react_query/get/media/related/media';
+import { useDebounce } from '@/lib/client/hooks/use-debounce';
+import { MEDIA_FORMAT } from '@/lib/constants';
+import { fuzzyRegexMatch, sentenceCase } from '@/utils/general';
 import { Columns3Icon, Grid3x3Icon } from '@yamada-ui/lucide';
 import {
   Accordion,
   AccordionItem,
   AccordionLabel,
   AccordionPanel,
-  Box,
   DataListDescription,
   DataListItem,
   DataListTerm,
   Flex,
-  Heading,
   Input,
   Loading,
   Select,
-  Skeleton,
   Toggle,
   ToggleGroup,
   VStack,
 } from '@yamada-ui/react';
 import { useEffect, useState } from 'react';
 import MediaCard from '../media-card';
-import { fuzzyRegexMatch, sentenceCase } from '@/utils/general';
-import { useDebounce } from '@/lib/client/hooks/use-debounce';
-import { MEDIA_FORMAT } from '@/lib/constants';
 
 function fuzzySearchGrouped(query, data) {
   const results = [];
@@ -80,6 +77,7 @@ export default function RelatedMedia() {
     setSearchResult,
     fuzzySearchGrouped,
     debouncedSearchTerm,
+    mediaType,
   ]);
 
   return (
@@ -108,13 +106,13 @@ export default function RelatedMedia() {
             Object.groupBy(searchResult, ({ media }) => {
               return media.relationType;
             })
-          ).map(([key, value]) => (
-            <AccordionItem key={key}>
+          ).map(([relationType, mediaGroups]) => (
+            <AccordionItem key={relationType}>
               <AccordionLabel>
-                {sentenceCase(key.split('_').join(' '))}
+                {sentenceCase(relationType.split('_').join(' '))}
               </AccordionLabel>
               <AccordionPanel>
-                <CustomComponent value={value} />
+                <MediaGroupComponent mediaGroups={mediaGroups} />
               </AccordionPanel>
             </AccordionItem>
           ))}
@@ -126,7 +124,7 @@ export default function RelatedMedia() {
   );
 }
 
-function CustomComponent({ value }) {
+function MediaGroupComponent({ mediaGroups }) {
   const [cardGroupStyle, setCardGroupStyle] = useState('columns');
 
   return (
@@ -145,21 +143,30 @@ function CustomComponent({ value }) {
       </ToggleGroup>
       {cardGroupStyle === 'grid' && (
         <Flex gap="2" wrap="wrap" justify={'center'}>
-          {value?.map(({ media, entry }) => (
+          {mediaGroups?.map(({ media, entry }) => (
             <MediaCard
               media={media}
               entry={entry}
               key={media.id}
               dataListItems={
-                <DataListItem>
-                  <DataListTerm>Format</DataListTerm>
-                  <DataListDescription>
-                    {media.format &&
-                      MEDIA_FORMAT[media.type.toLowerCase()].find(
+                <>
+                  <DataListItem>
+                    <DataListTerm>Format</DataListTerm>
+                    <DataListDescription>
+                      {MEDIA_FORMAT[media.type.toLowerCase()].find(
                         ({ value }) => value === media.format
-                      ).label}
-                  </DataListDescription>
-                </DataListItem>
+                      )?.label ?? 'TBA'}
+                    </DataListDescription>
+                  </DataListItem>
+                  {media.seasonYear && (
+                    <DataListItem>
+                      <DataListTerm>Release Year</DataListTerm>
+                      <DataListDescription>
+                        {media.seasonYear}
+                      </DataListDescription>
+                    </DataListItem>
+                  )}
+                </>
               }
             />
           ))}
@@ -177,21 +184,30 @@ function CustomComponent({ value }) {
           }}
           bgColor={'whiteAlpha.100'}
         >
-          {value?.map(({ media, entry }) => (
+          {mediaGroups?.map(({ media, entry }) => (
             <MediaCard
               media={media}
               entry={entry}
               key={media.id}
               dataListItems={
-                <DataListItem>
-                  <DataListTerm>Format</DataListTerm>
-                  <DataListDescription>
-                    {media.format &&
-                      MEDIA_FORMAT[media.type.toLowerCase()].find(
+                <>
+                  <DataListItem>
+                    <DataListTerm>Format</DataListTerm>
+                    <DataListDescription>
+                      {MEDIA_FORMAT[media.type.toLowerCase()].find(
                         ({ value }) => value === media.format
-                      ).label}
-                  </DataListDescription>
-                </DataListItem>
+                      )?.label ?? 'TBA'}
+                    </DataListDescription>
+                  </DataListItem>
+                  {media.seasonYear && (
+                    <DataListItem>
+                      <DataListTerm>Release Year</DataListTerm>
+                      <DataListDescription>
+                        {media.seasonYear}
+                      </DataListDescription>
+                    </DataListItem>
+                  )}
+                </>
               }
             />
           ))}

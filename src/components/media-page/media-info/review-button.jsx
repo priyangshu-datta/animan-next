@@ -1,7 +1,15 @@
-import { useMedia } from "@/context/use-media"
-import { REVIEW_CATEGORIES } from "@/lib/constants"
-import { ChevronDownIcon } from "@yamada-ui/lucide"
-import { Button, ButtonGroup, IconButton, Menu, MenuButton, MenuItem, MenuList } from "@yamada-ui/react"
+import { useMedia } from '@/context/use-media';
+import { REVIEW_CATEGORIES } from '@/lib/constants';
+import { ChevronDownIcon } from '@yamada-ui/lucide';
+import {
+  Button,
+  ButtonGroup,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+} from '@yamada-ui/react';
 
 export default function ReviewButtonGroup({
   onReviewEditorOpen,
@@ -19,6 +27,7 @@ export default function ReviewButtonGroup({
           });
           onReviewEditorOpen();
         }}
+        size="sm"
       >
         Review
       </Button>
@@ -28,6 +37,7 @@ export default function ReviewButtonGroup({
           as={IconButton}
           icon={<ChevronDownIcon />}
           disabled={disabled}
+          size="sm"
         />
 
         <MenuList>

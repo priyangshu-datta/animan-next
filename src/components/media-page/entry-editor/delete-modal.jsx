@@ -1,4 +1,5 @@
 import { Button, Modal, ModalFooter, ModalHeader } from '@yamada-ui/react';
+import { useEffect } from 'react';
 
 export default function EntryDeleteConfirmationModal({
   deleteEntry,
@@ -6,6 +7,13 @@ export default function EntryDeleteConfirmationModal({
   onClose,
   open,
 }) {
+  useEffect(() => {
+    if (deleteEntry.isSuccess) {
+      deleteEntry.reset();
+      onClose();
+    }
+  }, [deleteEntry]);
+  
   return (
     <Modal open={open}>
       <ModalHeader>Are you sure?</ModalHeader>

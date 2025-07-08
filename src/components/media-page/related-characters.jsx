@@ -1,5 +1,8 @@
+import { useMedia } from '@/context/use-media';
 import { useMediaCharacters } from '@/lib/client/hooks/react_query/get/media/related/characters';
+import { useDebounce } from '@/lib/client/hooks/use-debounce';
 import { debounce, fuzzyRegexMatch, sentenceCase } from '@/utils/general';
+import { Columns3Icon, Grid3x3Icon, SpeechIcon } from '@yamada-ui/lucide';
 import {
   Accordion,
   AccordionItem,
@@ -14,7 +17,6 @@ import {
   EmptyState,
   EmptyStateTitle,
   Flex,
-  Grid,
   Heading,
   IconButton,
   Image,
@@ -35,7 +37,6 @@ import {
   PopoverHeader,
   PopoverTrigger,
   Separator,
-  Skeleton,
   Status,
   Text,
   Toggle,
@@ -43,13 +44,9 @@ import {
   useDisclosure,
   VStack,
 } from '@yamada-ui/react';
-// import CharacterCard from './character-card';
 import NextLink from 'next/link';
-import { Fragment, useEffect, useState } from 'react';
-import { useDebounce } from '@/lib/client/hooks/use-debounce';
-import { Columns3Icon, Grid3x3Icon, MicIcon } from '@yamada-ui/lucide';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import Spoiler from '../spoiler';
-import { useMedia } from '@/context/use-media';
 
 function fuzzySearchGrouped(query, data) {
   const results = [];
@@ -67,11 +64,12 @@ function fuzzySearchGrouped(query, data) {
   return results;
 }
 
-export default function MediaCharacters(props) {
-  const { mediaId, mediaType } = props;
+export default function RelatedCharacters(props) {
+  const media = useMedia();
+  // const { mediaId: media.id, mediaType: media.type } = props;
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetched } =
-    useMediaCharacters({ mediaId, mediaType });
+    useMediaCharacters({ mediaId: media.id, mediaType: media.type });
 
   const fetchMore = debounce(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -120,15 +118,13 @@ export default function MediaCharacters(props) {
           <Accordion toggle defaultIndex={0}>
             {Object.entries(
               Object.groupBy(searchResult, ({ character }) => character.role)
-            ).map(([characterRole, characterCardDetails]) => (
+            ).map(([characterRole, charactersGroup]) => (
               <AccordionItem key={characterRole}>
                 <AccordionLabel>
                   {sentenceCase(characterRole.split('_').join(' '))}
                 </AccordionLabel>
                 <AccordionPanel>
-                  <CustomComponent
-                    characterCardDetails={characterCardDetails}
-                  />
+                  <CharactersGroupComponent charactersGroup={charactersGroup} />
                 </AccordionPanel>
               </AccordionItem>
             ))}
@@ -155,7 +151,7 @@ export default function MediaCharacters(props) {
   );
 }
 
-function RelatedSubjectCard({ character, voiceActors }) {
+function RelatedCharacterCard({ character, voiceActors }) {
   const { open, onOpen, onClose } = useDisclosure();
   const [vaContext, setVAContext] = useState();
   const media = useMedia();
@@ -184,7 +180,7 @@ function RelatedSubjectCard({ character, voiceActors }) {
               e.stopPropagation();
             }}
           >
-            <MicIcon fontSize={'2xl'} />
+            <SpeechIcon fontSize={'2xl'} />
           </MenuButton>
 
           <MenuList>
@@ -206,72 +202,169 @@ function RelatedSubjectCard({ character, voiceActors }) {
         </Menu>
       </VStack>
 
-      <Modal open={open} size="4xl">
-        <ModalHeader>
-          <Heading size="xl" fontWeight={'normal'}>
-            {vaContext?.language} voice actor
-            {vaContext?.VAs?.length > 1 ? 's' : ''} voicing{' '}
-            <em>{character.name.userPreferred}</em> in{' '}
-            <strong>{media.title.userPreferred}</strong>
-          </Heading>
-        </ModalHeader>
-        <ModalBody>
-          <VStack>
-            {vaContext?.VAs?.map((va, index) => (
-              <Fragment key={`${media.id}-${va.id}`}>
-                <Flex gap="4">
-                  <Box boxShadow={'xl'} flexShrink={0}>
-                    <Image
-                      src={va?.image?.large}
-                      objectFit="cover"
-                      w="32"
-                      aspectRatio={0.61805}
-                      alt={va?.name?.userPreferred}
-                      _dark={{
-                        boxShadow: '0px 2px 5px 0px rgb(123 118 118 / 94%)',
-                      }}
-                      boxShadow={
-                        '0 1px 1px hsl(0deg 0% 0% / 0.075), 0 2px 2px hsl(0deg 0% 0% / 0.075), 0 4px 4px hsl(0deg 0% 0% / 0.075), 0 8px 8px hsl(0deg 0% 0% / 0.075), 0 16px 16px hsl(0deg 0% 0% / 0.075)'
-                      }
-                    />
-                  </Box>
-                  <VStack>
-                    <Heading size="lg" fontSize={'2xl'}>
-                      <Link
-                        as={NextLink}
-                        href={`/va?id=${va.id}`}
-                        color="link.200"
-                      >
-                        {va.name.userPreferred}
-                      </Link>
-                    </Heading>
-                    {va.roleNotes && (
-                      <Status>
-                        {va.name.userPreferred} voices{' '}
-                        <em>{character.name.userPreferred}</em> ({va.roleNotes})
-                        {va.dubGroup ? ` in ${va.dubGroup} dubbing` : '.'}
-                      </Status>
-                    )}
-                    {!va.roleNotes && va.dubGroup && (
-                      <Status>
-                        {va.name.userPreferred} voices{' '}
-                        <em>{character.name.userPreferred}</em> in {va.dubGroup}{' '}
-                        dubbing.
-                      </Status>
-                    )}
-                    {(va.roleNotes || va.dubGroup) && <Separator />}
-                    <Spoiler text={va.description} />
-                  </VStack>
-                </Flex>
-                {index !== vaContext.VAs.length - 1 && <Separator />}
-              </Fragment>
-            ))}
-          </VStack>
-        </ModalBody>
-        <ModalFooter>
-          <Button onClick={() => onClose()}>Close</Button>
-        </ModalFooter>
-      </Modal>
+      <VoiceActorsListModal
+        character={character}
+        media={media}
+        onClose={onClose}
+        open={open}
+        vaContext={vaContext}
+      />
+    </Flex>
+  );
+}
+
+function CharactersGroupComponent({ charactersGroup }) {
+  const [cardGroupStyle, setCardGroupStyle] = useState('columns');
+
+  return (
+    <VStack w="full" wrap="wrap" justify={'center'} gap="md">
+      <ToggleGroup
+        ml="auto"
+        value={cardGroupStyle}
+        onChange={setCardGroupStyle}
+      >
+        <Toggle value="columns" disabled={cardGroupStyle === 'columns'}>
+          <Columns3Icon />
+        </Toggle>
+        <Toggle value="grid" disabled={cardGroupStyle === 'grid'}>
+          <Grid3x3Icon />
+        </Toggle>
+      </ToggleGroup>
+      {cardGroupStyle === 'grid' && (
+        <Flex gap="2" wrap="wrap" justify={'center'}>
+          {charactersGroup.map(({ id, character, voiceActors }) => (
+            <RelatedCharacterCard
+              key={id}
+              character={character}
+              voiceActors={voiceActors}
+            />
+          ))}
+        </Flex>
+      )}
+      {cardGroupStyle === 'columns' && (
+        <Flex
+          gap="4"
+          w="full"
+          overflow={'auto'}
+          p="4"
+          boxShadow={'inner'}
+          _dark={{
+            boxShadow: '0px 0px 0px 0px rgba(255,255,255,1) inset',
+          }}
+          bgColor={'whiteAlpha.100'}
+        >
+          {charactersGroup.map(({ id, character, voiceActors }) => (
+            <RelatedCharacterCard
+              key={id}
+              character={character}
+              voiceActors={voiceActors}
+            />
+          ))}
+        </Flex>
+      )}
+    </VStack>
+  );
+}
+
+function VoiceActorsListModal({ character, media, onClose, open, vaContext }) {
+  return (
+    <Modal open={open} size="4xl">
+      <ModalHeader>
+        <Heading size="xl" fontWeight={'normal'}>
+          {vaContext?.language} voice actor
+          {vaContext?.VAs?.length > 1 ? 's' : ''} (
+          <em>{character.name.userPreferred}</em> in{' '}
+          <strong>{media.title.userPreferred}</strong>)
+        </Heading>
+      </ModalHeader>
+      <ModalBody>
+        <VStack>
+          {vaContext?.VAs?.map((va, index) => (
+            <Fragment key={`${media.id}-${va.id}`}>
+              <VoiceActorListItem character={character} voiceActor={va} />
+              {index !== vaContext.VAs.length - 1 && <Separator />}
+            </Fragment>
+          ))}
+        </VStack>
+      </ModalBody>
+      <ModalFooter>
+        <Button onClick={() => onClose()}>Close</Button>
+      </ModalFooter>
+    </Modal>
+  );
+}
+
+function VoiceActorListItem({ character, voiceActor }) {
+  const profileImageRef = useRef(null);
+  const descriptionRef = useRef(null);
+  const [startingHeight, setStartingHeight] = useState(135);
+
+  useEffect(() => {
+    if (descriptionRef.current && profileImageRef.current) {
+      setStartingHeight(
+        207 -
+          (descriptionRef.current.getBoundingClientRect().top -
+            profileImageRef.current.getBoundingClientRect().top) -
+          20
+      );
+    }
+  }, [voiceActor]);
+
+  return (
+    <Flex gap="4" align={'start'} position={'relative'}>
+      <Box boxShadow={'xl'} flexShrink={0} position={'sticky'} top="0">
+        <Image
+          ref={profileImageRef}
+          src={voiceActor?.image?.large}
+          objectFit="cover"
+          objectPosition={'center'}
+          w="32"
+          aspectRatio={0.61805}
+          alt={voiceActor?.name?.userPreferred}
+          _dark={{
+            boxShadow: '0px 2px 5px 0px rgb(123 118 118 / 94%)',
+          }}
+          boxShadow={
+            '0 1px 1px hsl(0deg 0% 0% / 0.075), 0 2px 2px hsl(0deg 0% 0% / 0.075), 0 4px 4px hsl(0deg 0% 0% / 0.075), 0 8px 8px hsl(0deg 0% 0% / 0.075), 0 16px 16px hsl(0deg 0% 0% / 0.075)'
+          }
+        />
+      </Box>
+      <VStack position="relative" h="full">
+        <Heading
+          size="lg"
+          fontSize={'2xl'}
+          position={'sticky'}
+          top="0"
+          zIndex="2"
+          bgColor={'white'}
+        >
+          <Link as={NextLink} href={`/va?id=${voiceActor.id}`} color="link.200">
+            {voiceActor.name.userPreferred}
+          </Link>
+        </Heading>
+        {voiceActor.roleNotes && (
+          <Status>
+            {voiceActor.name.userPreferred} voices{' '}
+            <em>{character.name.userPreferred}</em> ({voiceActor.roleNotes})
+            {voiceActor.dubGroup ? ` in ${voiceActor.dubGroup} dubbing` : '.'}
+          </Status>
+        )}
+        {!voiceActor.roleNotes && voiceActor.dubGroup && (
+          <Status>
+            {voiceActor.name.userPreferred} voices{' '}
+            <em>{character.name.userPreferred}</em> in {voiceActor.dubGroup}{' '}
+            dubbing.
+          </Status>
+        )}
+        {(voiceActor.roleNotes || voiceActor.dubGroup) &&
+          voiceActor.description && <Separator />}
+        <Box ref={descriptionRef}>
+          <Spoiler
+            text={voiceActor.description}
+            startingHeight={startingHeight}
+          />
+        </Box>
+      </VStack>
     </Flex>
   );
 }
@@ -317,58 +410,5 @@ function CharacterCard({
         </PopoverBody>
       </PopoverContent>
     </Popover>
-  );
-}
-
-function CustomComponent({ characterCardDetails }) {
-  const [cardGroupStyle, setCardGroupStyle] = useState('columns');
-
-  return (
-    <VStack w="full" wrap="wrap" justify={'center'} gap="md">
-      <ToggleGroup
-        ml="auto"
-        value={cardGroupStyle}
-        onChange={setCardGroupStyle}
-      >
-        <Toggle value="columns" disabled={cardGroupStyle === 'columns'}>
-          <Columns3Icon />
-        </Toggle>
-        <Toggle value="grid" disabled={cardGroupStyle === 'grid'}>
-          <Grid3x3Icon />
-        </Toggle>
-      </ToggleGroup>
-      {cardGroupStyle === 'grid' && (
-        <Flex gap="2" wrap="wrap" justify={'center'}>
-          {characterCardDetails.map(({ id, character, voiceActors }) => (
-            <RelatedSubjectCard
-              key={id}
-              character={character}
-              voiceActors={voiceActors}
-            />
-          ))}
-        </Flex>
-      )}
-      {cardGroupStyle === 'columns' && (
-        <Flex
-          gap="4"
-          w="full"
-          overflow={'auto'}
-          p="4"
-          boxShadow={'inner'}
-          _dark={{
-            boxShadow: '0px 0px 0px 0px rgba(255,255,255,1) inset',
-          }}
-          bgColor={'whiteAlpha.100'}
-        >
-          {characterCardDetails.map(({ id, character, voiceActors }) => (
-            <RelatedSubjectCard
-              key={id}
-              character={character}
-              voiceActors={voiceActors}
-            />
-          ))}
-        </Flex>
-      )}
-    </VStack>
   );
 }

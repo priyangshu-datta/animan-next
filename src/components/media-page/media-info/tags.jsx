@@ -7,19 +7,23 @@ import {
   Flex,
   Tag,
   Tooltip,
+  useDisclosure,
 } from '@yamada-ui/react';
-import { useState } from 'react';
 import NextLink from 'next/link';
+import { useState } from 'react';
 
-export default function MediaTags({ onToggle, open }) {
+export default function MediaTags() {
   const media = useMedia();
   const tags = media.tags ?? [];
   const [showSpoilerTags, setShowSpoilerTags] = useState(false);
+
+  const { open, onToggle } = useDisclosure();
+
   return (
     <>
       {!media.isLoading && (
         <Button variant={'link'} onClick={onToggle}>
-          See Tags
+          {open ? 'Hide' : 'See'} Tags
         </Button>
       )}
       <Collapse open={open}>

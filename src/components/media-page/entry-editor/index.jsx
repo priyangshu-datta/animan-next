@@ -111,6 +111,7 @@ export default function EntryEditor({ openEntryEditor, onEntryEditorClose }) {
         size="full"
         as={'form'}
         onSubmit={formMethods.handleSubmit(onSubmit)}
+        blockScrollOnMount={false}
       >
         <DrawerHeader>
           <Flex w="full" gap="md">

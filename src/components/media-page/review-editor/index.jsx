@@ -11,7 +11,7 @@ import { Body } from './Body';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { useReviewEditor } from './hooks';
-import { SNACK_DURATION } from '@/lib/constants'
+import { SNACK_DURATION } from '@/lib/constants';
 
 export default function ReviewEditor({
   openReviewEditor,
@@ -87,6 +87,7 @@ export default function ReviewEditor({
         size="full"
         as={'form'}
         onSubmit={methods.handleSubmit(onSubmit)}
+        blockScrollOnMount={false}
       >
         <DrawerHeader>
           <Header currentReviewMetadata={currentReviewMetadata} />

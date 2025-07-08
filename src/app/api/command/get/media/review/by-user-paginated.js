@@ -141,18 +141,13 @@ export async function getMediaReviewsByUserPaginatedBySubjectType(
   const assocMedia = response.data.data.Page.media;
 
   const mergedResult = reviews.map((review) => {
-    const media = assocMedia.find((m) => {
-      console.log({ m, review, isEqual: m.id === review[`${mediaType}Id`] });
-      return m.id === review[`${mediaType}Id`];
-    });
-    console.log({ media });
     return {
       review,
-      assocMedia: media,
+      assocMedia: assocMedia.find(
+        (m) => m.id === parseInt(review[`${mediaType}Id`])
+      ),
     };
   });
-
-  console.dir(response.data.data, { depth: Infinity });
 
   return respondSuccess({ reviews: mergedResult }, null, 200, {
     nextCursor,

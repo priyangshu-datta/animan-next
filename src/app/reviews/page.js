@@ -199,10 +199,6 @@ function MediaReviewList({ setIsLoading, mediaType, subjectType }) {
   );
 
   useEffect(() => {
-    console.log({ reviews });
-  }, [reviews]);
-
-  useEffect(() => {
     if (typeof isLoading === 'boolean') {
       setIsLoading(isLoading);
     }
@@ -226,8 +222,6 @@ function MediaReviewList({ setIsLoading, mediaType, subjectType }) {
             const emotionList = review.emotions
               ? review.emotions.split(';')
               : [];
-
-            console.log({ review });
 
             return (
               <Stack

@@ -16,7 +16,7 @@ import { getFullMediaInfoById } from './get/media/info/full-by-id';
 import { getCharacterReviewById } from './get/character/review/by-id';
 import { getCharacterReviewsPaginated } from './get/character/review/paginated';
 import { getMediaReviewById } from './get/media/review/by-id';
-import { getMedia$subjectType$ReviewsPaginated } from './get/media/review/paginated';
+import { getMediaReviewsPaginatedBySubjectType } from './get/media/review/paginated';
 
 import { patchCharacterReview } from './patch/character/review';
 import { patchMediaReview } from './patch/media/review';
@@ -41,7 +41,7 @@ import { getMediaTagCollection } from './get/media/tag-collection';
 import { getSearchResults } from './get/search-results';
 import { deleteUserMedia } from './delete/user/media';
 import { getAnimeSchedule } from './get/media/schedule';
-import { getMedia$subjectType$ReviewsByUserPaginated } from './get/media/review/by-user-paginated';
+import { getMediaReviewsByUserPaginatedBySubjectType } from './get/media/review/by-user-paginated';
 import { getCharacterReviewsByUserPaginated } from './get/character/review/by-user-paginated';
 import { getMediaRelatedMedia } from './get/media/related/media';
 
@@ -64,7 +64,7 @@ const COMMANDS = {
     getMediaRelatedCharacters,
 
   'anilist:get:media:[subjectType]:reviews-paginated:{mediaId,mediaType,subjectType,cursor,limit}':
-    getMedia$subjectType$ReviewsPaginated,
+    getMediaReviewsPaginatedBySubjectType,
 
   'anilist:get:character:reviews-paginated:{characterId,cursor,limit}':
     getCharacterReviewsPaginated,
@@ -111,7 +111,7 @@ const COMMANDS = {
 
   'anilist:get:anime:schedule': getAnimeSchedule,
   'anilist:get:media:[subjectType]:reviews-paginated:{mediaType,subjectType,cursor,limit}':
-    getMedia$subjectType$ReviewsByUserPaginated,
+    getMediaReviewsByUserPaginatedBySubjectType,
   'anilist:get:character:reviews-paginated:{cursor,limit}':
     getCharacterReviewsByUserPaginated,
 

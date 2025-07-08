@@ -1,14 +1,14 @@
 'use client';
 
-import CharacterReviewCard from '@/components/character-page/review-card'
-import Rating from '@/components/rating'
-import Spoiler from '@/components/spoiler'
-import { useCharacterReviewsByUserPaginated } from '@/lib/client/hooks/react_query/get/character/review/by-user-paginated'
-import { useMediaReviewsByUserPaginated } from '@/lib/client/hooks/react_query/get/media/review/by-user-paginated'
-import { MEDIA_TYPES, REVIEW_CATEGORIES } from '@/lib/constants'
-import { debounce, sentenceCase } from '@/utils/general'
-import AppStorage from '@/utils/local-storage'
-import { HeartIcon } from '@yamada-ui/lucide'
+import CharacterReviewCard from '@/components/character-page/review-card';
+import Rating from '@/components/rating';
+import Spoiler from '@/components/spoiler';
+import { useCharacterReviewsByUserPaginated } from '@/lib/client/hooks/react_query/get/character/review/by-user-paginated';
+import { useMediaReviewsByUserPaginated } from '@/lib/client/hooks/react_query/get/media/review/by-user-paginated';
+import { MEDIA_TYPES, REVIEW_CATEGORIES } from '@/lib/constants';
+import { debounce, sentenceCase } from '@/utils/general';
+import AppStorage from '@/utils/local-storage';
+import { HeartIcon } from '@yamada-ui/lucide';
 import {
   Badge,
   Box,
@@ -27,10 +27,10 @@ import {
   Stack,
   Text,
   VStack,
-} from '@yamada-ui/react'
-import NextLink from 'next/link'
-import { useSearchParams } from 'next/navigation'
-import { Suspense, useEffect, useMemo, useState } from 'react'
+} from '@yamada-ui/react';
+import NextLink from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 
 export default function ReviewsPage() {
   return (
@@ -199,6 +199,10 @@ function MediaReviewList({ setIsLoading, mediaType, subjectType }) {
   );
 
   useEffect(() => {
+    console.log({ reviews });
+  }, [reviews]);
+
+  useEffect(() => {
     if (typeof isLoading === 'boolean') {
       setIsLoading(isLoading);
     }
@@ -222,6 +226,8 @@ function MediaReviewList({ setIsLoading, mediaType, subjectType }) {
             const emotionList = review.emotions
               ? review.emotions.split(';')
               : [];
+
+            console.log({ review });
 
             return (
               <Stack
@@ -314,7 +320,6 @@ function MediaReviewList({ setIsLoading, mediaType, subjectType }) {
                 </VStack>
               </Stack>
             );
-            // <MediaReviewCard review={review} key={review.id} />
           })
         )}
       </Grid>

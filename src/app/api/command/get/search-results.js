@@ -16,110 +16,145 @@ export async function getSearchResults(
   { providerAccessToken: anilistAccessToken, ...metadata }
 ) {
   const contextSchema = Joi.object({
-    mediaType: Joi.string().valid('ANIME', 'MANGA').uppercase(),
-    query: Joi.string().min(3),
-    countryOfOrigin: Joi.string().length(2),
-    mediaSource: Joi.array().items(...MEDIA_SOURCE),
-    mediaSort: Joi.array().items(Joi.string()),
-    popularityLesser: Joi.number(),
-    popularityGreater: Joi.number(),
-    scoreLesser: Joi.number(),
-    scoreGreater: Joi.number(),
+    searchSubject: Joi.string()
+      .valid('media', 'characters', 'staffs', 'studios')
+      .required(),
+    searchVariables: Joi.object().when('searchSubject', {
+      switch: [
+        {
+          is: 'media',
+          then: Joi.object({
+            mediaType: Joi.string().valid('ANIME', 'MANGA').uppercase(),
+            query: Joi.string().min(3),
+            countryOfOrigin: Joi.string().length(2),
+            mediaSource: Joi.array().items(...MEDIA_SOURCE),
+            mediaSort: Joi.array().items(Joi.string()),
+            popularityLesser: Joi.number(),
+            popularityGreater: Joi.number(),
+            scoreLesser: Joi.number(),
+            scoreGreater: Joi.number(),
 
-    mediaTagIn: Joi.array().items(Joi.string()),
-    mediaTagNotIn: Joi.array().items(Joi.string()),
-    mediaTagCategoryIn: Joi.array().items(Joi.string()),
-    mediaTagCategoryNotIn: Joi.array().items(Joi.string()),
-    genresIn: Joi.array().items(Joi.string()),
-    genresNotIn: Joi.array().items(Joi.string()),
+            mediaTagIn: Joi.array().items(Joi.string()),
+            mediaTagNotIn: Joi.array().items(Joi.string()),
+            mediaTagCategoryIn: Joi.array().items(Joi.string()),
+            mediaTagCategoryNotIn: Joi.array().items(Joi.string()),
+            genresIn: Joi.array().items(Joi.string()),
+            genresNotIn: Joi.array().items(Joi.string()),
 
-    startDate: Joi.object({
-      year: Joi.number(),
-      month: Joi.number(),
-      day: Joi.number(),
-    }),
-    startDateLesser: Joi.object({
-      year: Joi.number(),
-      month: Joi.number(),
-      day: Joi.number(),
-    }),
-    startDateGreater: Joi.object({
-      year: Joi.number(),
-      month: Joi.number(),
-      day: Joi.number(),
-    }),
+            startDate: Joi.object({
+              year: Joi.number(),
+              month: Joi.number(),
+              day: Joi.number(),
+            }),
+            startDateLesser: Joi.object({
+              year: Joi.number(),
+              month: Joi.number(),
+              day: Joi.number(),
+            }),
+            startDateGreater: Joi.object({
+              year: Joi.number(),
+              month: Joi.number(),
+              day: Joi.number(),
+            }),
 
-    endDate: Joi.object({
-      year: Joi.number(),
-      month: Joi.number(),
-      day: Joi.number(),
-    }),
-    endDateLesser: Joi.object({
-      year: Joi.number(),
-      month: Joi.number(),
-      day: Joi.number(),
-    }),
-    endDateGreater: Joi.object({
-      year: Joi.number(),
-      month: Joi.number(),
-      day: Joi.number(),
-    }),
+            endDate: Joi.object({
+              year: Joi.number(),
+              month: Joi.number(),
+              day: Joi.number(),
+            }),
+            endDateLesser: Joi.object({
+              year: Joi.number(),
+              month: Joi.number(),
+              day: Joi.number(),
+            }),
+            endDateGreater: Joi.object({
+              year: Joi.number(),
+              month: Joi.number(),
+              day: Joi.number(),
+            }),
 
-    isAdult: Joi.bool().default(false),
-    onList: Joi.bool(),
-    isLicensed: Joi.bool(),
-  })
-    .when(Joi.object({ mediaType: 'ANIME' }).unknown(), {
-      then: Joi.object({
-        season: Joi.string().valid(...MEDIA_SEASONS),
-        seasonYear: Joi.string().length(4),
-        mediaFormatIn: Joi.array().items(
-          ...MEDIA_FORMAT['anime'].map((mf) => mf.value)
-        ),
-        mediaFormatNotIn: Joi.array().items(
-          ...MEDIA_FORMAT['anime'].map((mf) => mf.value)
-        ),
-        mediaStatusIn: Joi.array().items(
-          ...MEDIA_STATUS['anime'].map((mf) => mf.value)
-        ),
-        mediaStatusNotIn: Joi.array().items(
-          ...MEDIA_STATUS['anime'].map((mf) => mf.value)
-        ),
-        episodesLesser: Joi.number(),
-        episodesGreater: Joi.number(),
-        durationLesser: Joi.number(),
-        durationGreater: Joi.number(),
-      }),
-    })
-    .when(Joi.object({ mediaType: 'MANGA' }).unknown(), {
-      then: Joi.object({
-        mediaFormatIn: Joi.array().items(
-          ...MEDIA_FORMAT['manga'].map((mf) => mf.value)
-        ),
-        mediaFormatNotIn: Joi.array().items(
-          ...MEDIA_FORMAT['manga'].map((mf) => mf.value)
-        ),
-        mediaStatusIn: Joi.array().items(
-          ...MEDIA_STATUS['manga'].map((mf) => mf.value)
-        ),
-        mediaStatusNotIn: Joi.array().items(
-          ...MEDIA_STATUS['manga'].map((mf) => mf.value)
-        ),
-        chaptersLesser: Joi.number(),
-        chaptersGreater: Joi.number(),
-        volumesLesser: Joi.number(),
-        volumesGreater: Joi.number(),
-      }),
-    })
-    .oxor('startDate', 'startDateGreater')
-    .oxor('startDate', 'startDateLesser')
-    .oxor('endDate', 'endDateGreater')
-    .oxor('endDate', 'endDateLesser')
-    .oxor('mediaTagIn', 'mediaTagNotIn')
-    .oxor('genresIn', 'genresNotIn')
-    .oxor('mediaTagCategoryIn', 'mediaTagCategoryNotIn')
-    .oxor('mediaFormatIn', 'mediaFormatNotIn')
-    .oxor('mediaStatusIn', 'mediaStatusNotIn');
+            isAdult: Joi.bool().default(false),
+            onList: Joi.bool(),
+            isLicensed: Joi.bool(),
+          })
+            .when(Joi.object({ mediaType: 'ANIME' }).unknown(), {
+              then: Joi.object({
+                season: Joi.string().valid(...MEDIA_SEASONS),
+                seasonYear: Joi.string().length(4),
+                mediaFormatIn: Joi.array().items(
+                  ...MEDIA_FORMAT['anime'].map((mf) => mf.value)
+                ),
+                mediaFormatNotIn: Joi.array().items(
+                  ...MEDIA_FORMAT['anime'].map((mf) => mf.value)
+                ),
+                mediaStatusIn: Joi.array().items(
+                  ...MEDIA_STATUS['anime'].map((mf) => mf.value)
+                ),
+                mediaStatusNotIn: Joi.array().items(
+                  ...MEDIA_STATUS['anime'].map((mf) => mf.value)
+                ),
+                episodesLesser: Joi.number(),
+                episodesGreater: Joi.number(),
+                durationLesser: Joi.number(),
+                durationGreater: Joi.number(),
+              }),
+            })
+            .when(Joi.object({ mediaType: 'MANGA' }).unknown(), {
+              then: Joi.object({
+                mediaFormatIn: Joi.array().items(
+                  ...MEDIA_FORMAT['manga'].map((mf) => mf.value)
+                ),
+                mediaFormatNotIn: Joi.array().items(
+                  ...MEDIA_FORMAT['manga'].map((mf) => mf.value)
+                ),
+                mediaStatusIn: Joi.array().items(
+                  ...MEDIA_STATUS['manga'].map((mf) => mf.value)
+                ),
+                mediaStatusNotIn: Joi.array().items(
+                  ...MEDIA_STATUS['manga'].map((mf) => mf.value)
+                ),
+                chaptersLesser: Joi.number(),
+                chaptersGreater: Joi.number(),
+                volumesLesser: Joi.number(),
+                volumesGreater: Joi.number(),
+              }),
+            })
+            .oxor('startDate', 'startDateGreater')
+            .oxor('startDate', 'startDateLesser')
+            .oxor('endDate', 'endDateGreater')
+            .oxor('endDate', 'endDateLesser')
+            .oxor('mediaTagIn', 'mediaTagNotIn')
+            .oxor('genresIn', 'genresNotIn')
+            .oxor('mediaTagCategoryIn', 'mediaTagCategoryNotIn')
+            .oxor('mediaFormatIn', 'mediaFormatNotIn')
+            .oxor('mediaStatusIn', 'mediaStatusNotIn'),
+        },
+        {
+          is: 'characters',
+          then: Joi.object({
+            query: Joi.string().min(3),
+            isBirthday: Joi.boolean(),
+            characterSort: Joi.array().items(Joi.string()),
+          }),
+        },
+        {
+          is: 'staffs',
+          then: Joi.object({
+            query: Joi.string().min(3),
+            isBirthday: Joi.boolean(),
+            staffSort: Joi.array().items(Joi.string()),
+          }),
+        },
+        {
+          is: 'studios',
+          then: Joi.object({
+            query: Joi.string().min(3),
+            studioSort: Joi.array().items(Joi.string()),
+          }),
+        },
+      ],
+    }),
+  });
 
   const { error: contextError, value: contextValue } = contextSchema.validate(
     context,
@@ -158,7 +193,8 @@ export async function getSearchResults(
 
   const { page, perPage } = metadataValue;
 
-  const SEARCH_QUERY = `query (
+  const SEARCH_QUERY = {
+    media: `query (
   $page: Int = 1,
   $perPage: Int = 10,
 	$startDate: FuzzyDateInt
@@ -294,13 +330,63 @@ export async function getSearchResults(
 			}
 		}
 	}
-}`;
+}`,
+    characters: `query ($isBirthday: Boolean, $query: String, $characterSort: [CharacterSort], $page: Int = 1, $perPage: Int = 10) {
+  Page(page: $page, perPage: $perPage) {
+		pageInfo {
+			currentPage
+			hasNextPage
+		}
+    characters(isBirthday: $isBirthday, search: $query, sort: $characterSort) {
+      id
+      name {
+        userPreferred
+      }
+      image {
+        large
+      }
+    }
+  }
+}`,
+    staffs: `query ($isBirthday: Boolean, $query: String, $staffSort: [StaffSort], $page: Int = 1, $perPage: Int = 10) {
+  Page(page: $page, perPage: $perPage) {
+		pageInfo {
+			currentPage
+			hasNextPage
+		}
+		staffs: staff(isBirthday: $isBirthday, search: $query, sort: $staffSort) {
+			id
+			name {
+				userPreferred
+			}
+			image {
+				large
+			}
+		}
+  }
+}`,
+    studios: `query ($query: String, $page: Int = 1, $perPage: Int = 10, $studiosSort: [StudioSort]) {
+  Page(page: $page, perPage: $perPage) {
+		pageInfo {
+			currentPage
+			hasNextPage
+		}
+		studios(search: $query, sort: $studiosSort) {
+			id
+			name
+			isAnimationStudio
+		}
+  }
+}`,
+  };
+
+  const { searchSubject, searchVariables } = contextValue;
 
   const respone = await axios.post(
     ANILIST_GRAPHQL_ENDPOINT,
     {
-      query: SEARCH_QUERY,
-      variables: { ...contextValue, page, perPage },
+      query: SEARCH_QUERY[searchSubject],
+      variables: { ...searchVariables, page, perPage },
     },
     {
       headers: {
@@ -312,18 +398,45 @@ export async function getSearchResults(
   const baseData = respone.data.data.Page;
 
   const meta = baseData.pageInfo;
-  const data = baseData.media.map(({ entry, ...media }) => ({
-    entry,
-    media: {
-      ...media,
-      ...(media.nextAiringEpisode && {
-        nextAiringEpisode: {
-          ...media.nextAiringEpisode,
-          airingAt: media.nextAiringEpisode.airingAt * 1000,
+  switch (searchSubject) {
+    case 'media':
+      const data = baseData.media.map(({ entry, ...media }) => ({
+        entry,
+        media: {
+          ...media,
+          ...(media.nextAiringEpisode && {
+            nextAiringEpisode: {
+              ...media.nextAiringEpisode,
+              airingAt: media.nextAiringEpisode.airingAt * 1000,
+            },
+          }),
         },
-      }),
-    },
-  }));
+      }));
 
-  return respondSuccess(data, null, 200, meta);
+      return respondSuccess(data, null, 200, meta);
+
+    case 'characters':
+      return respondSuccess(
+        baseData.characters.map((character) => ({ character })),
+        null,
+        200,
+        meta
+      );
+
+    case 'staffs':
+      return respondSuccess(
+        baseData.staffs.map((staff) => ({ staff })),
+        null,
+        200,
+        meta
+      );
+
+    case 'studios':
+      return respondSuccess(
+        baseData.studios.map((studio) => ({ studio })),
+        null,
+        200,
+        meta
+      );
+  }
 }

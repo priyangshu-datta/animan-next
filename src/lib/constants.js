@@ -1,3 +1,11 @@
+import {
+  ArrowDown10Icon,
+  ArrowDownZAIcon,
+  ArrowUp10Icon,
+  ArrowUpZAIcon,
+} from '@yamada-ui/lucide';
+import { Flex, Text } from '@yamada-ui/react';
+
 export const SECOND_IN_MS = 1000;
 export const MINUTE_IN_MS = 60 * SECOND_IN_MS;
 export const QUARTER_HOUR_IN_MS = 15 * MINUTE_IN_MS;
@@ -167,11 +175,11 @@ export const COUNTRY_OF_ORIGIN = [
 export const MEDIA_FORMAT = {
   anime: [
     {
-      label: 'TV Show',
+      label: 'TV show',
       value: 'TV',
     },
     {
-      label: 'TV Short',
+      label: 'TV short',
       value: 'TV_SHORT',
     },
     {
@@ -227,60 +235,495 @@ export const MEDIA_SOURCE = [
   'MULTIMEDIA_PROJECT',
   'PICTURE_BOOK',
 ];
+
 export const MEDIA_SORT = [
-  { label: 'ID (Ascending)', value: 'ID' },
-  { label: 'ID (Descending)', value: 'ID_DESC' },
+  {
+    label: (
+      <Text>
+        ID <ArrowUp10Icon />
+      </Text>
+    ),
+    value: 'ID',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>ID</Text> <ArrowDownZAIcon />
+      </Flex>
+    ),
+    value: 'ID_DESC',
+  },
 
-  { label: 'Romaji Title (Ascending)', value: 'TITLE_ROMAJI' },
-  { label: 'Romaji Title (Descending)', value: 'TITLE_ROMAJI_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Romaji Title</Text> <ArrowUpZAIcon />
+      </Flex>
+    ),
+    value: 'TITLE_ROMAJI',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Romaji Title</Text> <ArrowDownZAIcon />
+      </Flex>
+    ),
+    value: 'TITLE_ROMAJI_DESC',
+  },
 
-  { label: 'English Title (Ascending)', value: 'TITLE_ENGLISH' },
-  { label: 'English Title (Descending)', value: 'TITLE_ENGLISH_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>English Title</Text> <ArrowUpZAIcon />
+      </Flex>
+    ),
+    value: 'TITLE_ENGLISH',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>English Title</Text> <ArrowDownZAIcon />
+      </Flex>
+    ),
+    value: 'TITLE_ENGLISH_DESC',
+  },
 
-  { label: 'Native Title (Ascending)', value: 'TITLE_NATIVE' },
-  { label: 'Native Title (Descending)', value: 'TITLE_NATIVE_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Native Title</Text> <ArrowUpZAIcon />
+      </Flex>
+    ),
+    value: 'TITLE_NATIVE',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Native Title</Text> <ArrowDownZAIcon />
+      </Flex>
+    ),
+    value: 'TITLE_NATIVE_DESC',
+  },
 
-  { label: 'Type (Ascending)', value: 'TYPE' },
-  { label: 'Type (Descending)', value: 'TYPE_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Type</Text> <ArrowUpZAIcon />
+      </Flex>
+    ),
+    value: 'TYPE',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Type</Text> <ArrowDownZAIcon />
+      </Flex>
+    ),
+    value: 'TYPE_DESC',
+  },
 
-  { label: 'Format (Ascending)', value: 'FORMAT' },
-  { label: 'Format (Descending)', value: 'FORMAT_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Format</Text> <ArrowUpZAIcon />
+      </Flex>
+    ),
+    value: 'FORMAT',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Format</Text> <ArrowDownZAIcon />
+      </Flex>
+    ),
+    value: 'FORMAT_DESC',
+  },
 
-  { label: 'Start Date (Ascending)', value: 'START_DATE' },
-  { label: 'Start Date (Descending)', value: 'START_DATE_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Start Date</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'START_DATE',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Start Date</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'START_DATE_DESC',
+  },
 
-  { label: 'End Date (Ascending)', value: 'END_DATE' },
-  { label: 'End Date (Descending)', value: 'END_DATE_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>End Date</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'END_DATE',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>End Date</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'END_DATE_DESC',
+  },
 
-  { label: 'Score (Ascending)', value: 'SCORE' },
-  { label: 'Score (Descending)', value: 'SCORE_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Score</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'SCORE',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Score</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'SCORE_DESC',
+  },
 
-  { label: 'Popularity (Ascending)', value: 'POPULARITY' },
-  { label: 'Popularity (Descending)', value: 'POPULARITY_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Popularity</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'POPULARITY',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Popularity</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'POPULARITY_DESC',
+  },
 
-  { label: 'Trending (Ascending)', value: 'TRENDING' },
-  { label: 'Trending (Descending)', value: 'TRENDING_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Trending</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'TRENDING',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Trending</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'TRENDING_DESC',
+  },
 
-  { label: 'Number of Episodes (Ascending)', value: 'EPISODES' },
-  { label: 'Number of Episodes (Descending)', value: 'EPISODES_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Number of Episodes</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'EPISODES',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Number of Episodes</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'EPISODES_DESC',
+  },
 
-  { label: 'Duration (Ascending)', value: 'DURATION' },
-  { label: 'Duration (Descending)', value: 'DURATION_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Duration</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'DURATION',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Duration</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'DURATION_DESC',
+  },
 
-  { label: 'Status (Ascending)', value: 'STATUS' },
-  { label: 'Status (Descending)', value: 'STATUS_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Status</Text> <ArrowUpZAIcon />
+      </Flex>
+    ),
+    value: 'STATUS',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Status</Text> <ArrowDownZAIcon />
+      </Flex>
+    ),
+    value: 'STATUS_DESC',
+  },
 
-  { label: 'Number of Chapters (Ascending)', value: 'CHAPTERS' },
-  { label: 'Number of Chapters (Descending)', value: 'CHAPTERS_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Number of Chapters</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'CHAPTERS',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Number of Chapters</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'CHAPTERS_DESC',
+  },
 
-  { label: 'Number of Volumes (Ascending)', value: 'VOLUMES' },
-  { label: 'Number of Volumes (Descending)', value: 'VOLUMES_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Number of Volumes</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'VOLUMES',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Number of Volumes</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'VOLUMES_DESC',
+  },
 
-  { label: 'Last Updated At (Ascending)', value: 'UPDATED_AT' },
-  { label: 'Last Updated At (Descending)', value: 'UPDATED_AT_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Last Updated At</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'UPDATED_AT',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Last Updated At</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'UPDATED_AT_DESC',
+  },
 
-  { label: 'Favourites (Ascending)', value: 'FAVOURITES' },
-  { label: 'Favourites (Descending)', value: 'FAVOURITES_DESC' },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Favourites</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'FAVOURITES',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Favourites</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'FAVOURITES_DESC',
+  },
+
+  { label: 'Search Match', value: 'SEARCH_MATCH' },
+];
+
+export const CHARACTER_SORT = [
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Role</Text> <ArrowUpZAIcon />
+      </Flex>
+    ),
+    value: 'ROLE',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Role</Text> <ArrowDownZAIcon />
+      </Flex>
+    ),
+    value: 'ROLE_DESC',
+  },
+
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Favourites</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'FAVOURITES',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Favourites</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'FAVOURITES_DESC',
+  },
+
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>ID</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'ID',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>ID</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'ID_DESC',
+  },
+
+  { label: 'Search Match', value: 'SEARCH_MATCH' },
+];
+
+export const STAFF_SORT = [
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Role</Text> <ArrowUpZAIcon />
+      </Flex>
+    ),
+    value: 'ROLE',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Role</Text> <ArrowDownZAIcon />
+      </Flex>
+    ),
+    value: 'ROLE_DESC',
+  },
+
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Favourites</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'FAVOURITES',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Favourites</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'FAVOURITES_DESC',
+  },
+
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Language</Text> <ArrowUpZAIcon />
+      </Flex>
+    ),
+    value: 'LANGUAGE',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Language</Text> <ArrowDownZAIcon />
+      </Flex>
+    ),
+    value: 'LANGUAGE_DESC',
+  },
+
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>ID</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'ID',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>ID</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'ID_DESC',
+  },
+
+  { label: 'Search Match', value: 'SEARCH_MATCH' },
+];
+
+export const STUDIO_SORT = [
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Name</Text> <ArrowUpZAIcon />
+      </Flex>
+    ),
+    value: 'NAME',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Name</Text> <ArrowDownZAIcon />
+      </Flex>
+    ),
+    value: 'NAME_DESC',
+  },
+
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Favourites</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'FAVOURITES',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>Favourites</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'FAVOURITES_DESC',
+  },
+
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>ID</Text> <ArrowUp10Icon />
+      </Flex>
+    ),
+    value: 'ID',
+  },
+  {
+    label: (
+      <Flex alignItems={'center'} gap="2">
+        <Text>ID</Text> <ArrowDown10Icon />
+      </Flex>
+    ),
+    value: 'ID_DESC',
+  },
 
   { label: 'Search Match', value: 'SEARCH_MATCH' },
 ];

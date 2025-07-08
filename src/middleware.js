@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+const PUBLIC_PATH = ['/', '/login'];
+
 /**
  * NextJS middleware function
  * @param {NextRequest} request
@@ -8,11 +10,14 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function middleware(request) {
   const pathname = request.nextUrl.pathname;
-  console.log(`[${request.method}] ${request.nextUrl.pathname}`);
+
   const cookieStore = await cookies();
-  if (!cookieStore.get('refresh_token')) {
-    // Optional redirect to login/auth
-    if (pathname !== '/login') {
+
+  const accessingPublicRoute = PUBLIC_PATH.includes(pathname);
+  const localSessionExists = !!cookieStore.get('refresh_token');
+
+  if (!localSessionExists) {
+    if (!accessingPublicRoute) {
       return NextResponse.redirect(
         new URL(
           `/login?next=${encodeURI(request.nextUrl.href)}`,
@@ -20,12 +25,11 @@ export async function middleware(request) {
         )
       );
     }
-
     return NextResponse.next();
   }
 
-  if (pathname === '/login') {
-    return NextResponse.redirect(new URL('/', request.nextUrl.origin));
+  if (accessingPublicRoute) {
+    return NextResponse.redirect(new URL('/home', request.nextUrl.origin));
   }
 
   return NextResponse.next();

@@ -1,33 +1,47 @@
 'use client';
 
-import MediaReviewCard from '@/components/media-page/review-card';
 import CharacterReviewCard from '@/components/character-page/review-card';
+import Rating from '@/components/rating';
+import Spoiler from '@/components/spoiler';
 import { useCharacterReviewsByUserPaginated } from '@/lib/client/hooks/react_query/get/character/review/by-user-paginated';
+import { useMediaBasicDetailsByIds } from '@/lib/client/hooks/react_query/get/media/info/basic/by-ids';
 import { useMediaReviewsByUserPaginated } from '@/lib/client/hooks/react_query/get/media/review/by-user-paginated';
 import { MEDIA_TYPES, REVIEW_CATEGORIES } from '@/lib/constants';
 import { debounce, sentenceCase } from '@/utils/general';
+import AppStorage from '@/utils/local-storage';
+import { HeartIcon } from '@yamada-ui/lucide';
 import {
+  Badge,
+  Box,
   Button,
   EmptyState,
   EmptyStateDescription,
   Flex,
   FormControl,
   Grid,
+  Heading,
+  HStack,
+  Image,
+  Link,
   Select,
   Separator,
+  Stack,
+  Text,
+  VStack,
 } from '@yamada-ui/react';
-import { Suspense, useEffect, useState } from 'react';
+import NextLink from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 
-export default function TimlinePage() {
+export default function ReviewsPage() {
   return (
     <Suspense>
-      <TimelinePageComponent />
+      <ReviewsPageComponent />
     </Suspense>
   );
 }
 
-function TimelinePageComponent() {
+function ReviewsPageComponent() {
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
 
@@ -49,6 +63,10 @@ function TimelinePageComponent() {
       ? 'all'
       : ''
   );
+
+  useEffect(() => {
+    document.title = 'My Reviews';
+  }, []);
 
   return (
     <Flex p="2" gap="4" direction={'column'}>
@@ -176,6 +194,25 @@ function MediaReviewList({ setIsLoading, mediaType, subjectType }) {
       subjectType,
     });
 
+  const reviews = useMemo(
+    () => data?.pages.flatMap((page) => page.data.reviews),
+    [data]
+  );
+
+  const basicAnimeDetails = useMediaBasicDetailsByIds({
+    mediaIds: reviews
+      ?.filter(({ animeId }) => !!animeId)
+      ?.map(({ animeId }) => animeId),
+    mediaType: mediaType.toUpperCase() === 'ANIME' ? 'ANIME' : undefined,
+  });
+
+  const basicMangaDetails = useMediaBasicDetailsByIds({
+    mediaIds: reviews
+      ?.filter(({ mangaId }) => !!mangaId)
+      ?.map(({ mangaId }) => mangaId),
+    mediaType: mediaType.toUpperCase() === 'MANGA' ? 'MANGA' : undefined,
+  });
+
   useEffect(() => {
     if (typeof isLoading === 'boolean') {
       setIsLoading(isLoading);
@@ -190,17 +227,120 @@ function MediaReviewList({ setIsLoading, mediaType, subjectType }) {
 
   return (
     <>
-      <Grid gap="2">
-        {data?.pages.flatMap((page) => page.data.reviews).length < 1 ? (
+      <Grid gap="5">
+        {reviews?.length < 1 ? (
           <EmptyState>
             <EmptyStateDescription>No Reviews found</EmptyStateDescription>
           </EmptyState>
         ) : (
-          data?.pages
-            .flatMap((page) => page.data.reviews)
-            .map((review) => (
-              <MediaReviewCard review={review} key={review.id} />
-            ))
+          reviews?.map((review) => {
+            const emotionList = review.emotions
+              ? review.emotions.split(';')
+              : [];
+
+            const assocMedia = (
+              mediaType === 'anime'
+                ? basicAnimeDetails.data?.data
+                : basicMangaDetails.data?.data
+            )?.find(({ id }) =>
+              mediaType === 'anime'
+                ? id === review.animeId
+                : id === review.mangaId
+            );
+
+            return (
+              <Stack
+                direction={{ md: 'column', base: 'row' }}
+                key={review.id}
+                position={'relative'}
+                alignItems={'start'}
+                borderWidth={'thin'}
+                gap="0"
+              >
+                <Box aspectRatio={0.61805} w="32" m={{ md: 'auto', base: '0' }}>
+                  <Image
+                    objectFit={'cover'}
+                    objectPosition={'center'}
+                    w="full"
+                    h="full"
+                    src={assocMedia?.coverImage?.extraLarge}
+                    alt={assocMedia?.title?.userPreferred}
+                  />
+                </Box>
+                <VStack gap="2" p="4" pt="2">
+                  <Link
+                    as={NextLink}
+                    href={`/media?id=${
+                      assocMedia?.id
+                    }&type=${mediaType.toUpperCase()}`}
+                  >
+                    <Heading size="lg" fontSize={'2xl'}>
+                      {assocMedia?.title?.userPreferred}
+                    </Heading>
+                  </Link>
+                  <Flex justify="space-between" align="start" mb="2">
+                    <HStack spacing="2">
+                      {review.favourite && (
+                        <HeartIcon color={'red'} fill={'red'} />
+                      )}
+                      {!['anime', 'manga'].includes(review.subjectType) && (
+                        <Badge colorScheme="primary" variant="solid">
+                          {review.subjectType === 'chapter' &&
+                            `Ch. ${review.chapterNumber}`}
+                          {review.subjectType === 'episode' &&
+                            `Ep. ${review.episodeNumber}`}
+                          {review.subjectType === 'volume' &&
+                            `Vl. ${review.volume}`}
+                        </Badge>
+                      )}
+                      <Rating score={review.rating} maxScore={10} stars={5} />
+                    </HStack>
+                  </Flex>
+
+                  {emotionList.length > 0 && (
+                    <HStack spacing="1" flexWrap="wrap">
+                      {emotionList.map((emotion) => (
+                        <Badge
+                          key={emotion}
+                          colorScheme="pink"
+                          variant="subtle"
+                        >
+                          {emotion}
+                        </Badge>
+                      ))}
+                    </HStack>
+                  )}
+                  <Link
+                    as={NextLink}
+                    href={`/media?id=${
+                      assocMedia?.id
+                    }&type=${mediaType}&tabIndex=${5}&reviewType=${
+                      review.subjectType
+                    }#${review.id}`}
+                  >
+                    Go to Review
+                  </Link>
+                  <Box align="start" spacing="2" w="full" mb="3">
+                    <Spoiler text={review.reviewText} />
+                  </Box>
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    mt="2"
+                    position={'absolute'}
+                    bottom={2}
+                  >
+                    {Intl.DateTimeFormat(AppStorage.get('locale'), {
+                      timeZone: AppStorage.get('timezone'),
+                      timeStyle: 'medium',
+                      dateStyle: 'long',
+                    }).format(new Date(review.updatedAt))}
+                  </Text>
+                </VStack>
+              </Stack>
+            );
+            // <MediaReviewCard review={review} key={review.id} />
+          })
         )}
       </Grid>
       <Button

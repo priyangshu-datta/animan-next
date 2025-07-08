@@ -67,6 +67,7 @@ function SchedulePage() {
     parseInt(searchParams.get('offset') ?? 0)
   );
   const [scheduleIsLoading, setIsLoading] = useState();
+  const [onList, setOnList] = useState('all');
 
   const {
     data: userCurrentMedia,
@@ -78,15 +79,6 @@ function SchedulePage() {
     mediaEntryStatus: 'CURRENT',
     perPage: 25,
   });
-
-  useEffect(() => {
-    if (userCurrentMedia && hasNextPage) {
-      fetchNextPage();
-    }
-  }, [userCurrentMedia]);
-
-  const [onList, setOnList] = useState('all');
-
   const releasingMediaIds = useMemo(
     () =>
       (userCurrentMedia?.pages ?? [])
@@ -95,6 +87,16 @@ function SchedulePage() {
         .map((entry) => entry.media.id),
     [userCurrentMedia]
   );
+
+  useEffect(() => {
+    if (userCurrentMedia && hasNextPage) {
+      fetchNextPage();
+    }
+  }, [userCurrentMedia]);
+
+  useEffect(() => {
+    document.title = 'Schedule';
+  }, []);
 
   return (
     <Flex w="full" justifyContent={'center'} direction={'column'} gap="4">
@@ -523,7 +525,7 @@ function ScheduleTimeline({
 function Gallery({ carouselRef, data, markerHistory }) {
   return (
     <Carousel
-      slideSize={'50%'}
+      slideSize={{ base: '50%', md: '100%' }}
       autoplay
       onChange={(index) => {
         carouselRef.current = index;
@@ -554,7 +556,7 @@ function Gallery({ carouselRef, data, markerHistory }) {
               >
                 <Box
                   w="32"
-                  aspectRatio={8.7 / 12}
+                  aspectRatio={0.61805}
                   alignSelf={'end'}
                   boxShadow={'dark-lg'}
                   flexShrink={0}
@@ -583,29 +585,29 @@ function Gallery({ carouselRef, data, markerHistory }) {
                     nextEp={nextEp}
                   />
 
-                  {media.listEntry && (
+                  {media.entry && (
                     <Box>
-                      {media.listEntry.status === 'CURRENT' ? (
+                      {media.entry.status === 'CURRENT' ? (
                         <Flex gap="1">
                           You&apos;re <Text as="em">watching</Text> this.
                         </Flex>
-                      ) : media.listEntry.status === 'PLANNING' ? (
+                      ) : media.entry.status === 'PLANNING' ? (
                         <Flex gap="1">
                           This is on your <Text as="em">planning</Text> list.
                         </Flex>
-                      ) : media.listEntry.status === 'PAUSED' ? (
+                      ) : media.entry.status === 'PAUSED' ? (
                         <Flex gap="1">
                           You have <Text as="em">paused</Text> this.
                         </Flex>
-                      ) : media.listEntry.status === 'DROPPED' ? (
+                      ) : media.entry.status === 'DROPPED' ? (
                         <Flex gap="1">
                           You have <Text as="em">dropped</Text> this.
                         </Flex>
-                      ) : media.listEntry.status === 'REPEATING' ? (
+                      ) : media.entry.status === 'REPEATING' ? (
                         <Flex gap="1">
                           You are <Text as="em">re-watching</Text> this.
                         </Flex>
-                      ) : media.listEntry.status === 'COMPLETED' ? (
+                      ) : media.entry.status === 'COMPLETED' ? (
                         <Flex gap="1">
                           You <Text as="em">finished</Text> this.
                         </Flex>

@@ -11,7 +11,9 @@ export async function getBasicMediaInfoByIds(
 ) {
   const contextSchema = Joi.object({
     mediaIds: Joi.array().items(Joi.number()),
-    mediaType: Joi.string().valid(...MEDIA_TYPES),
+    mediaType: Joi.string()
+      .valid(...MEDIA_TYPES)
+      .uppercase(),
   });
 
   const { value, error } = contextSchema.validate(context);

@@ -113,8 +113,12 @@ export default function MediaCard({
                 {media?.status === 'NOT_YET_RELEASED' && media?.startDate?.year
                   ? 'Release in'
                   : media?.status === 'RELEASING'
-                  ? 'Airs'
-                  : 'Airing'}
+                  ? media?.type === 'ANIME'
+                    ? 'Airs'
+                    : 'Publishes'
+                  : media?.type === 'ANIME'
+                  ? 'Airing'
+                  : 'Publishing'}
               </DataListTerm>
               <DataListDescription>
                 {media?.type === 'ANIME'

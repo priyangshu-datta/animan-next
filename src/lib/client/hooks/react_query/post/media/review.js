@@ -11,12 +11,19 @@ export function useCreateMediaReview({ mediaId, mediaType, subjectType }) {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: [
-          'get:media:[subjectType]:reviews-paginated:{mediaId,mediaType,subjectType,cursor,limit}',
-          mediaId,
-          mediaType,
-          subjectType,
-        ],
+        predicate: (query) => {
+          return (
+            (query.queryKey[0] ===
+              'get:media:[subjectType]:reviews-paginated:{mediaId,mediaType,subjectType,cursor,limit}' &&
+              query.queryKey[1] === mediaId &&
+              query.queryKey[2] === mediaType &&
+              query.queryKey[3] === subjectType) ||
+            (query.queryKey[0] ===
+              'get:media:[subjectType]:reviews-paginated:{mediaType,subjectType,cursor,limit}' &&
+              query.queryKey[1] === 'anime' &&
+              query.queryKey[2] === 'all')
+          );
+        },
       });
     },
   });

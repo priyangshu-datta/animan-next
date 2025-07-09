@@ -30,7 +30,13 @@ export function useUpdateMediaReview({
             query.queryKey[2] === mediaType &&
             query.queryKey[3] === subjectType;
 
-          return updateReviewById || updateReviews;
+          const updateUserReviews =
+            query.queryKey[0] ===
+              'get:media:[subjectType]:reviews-paginated:{mediaType,subjectType,cursor,limit}' &&
+            query.queryKey[1] === 'anime' &&
+            query.queryKey[2] === 'all';
+
+          return updateReviewById || updateReviews || updateUserReviews;
         },
       });
     },

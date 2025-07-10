@@ -1175,3 +1175,5 @@ export const TIMEZONES = [
   'Pacific/Wallis',
   'UTC',
 ];
+
+export const PUBLIC_PATH = ['/', '/login'];

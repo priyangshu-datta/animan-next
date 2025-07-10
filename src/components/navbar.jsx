@@ -1,16 +1,18 @@
 'use client';
 
-import { useUserInfo } from '@/lib/client/hooks/react_query/get/user/info'
-import { authStore } from '@/stores/auth-store'
-import AppStorage from '@/utils/local-storage'
+import { useUserInfo } from '@/lib/client/hooks/react_query/get/user/info';
+import { PUBLIC_PATH } from '@/lib/constants';
+import { authStore } from '@/stores/auth-store';
+import AppStorage from '@/utils/local-storage';
 import {
   CalendarDaysIcon,
+  ClockAlertIcon,
   LogOutIcon,
   NotebookIcon,
   SearchIcon,
   Settings2Icon,
-  UserRoundIcon
-} from '@yamada-ui/lucide'
+  UserRoundIcon,
+} from '@yamada-ui/lucide';
 import {
   Avatar,
   Box,
@@ -28,19 +30,25 @@ import {
   useColorModeValue,
   useMediaQuery,
   useSnacks,
-} from '@yamada-ui/react'
-import axios from 'axios'
-import NextLink from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useRef } from 'react'
+} from '@yamada-ui/react';
+import axios from 'axios';
+import NextLink from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef } from 'react';
 
 export default function NavBar({}) {
-  const router = useRouter();
   const pathname = usePathname();
 
-  if (pathname.includes('/login')) {
-    return;
+  if (PUBLIC_PATH.includes(pathname)) {
+    return <></>;
   }
+
+  return <AuthenticatedNavBar />;
+}
+
+function AuthenticatedNavBar() {
+  const router = useRouter();
+  const pathname = usePathname();
 
   const bgColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.100');
 
@@ -60,19 +68,13 @@ export default function NavBar({}) {
       userData &&
       !(userData?.locale?.length > 0 && userData.timezone.length > 0)
     ) {
+      if (snackRef.current) {
+        snack.close(snackRef.current);
+      }
       snackRef.current = snack({
         status: 'warning',
-        description: (
-          <Flex gap="1" p="1" alignItems={'center'}>
-            Go to{' '}
-            <Link as={NextLink} href={'/profile'}>
-              <Text>settings</Text>
-            </Link>{' '}
-            to set your locale and timezone.
-          </Flex>
-        ),
+        component: () => <SnackBarComponent />,
         isClosable: false,
-        variant: 'solid',
       });
     } else if (!(locale && timezone)) {
       if (userData?.locale?.length > 0 && userData?.timezone?.length > 0) {
@@ -85,17 +87,23 @@ export default function NavBar({}) {
   }, [userData, pathname]);
 
   const [isSmallScreen] = useMediaQuery(['(width < 786px)']);
-
+  function handleLogout() {
+    axios
+      .delete(`${window.location.origin}/api/auth/logout`, {
+        headers: {
+          Authorization: `Bearer ${authStore.getState().accessToken}`,
+        },
+      })
+      .catch((error) => {
+        if (error.status) {
+          authStore.setState({ accessToken: null, userId: null });
+          router.push(error.response.data.data.redirect);
+        }
+      });
+  }
   return (
     <>
-      <Flex
-        w="full"
-        bgColor={bgColor}
-        p="4"
-        mb="4"
-        alignItems={'center'}
-        gap="2"
-      >
+      <Flex w="full" bgColor={bgColor} p="4" alignItems={'center'} gap="2">
         <Link as={NextLink} href="/home" display={'initial'}>
           <Image src={'/animan-logo.png'} width={'12'} />
         </Link>
@@ -187,22 +195,21 @@ export default function NavBar({}) {
               </>
             )}
 
-
             <MenuItem
               as={NextLink}
               href="/profile"
               icon={
                 <Settings2Icon
-                fontSize={'lg'}
-                _dark={{ stroke: 'white' }}
-                stroke={'black'}
+                  fontSize={'lg'}
+                  _dark={{ stroke: 'white' }}
+                  stroke={'black'}
                 />
               }
             >
               Settings
             </MenuItem>
 
-              <MenuSeparator />
+            <MenuSeparator />
 
             <MenuItem
               onClick={() => handleLogout()}
@@ -219,26 +226,36 @@ export default function NavBar({}) {
           </MenuList>
         </Menu>
       </Flex>
-      {pathname !== '/profile' && (
-        <Box px={'4'}>
-          <Snacks snacks={snacks} mb="4" />
-        </Box>
-      )}
+      {pathname !== '/profile' && <Snacks snacks={snacks} />}
     </>
   );
+}
 
-  function handleLogout() {
-    axios
-      .delete(`${window.location.origin}/api/auth/logout`, {
-        headers: {
-          Authorization: `Bearer ${authStore.getState().accessToken}`,
-        },
-      })
-      .catch((error) => {
-        if (error.status) {
-          authStore.setState({ accessToken: null, userId: null });
-          router.push(error.response.data.data.redirect);
-        }
-      });
-  }
+function SnackBarComponent() {
+  return (
+    <Box py="2" w="fit-content" m="auto">
+      <Flex
+        gap="1"
+        py="0.5"
+        alignItems={'center'}
+        p="2"
+        px="4"
+        bgColor={'#F97415'}
+        color="black"
+        textShadow={'lg'}
+        rounded={'md'}
+        fontSize={'lg'}
+      >
+        <ClockAlertIcon />
+
+        <Text>
+          Go to{' '}
+          <Link as={NextLink} href={'/profile'} color="white" textShadow={'lg'}>
+            <Settings2Icon />
+          </Link>{' '}
+          to set your locale and timezone.
+        </Text>
+      </Flex>
+    </Box>
+  );
 }

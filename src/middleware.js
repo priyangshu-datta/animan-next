@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-
-const PUBLIC_PATH = ['/', '/login'];
+import { PUBLIC_PATH } from './lib/constants';
 
 /**
  * NextJS middleware function

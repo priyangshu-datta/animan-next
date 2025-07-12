@@ -101,9 +101,7 @@ const AppStorage = {
       const serializedValue = localStorage.getItem(APP_PREFIX + String(key));
       if (serializedValue === null) {
         // Key not found in localStorage, return default value from map
-        return this.DEFAULT_VALUES_MAP[key] !== undefined
-          ? this.DEFAULT_VALUES_MAP[key]
-          : null;
+        return this.DEFAULT_VALUES_MAP[key];
       }
       const parsedValue = JSON.parse(serializedValue);
 

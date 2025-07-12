@@ -22,7 +22,7 @@ export default function RootLayoutWrapper({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ColorModeScript />
+        <ColorModeScript initialColorMode="system" />
         <UIProvider>
           <Providers>
             <NavBar />

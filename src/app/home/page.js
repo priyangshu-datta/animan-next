@@ -90,6 +90,7 @@ function HomePageComponent() {
         className="max-w-6xl mx-auto px-4"
         gap="2"
         align="center"
+        p="2"
       >
         <Grid
           position={'sticky'}

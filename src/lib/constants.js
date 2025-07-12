@@ -4,7 +4,10 @@ import {
   ArrowUp10Icon,
   ArrowUpZAIcon,
 } from '@yamada-ui/lucide';
-import { Flex, Text } from '@yamada-ui/react';
+// import { Flex, Text } from '@yamada-ui/react';
+
+const Flex = ({ children }) => children;
+const Text = ({ children }) => children;
 
 export const SECOND_IN_MS = 1000;
 export const MINUTE_IN_MS = 60 * SECOND_IN_MS;

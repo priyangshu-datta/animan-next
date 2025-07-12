@@ -7,11 +7,14 @@ import {
   Button,
   Card,
   CardBody,
+  CardFooter,
   CardHeader,
   Flex,
   Image,
+  Link,
   Text,
 } from '@yamada-ui/react';
+import NextLink from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
@@ -85,6 +88,13 @@ function LoginPage() {
             <span>Login with Kitsu</span>
           </Button> */}
         </CardBody>
+
+        <CardFooter gap="2" justifyContent={'center'}>
+          <Text>Or, go to</Text>
+          <Link as={NextLink} href={'/'}>
+            Landing Page
+          </Link>
+        </CardFooter>
       </Card>
     </Flex>
   );

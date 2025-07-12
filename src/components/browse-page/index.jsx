@@ -1,10 +1,10 @@
 'use client';
 
 import { Center, Select, VStack } from '@yamada-ui/react';
-import { useEffect, useState } from 'react';
-import MediaSearchPageComponent from './media';
-import CharactersSearchPageComponent from './characters';
 import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import CharactersSearchPageComponent from './characters';
+import MediaSearchPageComponent from './media';
 import StaffsSearchPageComponent from './staffs';
 import StudiosSearchPageComponent from './studios';
 
@@ -15,7 +15,7 @@ export default function SearchPageComponent() {
     setSearchSubject(searchParams.get('subject') ?? 'media');
   }, []);
   return (
-    <Center>
+    <Center p="2">
       <VStack
         maxW={{ sm: '100%', xl: '90%', '2xl': '80%', base: '60%' }}
         w="full"

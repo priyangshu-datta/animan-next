@@ -27,7 +27,7 @@ export default function MediaPage() {
 
   return (
     <>
-      <Center>
+      <Center p="2">
         <MediaProvider
           value={{
             ...mediaFullInfo.data?.data,

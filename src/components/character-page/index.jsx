@@ -2,19 +2,12 @@
 
 import { CharacterProvider } from '@/context/use-character';
 import { useCharacterFullInfoById } from '@/lib/client/hooks/react_query/get/character/info/full-by-id';
-import {
-  Card,
-  Center,
-  Flex,
-  Image,
-  Loading,
-  useDisclosure,
-} from '@yamada-ui/react';
+import { Card, Center, Flex, Image, useDisclosure } from '@yamada-ui/react';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import CharacterInfo from './character-info';
 import ReviewEditor from './review-editor';
 import TabSection from './tab-section';
-import CharacterInfo from './character-info';
 
 export default function CharacterPage() {
   const searchParams = useSearchParams();
@@ -31,7 +24,7 @@ export default function CharacterPage() {
   const [currentReviewMetadata, setCurrentReviewMetadata] = useState(null);
 
   return (
-    <Center>
+    <Center p="2">
       <CharacterProvider value={{ ...data?.data?.Character, isLoading }}>
         <Flex
           direction={'column'}

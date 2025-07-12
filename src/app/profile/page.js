@@ -7,6 +7,7 @@ import AnilistIcon from '@/components/icons/anilist';
 import { useCheckUsername } from '@/lib/client/hooks/react_query/get/user/check-username';
 import { SNACK_DURATION, TIMEZONES } from '@/lib/constants';
 import { debounce, fuzzyRegexMatch, sentenceCase } from '@/utils/general';
+import AppStorage from '@/utils/local-storage';
 import {
   CheckIcon,
   ComputerIcon,
@@ -45,7 +46,6 @@ import {
   useFormContext,
 } from 'react-hook-form';
 import ReactSelect from 'react-select';
-import AppStorage from '@/utils/local-storage';
 
 export default function ProfilePage() {
   const userInfo = useUserInfo();
@@ -81,7 +81,7 @@ export default function ProfilePage() {
         status: 'error',
         description: error.message,
         duration: SNACK_DURATION,
-        isClosable: true
+        isClosable: true,
       });
     },
     handleSuccess: () => {
@@ -174,7 +174,7 @@ export default function ProfilePage() {
   });
 
   return (
-    <Container maxW={'min(80%, 1200px)'} minW={{ md: 'full' }} m={'auto'}>
+    <Container maxW={'min(80%, 1200px)'} minW={{ md: 'full' }} m={'auto'} p="2">
       <Flex justifyContent={'space-between'}>
         <Heading>Profile</Heading>
         {isLoading && (

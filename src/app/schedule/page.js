@@ -99,7 +99,7 @@ function SchedulePage() {
   }, []);
 
   return (
-    <Flex w="full" justifyContent={'center'} direction={'column'} gap="4">
+    <Flex w="full" justifyContent={'center'} direction={'column'} gap="4" p="2">
       <InputGroup w="fit-content" m="auto">
         <InputLeftAddon
           as={Button}

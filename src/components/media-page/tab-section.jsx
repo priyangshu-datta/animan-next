@@ -108,9 +108,11 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
           <Tab className="shrink-0" style={{ margin: 0 }}>
             Characters
           </Tab>
-          <Tab className="shrink-0" style={{ margin: 0 }}>
-            Episodes
-          </Tab>
+          {media.type === 'ANIME' && (
+            <Tab className="shrink-0" style={{ margin: 0 }}>
+              Episodes
+            </Tab>
+          )}
           <Tab className="shrink-0" style={{ margin: 0 }}>
             Related Media
           </Tab>
@@ -124,19 +126,17 @@ export default function TabSection({ setCurrentReviewMetadata, onDrawerOpen }) {
         <TabPanel>
           <RelatedCharacters mediaId={media.id} mediaType={media.type} />
         </TabPanel>
-        <TabPanel>
-          {!media.isLoading ? (
-            media.streamingEpisodes?.length ? (
+        {!media.isLoading && media.type === 'ANIME' && (
+          <TabPanel>
+            {media.streamingEpisodes?.length ? (
               <Episodes />
             ) : (
               <EmptyState>
                 <EmptyStateTitle>No Episode links found</EmptyStateTitle>
               </EmptyState>
-            )
-          ) : (
-            ''
-          )}
-        </TabPanel>
+            )}
+          </TabPanel>
+        )}
         <TabPanel>
           <RelatedMedia />
         </TabPanel>

@@ -289,9 +289,9 @@ function MediaReviewList({ setIsLoading, mediaType, subjectType }) {
                     as={NextLink}
                     href={`/media?id=${
                       assocMedia?.id
-                    }&type=${mediaType}&tabIndex=${5}&reviewType=${
-                      review.subjectType
-                    }#${review.id}`}
+                    }&type=${mediaType}&tabIndex=${
+                      mediaType === 'ANIME' ? 5 : 4
+                    }&reviewType=${review.subjectType}#${review.id}`}
                   >
                     Go to Review
                   </Link>

@@ -85,7 +85,11 @@ export default function ReviewList({
 
           setSubjectType(option);
         }}
-        items={REVIEW_CATEGORIES[media.type?.toLowerCase() ?? 'anime']}
+        items={
+          REVIEW_CATEGORIES[
+            media.type?.toLowerCase() ?? searchParams.get('type').toLowerCase()
+          ]
+        }
       />
       <Grid gap={'2'}>
         {isFetched ? (

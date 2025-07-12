@@ -47,31 +47,40 @@ export function Header({ currentReviewMetadata }) {
 
         <Flex gap={'sm'} alignItems={'baseline'} wrap="wrap">
           <Text fontSize={{ base: 'md', sm: 'sm' }}>Review</Text>
-
           <Controller
             name="subjectType"
             control={control}
             render={({ field }) => (
               <Select
                 {...field}
-                variant={"flushed"}
+                variant={'flushed'}
                 disabled={!!currentReviewMetadata?.id}
                 w={'fit-content'}
                 items={REVIEW_CATEGORIES[media.type.toLowerCase()]}
                 onChange={(option) => {
                   if (option === 'anime' || option === 'manga') {
                     const { unit, ...values } = getValues();
-                    reset(values);
-                  } else {
+                    reset({ ...values, subjectType: option });
+                  } else if (option === 'episode' || option === 'chapter') {
                     reset({
                       ...getValues(),
                       ...(['episode', 'chapter'].includes(
                         currentReviewMetadata?.subjectType
                       ) && {
                         unit: media.entry.progress ?? 0,
+                        subjectType: option,
                       }),
                     });
+                  } else {
+                    reset({
+                      ...getValues(),
+                      ...{
+                        volume: media.entry.volumeProgress ?? 0,
+                        subjectType: option,
+                      },
+                    });
                   }
+
                   field.onChange(option);
                 }}
               />

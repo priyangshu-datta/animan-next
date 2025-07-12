@@ -303,8 +303,8 @@ function AnimeWatchingSummaryModalBody({ mediaCardsDetails, hasMoreData }) {
 
       if (eD1 && eD2) {
         return (
-          Date.parse(`${eY2}-${eM2}-${eD2}`) -
-          Date.parse(`${eY1}-${eM1}-${eD1}`)
+          Date.parse(`${eY1}-${eM1}-${eD1}`) -
+          Date.parse(`${eY2}-${eM2}-${eD2}`) 
         );
       }
     })

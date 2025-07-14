@@ -571,38 +571,3 @@ export function searchParamsToFormControlValues(
   }
   return formValues;
 }
-
-export const animOptions = {
-  open: {
-    keyframes: {
-      '0%': {
-        transform: 'rotateZ(0deg)',
-      },
-      '50%': {
-        transform: 'rotateZ(90deg)',
-      },
-      '100%': {
-        transform: 'rotateZ(180deg)',
-      },
-    },
-    duration: 'slower',
-    fillMode: 'forwards',
-    timingFunction: 'ease-in-out',
-  },
-  close: {
-    keyframes: {
-      '0%': {
-        transform: 'rotateZ(180deg)',
-      },
-      '50%': {
-        transform: 'rotateZ(270deg)',
-      },
-      '100%': {
-        transform: 'rotateZ(360deg)',
-      },
-    },
-    duration: 'slower',
-    fillMode: 'forwards',
-    timingFunction: 'ease-in-out',
-  },
-};

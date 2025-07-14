@@ -15,7 +15,6 @@ import {
   Input,
   Separator,
   useDisclosure,
-  useDynamicAnimation,
   VStack,
 } from '@yamada-ui/react'
 import { useEffect, useState } from 'react'
@@ -38,8 +37,8 @@ import {
   MediaTagSelector,
   OnListRadio,
   SeasonYearSelector,
-} from './small-components'
-import { animOptions, setSearchOptionOnSubmit } from './utils'
+} from './small-components';
+import { setSearchOptionOnSubmit } from './utils';
 
 export default function MediaSearchPageComponent() {
   const { open: basicOptionsOpen, onToggle: basicOptionsToggle } =
@@ -47,10 +46,6 @@ export default function MediaSearchPageComponent() {
 
   const { open: advancedOptionsOpen, onToggle: advancedOptionsToggle } =
     useDisclosure();
-
-  const [advLabelAnim, setAdvLabelAnim] = useDynamicAnimation(animOptions);
-
-  const [basicLabelAnim, setBasicLabelAnim] = useDynamicAnimation(animOptions);
 
   const { methods, genresInfo, tagCategories, tagsInfo } = useSearchForm();
 
@@ -91,29 +86,13 @@ export default function MediaSearchPageComponent() {
               alignItems={'center'}
               flexWrap={{ base: 'nowrap', md: 'wrap' }}
             >
-              <Button
-                variant={'link'}
-                onClick={() => {
-                  setBasicLabelAnim((prev) =>
-                    prev === 'open' ? 'close' : 'open'
-                  );
-                  basicOptionsToggle();
-                }}
-              >
-                <ChevronDownIcon animation={basicLabelAnim} />
+              <Button variant={'link'} onClick={basicOptionsToggle}>
+                {basicOptionsOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
                 Basic Options
               </Button>
               <Separator orientation="vertical" h={'4'} />
-              <Button
-                variant={'link'}
-                onClick={() => {
-                  setAdvLabelAnim((prev) =>
-                    prev === 'open' ? 'close' : 'open'
-                  );
-                  advancedOptionsToggle();
-                }}
-              >
-                <ChevronDownIcon animation={advLabelAnim} />
+              <Button variant={'link'} onClick={advancedOptionsToggle}>
+                {advancedOptionsOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
                 Advanced Options
               </Button>
             </Flex>

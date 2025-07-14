@@ -32,7 +32,6 @@ import { useMemo } from 'react';
 export default function Overview() {
   const media = useMedia();
 
-  const timeLeft = useCountDownTimer(media.nextAiringEpisode?.airingAt);
   const memoedDescription = useMemo(() => media.description, [media]);
 
   if (media.isLoading) {
@@ -66,47 +65,10 @@ export default function Overview() {
       <DataListItem>
         <DataListTerm display={'flex'} gap="2" alignItems={'center'}>
           <RadioIcon />
-          {media.status === 'NOT_YET_RELEASED' && media.startDate?.year
-            ? (media.type === 'ANIME'
-                ? 'Release'
-                : media.type === 'MANGA'
-                ? 'Publish'
-                : 'Error: Unexpected Media type') + ' in'
-            : (media.type === 'ANIME'
-                ? 'Airing'
-                : media.type === 'MANGA'
-                ? 'Publishing'
-                : 'Error: Unexpected Media type') + ' Status'}
+          Status
         </DataListTerm>
         <DataListDescription>
-          {media.type === 'ANIME' ? (
-            media.nextAiringEpisode ? (
-              <Text>
-                Next episode {media.nextAiringEpisode.episode} is airing in{' '}
-                <Tooltip
-                  label={Intl.DateTimeFormat(AppStorage.get('locale'), {
-                    timeZone: AppStorage.get('timezone'),
-                    timeStyle: 'medium',
-                    dateStyle: 'medium',
-                  }).format(new Date(media.nextAiringEpisode?.airingAt))}
-                >
-                  <span>{timeLeft}</span>
-                </Tooltip>
-              </Text>
-            ) : media.status === 'NOT_YET_RELEASED' && media.startDate?.year ? (
-              formatPartialDate(media.startDate)
-            ) : (
-              `Not airing (${
-                MEDIA_STATUS[media.type.toLowerCase()].find(
-                  ({ value }) => value === media.status
-                ).label
-              })`
-            )
-          ) : media.status === 'RELEASING' ? (
-            'Ongoing'
-          ) : (
-            media.status
-          )}
+          <MediaStatusDisplay />
         </DataListDescription>
       </DataListItem>
 
@@ -169,4 +131,44 @@ export default function Overview() {
       </DataListItem>
     </DataList>
   );
+}
+
+function MediaStatusDisplay() {
+  const media = useMedia();
+  const timeLeft = useCountDownTimer(media.nextAiringEpisode?.airingAt);
+
+  if (media.status === 'NOT_YET_RELEASED') {
+    if (media.startDate?.year) {
+      return formatPartialDate(media.startDate);
+    } else {
+      return MEDIA_STATUS[media.type.toLowerCase()].find(
+        ({ value }) => value === media.status
+      ).label;
+    }
+  } else if (media.status === 'RELEASING') {
+    if (media.nextAiringEpisode) {
+      return (
+        <Text>
+          Next episode {media.nextAiringEpisode.episode} is airing in{' '}
+          <Tooltip
+            label={Intl.DateTimeFormat(AppStorage.get('locale'), {
+              timeZone: AppStorage.get('timezone'),
+              timeStyle: 'medium',
+              dateStyle: 'medium',
+            }).format(new Date(media.nextAiringEpisode?.airingAt))}
+          >
+            <span>{timeLeft}</span>
+          </Tooltip>
+        </Text>
+      );
+    } else {
+      return 'Ongoing';
+    }
+  } else {
+    return `Not airing (${
+      MEDIA_STATUS[media.type.toLowerCase()].find(
+        ({ value }) => value === media.status
+      ).label
+    })`;
+  }
 }

@@ -308,7 +308,7 @@ export default function Details() {
 
       <DataListItem>
         <DataListTerm>Producers</DataListTerm>
-        <DataListDescription display={'flex'} gap="2">
+        <DataListDescription display={'flex'} gap="2" flexWrap={'wrap'}>
           {media.studios
             ?.filter((studio) => !studio.isMain)
             ?.map((studio) => (

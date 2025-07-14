@@ -10,7 +10,7 @@ import {
 } from '@yamada-ui/react';
 import { useMemo } from 'react';
 
-export function SearchResults({ searchOptions }) {
+export function SearchResults({ searchOptions, entryStatus }) {
   const { data, hasNextPage, fetchNextPage, isFetchingNextPage, isFetched } =
     useSearchResults({
       searchOptions,
@@ -36,9 +36,16 @@ export function SearchResults({ searchOptions }) {
               <EmptyStateTitle>No results found</EmptyStateTitle>
             </EmptyState>
           ) : (
-            mediaCardDetails.map(({ entry, media }) => {
-              return <MediaCard entry={entry} media={media} key={media.id} />;
-            })
+            mediaCardDetails
+              .filter(({ entry }) => {
+                if (entryStatus === 'all') {
+                  return true;
+                }
+                return entry?.status === entryStatus;
+              })
+              .map(({ entry, media }) => {
+                return <MediaCard entry={entry} media={media} key={media.id} />;
+              })
           )
         ) : (
           <Loading fontSize={'lg'} />

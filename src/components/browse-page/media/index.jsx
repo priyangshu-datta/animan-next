@@ -1,5 +1,6 @@
 'use client';
 
+import { MEDIA_ENTRY_STATUS } from '@/lib/constants';
 import { getCurrentAnimeSeason } from '@/utils/general';
 import { ChevronDownIcon, ChevronUpIcon, XIcon } from '@yamada-ui/lucide';
 import {
@@ -10,6 +11,7 @@ import {
   CardHeader,
   Collapse,
   Flex,
+  FormControl,
   Grid,
   Heading,
   Input,
@@ -20,6 +22,7 @@ import {
 import { useEffect, useState } from 'react';
 import { Controller, FormProvider } from 'react-hook-form';
 import { defaultFormValues, useSearchForm } from './hooks';
+import { ReactSelectCustom } from './reusable-components';
 import { SearchResults } from './search-results';
 import { CountryOfOriginSelector } from './selectors/country-of-origin';
 import { DateSelector } from './selectors/date';
@@ -50,6 +53,8 @@ export default function MediaSearchPageComponent() {
   const { methods, genresInfo, tagCategories, tagsInfo } = useSearchForm();
 
   const [searchOptions, setSearchOptions] = useState();
+
+  const [entryStatus, setEntryStatus] = useState('all');
 
   function onSubmit() {
     methods.reset(methods.getValues());
@@ -129,47 +134,34 @@ export default function MediaSearchPageComponent() {
             >
               Clear all Filters
             </Button>
-            <Button
-              onClick={() => {
-                methods.reset({
-                  ...defaultFormValues,
-                  mediaSort: ['SCORE_DESC'],
-                });
-              }}
-              variant={'outline'}
-              size="sm"
-              colorScheme={'primary'}
+            <FormControl
+              label="Entry Status"
+              display={'flex'}
+              alignItems={'baseline'}
+              flexWrap={'wrap'}
             >
-              Top Anime
-            </Button>
-            <Button
-              onClick={() => {
-                methods.reset({
-                  ...defaultFormValues,
-                  mediaSort: ['SCORE_DESC'],
-                  mediaFormat: ['MOVIE'],
-                });
-              }}
-              variant={'outline'}
-              size="sm"
-              colorScheme={'primary'}
-            >
-              Top Movies
-            </Button>
-          </Flex>
-          <Button
-            onClick={() => {
-              methods.reset({
-                ...defaultFormValues,
-              });
-            }}
-            variant={'subtle'}
-            size="sm"
-            colorScheme={'red'}
-            startIcon={<XIcon />}
-          >
-            Clear all Filters
-          </Button>
+              <ReactSelectCustom
+                isSearchable={false}
+                options={[
+                  { label: 'All', value: 'all' },
+                  ...MEDIA_ENTRY_STATUS[
+                    methods.watch('mediaType').toLowerCase()
+                  ],
+                ]}
+                components={{ IndicatorSeparator: null }}
+                value={[
+                  { label: 'All', value: 'all' },
+                  ...MEDIA_ENTRY_STATUS[
+                    methods.watch('mediaType').toLowerCase()
+                  ],
+                ].find(({ value }) => value === entryStatus)}
+                onChange={(option) => {
+                  setEntryStatus(option.value);
+                }}
+                className="w-[146px]"
+              />
+            </FormControl>
+          </VStack>
         </Flex>
         {basicOptionsOpen && (
           <BasicFilterOptions
@@ -199,28 +191,28 @@ export default function MediaSearchPageComponent() {
 function BasicFilterOptions({ basicOptionsOpen, genresInfo }) {
   return (
     <Collapse open={basicOptionsOpen} style={{ overflow: 'visible' }} mt="2">
-            <Card variant={'outline'}>
-              <CardHeader>
-                <Heading size={'md'}>Basic Options</Heading>
-              </CardHeader>
-              <CardBody>
+      <Card variant={'outline'}>
+        <CardHeader>
+          <Heading size={'md'}>Basic Options</Heading>
+        </CardHeader>
+        <CardBody>
           <Flex gap="4" w="full" flexWrap={{ base: 'nowrap', md: 'wrap' }}>
-                  <MediaSeasonSelector />
-                  <SeasonYearSelector />
-                </Flex>
+            <MediaSeasonSelector />
+            <SeasonYearSelector />
+          </Flex>
           <Flex gap="4" w="full" flexWrap={{ base: 'nowrap', md: 'wrap' }}>
-                  {genresInfo.isFetched && (
-                    <GenreSelector genres={genresInfo.data.data} />
-                  )}
-                  <MediaSortMethodSelector />
-                </Flex>
+            {genresInfo.isFetched && (
+              <GenreSelector genres={genresInfo.data.data} />
+            )}
+            <MediaSortMethodSelector />
+          </Flex>
           <Flex gap="4" w="full" flexWrap={{ base: 'nowrap', md: 'wrap' }}>
-                  <MediaStatusSelector />
-                  <MediaFormatSelector />
-                </Flex>
-              </CardBody>
-            </Card>
-          </Collapse>
+            <MediaStatusSelector />
+            <MediaFormatSelector />
+          </Flex>
+        </CardBody>
+      </Card>
+    </Collapse>
   );
 }
 
@@ -232,75 +224,75 @@ function AdvancedFilterOptions({
 }) {
   return (
     <Collapse open={advancedOptionsOpen} style={{ overflow: 'visible' }} mt="2">
-            <Card variant={'outline'}>
-              <CardHeader>
-                <Heading size={'md'}>Advanced Options</Heading>
-              </CardHeader>
-              <CardBody>
+      <Card variant={'outline'}>
+        <CardHeader>
+          <Heading size={'md'}>Advanced Options</Heading>
+        </CardHeader>
+        <CardBody>
           <Flex gap="4" w="full" flexWrap={{ base: 'nowrap', md: 'wrap' }}>
-                  <Grid w="full" gap="sm">
-                    <CheckBoxes />
-                    <OnListRadio />
-                  </Grid>
-                  <CountryOfOriginSelector />
-                  <MediaSourceSelector />
-                </Flex>
+            <Grid w="full" gap="sm">
+              <CheckBoxes />
+              <OnListRadio />
+            </Grid>
+            <CountryOfOriginSelector />
+            <MediaSourceSelector />
+          </Flex>
 
-                <Flex
-                  gap="4"
-                  w="full"
-                  justifyContent={'space-between'}
-                  flexWrap={{ base: 'nowrap', md: 'wrap' }}
-                >
-                  <DateSelector name={'start'} />
-                  <DateSelector name={'end'} />
-                </Flex>
-                <MediaTagCategorySelector tagCategories={tagCategories} />
-                <MediaTagSelector
-                  tagCategories={tagCategories}
-                  tags={tagsInfo.data?.data}
+          <Flex
+            gap="4"
+            w="full"
+            justifyContent={'space-between'}
+            flexWrap={{ base: 'nowrap', md: 'wrap' }}
+          >
+            <DateSelector name={'start'} />
+            <DateSelector name={'end'} />
+          </Flex>
+          <MediaTagCategorySelector tagCategories={tagCategories} />
+          <MediaTagSelector
+            tagCategories={tagCategories}
+            tags={tagsInfo.data?.data}
+          />
+          <Grid
+            w="full"
+            gap="2"
+            justifyItems={'center'}
+            gridTemplateColumns={{
+              base: '1fr 10px 1fr',
+              md: '1fr',
+            }}
+          >
+            {methods.watch('mediaType') === 'ANIME' ? (
+              <>
+                <OpenEndedRange label={'episodes'} />
+                <Separator
+                  orientation="vertical"
+                  display={{ md: 'none', base: 'block' }}
                 />
-                <Grid
-                  w="full"
-                  gap="2"
-                  justifyItems={'center'}
-                  gridTemplateColumns={{
-                    base: '1fr 10px 1fr',
-                    md: '1fr',
-                  }}
-                >
-                  {methods.watch('mediaType') === 'ANIME' ? (
-                    <>
-                      <OpenEndedRange label={'episodes'} />
-                      <Separator
-                        orientation="vertical"
-                        display={{ md: 'none', base: 'block' }}
-                      />
 
-                      <OpenEndedRange label={'duration'} />
-                    </>
-                  ) : (
-                    <>
-                      <OpenEndedRange label={'chapters'} />
-                      <Separator
-                        orientation="vertical"
-                        display={{ md: 'none', base: 'block' }}
-                      />
+                <OpenEndedRange label={'duration'} />
+              </>
+            ) : (
+              <>
+                <OpenEndedRange label={'chapters'} />
+                <Separator
+                  orientation="vertical"
+                  display={{ md: 'none', base: 'block' }}
+                />
 
-                      <OpenEndedRange label={'volumes'} />
-                    </>
-                  )}
-                  <OpenEndedRange label={'popularity'} />
-                  <Separator
-                    orientation="vertical"
-                    display={{ md: 'none', base: 'block' }}
-                  />
+                <OpenEndedRange label={'volumes'} />
+              </>
+            )}
+            <OpenEndedRange label={'popularity'} />
+            <Separator
+              orientation="vertical"
+              display={{ md: 'none', base: 'block' }}
+            />
 
-                  <OpenEndedRange label={'score'} />
-                </Grid>
-              </CardBody>
-            </Card>
-          </Collapse>
+            <OpenEndedRange label={'score'} />
+          </Grid>
+        </CardBody>
+      </Card>
+    </Collapse>
   );
 }
 

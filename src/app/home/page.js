@@ -1,10 +1,9 @@
 'use client';
 
-import { getCurrentAnimeSeason } from '@/utils/general';
 import MediaCard from '@/components/media-card';
 import { useUserMediaList } from '@/lib/client/hooks/react_query/get/user/media/list';
 import { MEDIA_ENTRY_STATUS, MEDIA_STATUS } from '@/lib/constants';
-import { debounce } from '@/utils/general';
+import { debounce, getCurrentAnimeSeason } from '@/utils/general';
 import { PieChart } from '@yamada-ui/charts';
 import { Columns3Icon, Grid3x3Icon, InfoIcon } from '@yamada-ui/lucide';
 import {
@@ -12,6 +11,7 @@ import {
   AlertIcon,
   AlertTitle,
   Button,
+  Checkbox,
   EmptyState,
   EmptyStateTitle,
   Flex,
@@ -139,6 +139,7 @@ function HomePageComponent() {
               }
               mediaGroupDetails={mediaGroupDetails}
               loadMoreBtnRenders={hasNextPage}
+              mediaEntryStatus={mediaEntryStatus}
             />
           ))
         ) : (
@@ -158,10 +159,12 @@ function HomePageComponent() {
 
 function MediaGroupComponent({
   heading,
+  mediaEntryStatus,
   mediaGroupDetails,
   loadMoreBtnRenders,
 }) {
   const [cardGroupStyle, setCardGroupStyle] = useState('columns');
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
 
   if (mediaGroupDetails.length < 1) {
     return (
@@ -171,28 +174,53 @@ function MediaGroupComponent({
     );
   }
 
+  const mediaCards = mediaGroupDetails
+    .filter(({ media, entry }) => {
+      const maxEp = media.nextAiringEpisode?.episode - 1 || media.episodes;
+      if (showPendingOnly) {
+        return maxEp > entry.progress;
+      }
+      return true;
+    })
+    .map(({ media, entry }) => (
+      <MediaCard key={entry.id} entry={entry} media={media} />
+    ));
+
   return (
     <>
-      <Flex
+      <VStack
         position={'sticky'}
-        top={loadMoreBtnRenders ? '120' : '71'}
-        bgColor={'AppWorkspace'}
-        w="full"
+        top={loadMoreBtnRenders ? '165' : '120'}
+        gap="0"
       >
-        <Heading size="md">{heading}</Heading>
-        <ToggleGroup
-          ml="auto"
-          value={cardGroupStyle}
-          onChange={setCardGroupStyle}
-        >
-          <Toggle value="columns" disabled={cardGroupStyle === 'columns'}>
-            <Columns3Icon />
-          </Toggle>
-          <Toggle value="grid" disabled={cardGroupStyle === 'grid'}>
-            <Grid3x3Icon />
-          </Toggle>
-        </ToggleGroup>
-      </Flex>
+        <Flex bgColor={'AppWorkspace'} w="full" px="2" alignItems={'center'}>
+          <Heading size="md">{heading}</Heading>
+          <ToggleGroup
+            ml="auto"
+            value={cardGroupStyle}
+            onChange={setCardGroupStyle}
+          >
+            <Toggle value="columns" disabled={cardGroupStyle === 'columns'}>
+              <Columns3Icon />
+            </Toggle>
+            <Toggle value="grid" disabled={cardGroupStyle === 'grid'}>
+              <Grid3x3Icon />
+            </Toggle>
+          </ToggleGroup>
+        </Flex>
+        {mediaEntryStatus === 'ANIME-CURRENT' && (
+          <Checkbox
+            bgColor={'AppWorkspace'}
+            p="1"
+            label="Show pending only"
+            checked={showPendingOnly}
+            onChange={(ev) => {
+              setShowPendingOnly(ev.target.checked);
+            }}
+            ml="auto"
+          />
+        )}
+      </VStack>
       {cardGroupStyle === 'columns' && (
         <Flex
           gap="4"
@@ -203,16 +231,24 @@ function MediaGroupComponent({
           _dark={{ boxShadow: '0px 0px 0px 0px rgba(255,255,255,1) inset' }}
           bgColor={'whiteAlpha.100'}
         >
-          {mediaGroupDetails.map(({ media, entry }) => (
-            <MediaCard key={entry.id} entry={entry} media={media} />
-          ))}
+          {mediaCards.length > 0 ? (
+            mediaCards
+          ) : (
+            <EmptyState>
+              <EmptyStateTitle>No media found</EmptyStateTitle>
+            </EmptyState>
+          )}
         </Flex>
       )}
       {cardGroupStyle === 'grid' && (
         <Flex w={'full'} gap={'4'} p={'2'} justify={'center'} wrap="wrap">
-          {mediaGroupDetails.map(({ media, entry }) => (
-            <MediaCard key={entry.id} entry={entry} media={media} />
-          ))}
+          {mediaCards.length > 0 ? (
+            mediaCards
+          ) : (
+            <EmptyState>
+              <EmptyStateTitle>No media found</EmptyStateTitle>
+            </EmptyState>
+          )}
         </Flex>
       )}
     </>
@@ -304,7 +340,7 @@ function AnimeWatchingSummaryModalBody({ mediaCardsDetails, hasMoreData }) {
       if (eD1 && eD2) {
         return (
           Date.parse(`${eY1}-${eM1}-${eD1}`) -
-          Date.parse(`${eY2}-${eM2}-${eD2}`) 
+          Date.parse(`${eY2}-${eM2}-${eD2}`)
         );
       }
     })
@@ -352,14 +388,19 @@ function AnimeWatchingSummaryModalBody({ mediaCardsDetails, hasMoreData }) {
       <Heading size="md" mt="4">
         Pending Episodes
       </Heading>
-
-      <PieChart
-        size="md"
-        data={piechartData}
-        tooltipDataSource="segment"
-        flexShrink={0}
-        mx="auto"
-      />
+      {piechartData.every(({ value }) => value === 0) ? (
+        <EmptyState>
+          <EmptyStateTitle>None, all on track</EmptyStateTitle>
+        </EmptyState>
+      ) : (
+        <PieChart
+          size="md"
+          data={piechartData}
+          tooltipDataSource="segment"
+          flexShrink={0}
+          mx="auto"
+        />
+      )}
       <Alert status="info" flexShrink={0} w="full" mt="2">
         <AlertIcon />
         <AlertTitle>Legends represent anime airing status.</AlertTitle>

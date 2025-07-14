@@ -537,7 +537,12 @@ function Gallery({ carouselRef, data, markerHistory }) {
             key={id}
             bgColor={'secondary'}
             {...(media.bannerImage
-              ? { bgImg: `url(${media.bannerImage})` }
+              ? {
+                  bgImg: `url(${media.bannerImage})`,
+                  bgRepeat: 'no-repeat',
+                  bgSize: 'cover',
+                  bgPosition: 'center',
+                }
               : {})}
             bgPosition={'center'}
           >

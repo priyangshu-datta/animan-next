@@ -290,7 +290,7 @@ function MediaReviewList({ setIsLoading, mediaType, subjectType }) {
                     href={`/media?id=${
                       assocMedia?.id
                     }&type=${mediaType}&tabIndex=${
-                      mediaType === 'ANIME' ? 5 : 4
+                      mediaType === 'anime' ? 5 : 4
                     }&reviewType=${review.subjectType}#${review.id}`}
                   >
                     Go to Review

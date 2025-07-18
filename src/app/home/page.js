@@ -208,18 +208,19 @@ function MediaGroupComponent({
             </Toggle>
           </ToggleGroup>
         </Flex>
-        {mediaEntryStatus === 'ANIME-CURRENT' && (
-          <Checkbox
-            bgColor={'AppWorkspace'}
-            p="1"
-            label="Show pending only"
-            checked={showPendingOnly}
-            onChange={(ev) => {
-              setShowPendingOnly(ev.target.checked);
-            }}
-            ml="auto"
-          />
-        )}
+        {mediaEntryStatus === 'ANIME-CURRENT' &&
+          heading.toUpperCase() === 'RELEASING' && (
+            <Checkbox
+              bgColor={'AppWorkspace'}
+              p="1"
+              label="Show pending only"
+              checked={showPendingOnly}
+              onChange={(ev) => {
+                setShowPendingOnly(ev.target.checked);
+              }}
+              ml="auto"
+            />
+          )}
       </VStack>
       {cardGroupStyle === 'columns' && (
         <Flex

@@ -332,6 +332,7 @@ function AnimeWatchingSummaryModalBody({ mediaCardsDetails, hasMoreData }) {
       ({ media }) =>
         media.season === getCurrentAnimeSeason() &&
         media.seasonYear === new Date().getFullYear() &&
+        media.status === "RELEASING"  &&
         media.endDate.day
     )
     .sort(({ media: m1 }, { media: m2 }) => {

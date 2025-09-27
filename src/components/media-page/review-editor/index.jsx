@@ -69,11 +69,7 @@ export default function ReviewEditor({
     } else {
       saveReview.mutate({
         ...(media.type === 'ANIME'
-          ? {
-              animeId: media.id,
-              season: media.season.toLowerCase(),
-              year: media.seasonYear,
-            }
+          ? { animeId: media.id }
           : { mangaId: media.id }),
         subjectType: data.subjectType,
         ...submissionData,
